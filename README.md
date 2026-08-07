@@ -80,7 +80,7 @@ npm run verify
 ---
 
 ## Архитектура
- 
+
 Проект использует
 
 - Feature-Sliced Design

@@ -1,0 +1,51 @@
+/**
+ * Shared keyframe animations.
+ * Import this file in any SCSS module that needs these animations.
+ * The keyframes are also registered globally via index.css.
+ */
+
+/* Gentle vertical float — used for CharacterSigil "breathing" effect */
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Entrance reveal — opacity + scale, same curve as ConfirmationStep.revealIn */
+@keyframes revealScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Subtle glow pulse — used on active/highlight elements */
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Utility classes for one-shot animations */
+.animate-float {
+  animation: floatY 3.5s ease-in-out infinite;
+}
+
+.animate-reveal {
+  animation: revealScale 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}

@@ -1,0 +1,33 @@
+.heroAvatarWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-4) 0;
+}
+
+.heroAvatar {
+  font-size: clamp(3.5rem, 16vw, 5rem);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  animation: heroBreathing 2.8s ease-in-out infinite;
+}
+
+@keyframes heroBreathing {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgb(99 102 241 / 20%);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 28px rgb(99 102 241 / 35%);
+  }
+}

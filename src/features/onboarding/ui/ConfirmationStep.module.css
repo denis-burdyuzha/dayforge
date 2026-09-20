@@ -1,0 +1,139 @@
+.flashOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  animation: fullFlash 350ms ease-out forwards;
+}
+
+.reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  animation: revealIn 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.levelBadge {
+  font-size: clamp(1.8rem, 6vw, 2.5rem);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-1);
+}
+
+.heroAvatar {
+  font-size: clamp(3.2rem, 12vw, 4rem);
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+
+.characterName {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.className {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.1em;
+}
+
+.directions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.subtitleInfo {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: var(--line-height-normal);
+  margin: var(--space-2) 0;
+}
+
+.errorBanner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: rgb(239 68 68 / 15%);
+  border: 1px solid rgb(239 68 68 / 30%);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  width: 100%;
+}
+
+.authBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.registerForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.footerLink {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-1);
+}
+
+.linkButton {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: opacity var(--transition-fast);
+}
+
+.linkButton:hover {
+  opacity: 0.8;
+}
+
+@keyframes fullFlash {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes revealIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

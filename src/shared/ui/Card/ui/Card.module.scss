@@ -1,0 +1,40 @@
+.card {
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sm);
+}
+
+.default {
+    padding: var(--space-4);
+}
+
+.interactive {
+    padding: var(--space-4);
+
+    cursor: pointer;
+
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.interactive:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.highlight {
+    padding: var(--space-5);
+
+    border-color: var(--color-primary);
+
+    background:
+        linear-gradient(135deg,
+            var(--color-surface),
+            rgb(99 102 241 / 8%));
+}

@@ -1,10 +1,85 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import HomePage from '../../pages/HomePage/HomePage'
+import { DailyPlanPage } from "@/features/daily-plan/ui/DailyPlanPage";
+import { DailyReportPage } from "@/features/daily-report/ui/DailyReportPage";
+import { OnboardingPage } from "@/features/onboarding/ui/OnboardingPage";
+import { AuthCallbackPage } from "@/pages/AuthCallbackPage/AuthCallbackPage";
+import { AvatarPlaygroundPage } from "@/pages/AvatarPlaygroundPage/AvatarPlaygroundPage";
+import HomePage from "@/pages/HomePage/HomePage";
+import { LandingPage } from "@/pages/LandingPage/LandingPage";
+import { LoginPage } from "@/pages/LoginPage/LoginPage";
 
-export const router = createBrowserRouter([
+import { AppShell } from "../layouts/AppShell";
+import { GuestLayout } from "../layouts/GuestLayout";
+import { ProtectedLayout } from "../layouts/ProtectedLayout";
+
+export const appRouter = createBrowserRouter([
+  // Dev-only Playground Route
   {
-    path: '/',
-    element: <HomePage />,
+    path: "/dev/avatar",
+    element: <AvatarPlaygroundPage />,
   },
-])
+  // Guest accessible routes
+  {
+    element: <GuestLayout />,
+    children: [
+      {
+        path: "/",
+        element: <LandingPage />,
+      },
+      {
+        path: "/onboarding",
+        element: <OnboardingPage />,
+      },
+      {
+        path: "/login",
+        element: <LoginPage />,
+      },
+    ],
+  },
+  // OAuth Callback Route
+  {
+    path: "/auth/callback",
+    element: <AuthCallbackPage />,
+  },
+  // Protected App Routes (/app/*)
+  {
+    path: "/app",
+    element: <ProtectedLayout />,
+    children: [
+      {
+        element: <AppShell />,
+        children: [
+          {
+            path: "",
+            element: <HomePage />,
+          },
+          {
+            path: "plan",
+            element: <DailyPlanPage />,
+          },
+          {
+            path: "report",
+            element: <DailyReportPage />,
+          },
+          {
+            path: "report/review",
+            element: <div>👀 Report Review Page </div>,
+          },
+          {
+            path: "character",
+            element: <div>🦸 Character Stats Page </div>,
+          },
+          {
+            path: "settings",
+            element: <div>⚙️ Settings Page </div>,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+  },
+]);

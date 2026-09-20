@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.logo {
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.15em;
+  color: var(--color-text);
+  text-shadow: 0 0 24px rgb(99 102 241 / 35%);
+  animation: pulseLogo 1.8s ease-in-out infinite;
+}
+
+@keyframes pulseLogo {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}

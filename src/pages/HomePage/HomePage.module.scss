@@ -1,0 +1,615 @@
+/* ═══════════════════════════════════════════════════════
+   Loading / Error centering
+═══════════════════════════════════════════════════════ */
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60dvh;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Page layout
+═══════════════════════════════════════════════════════ */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  /* AppShell .main already handles bottom padding for BottomNavigation.
+     Remove double-padding by relying solely on AppShell. */
+}
+
+/* ═══════════════════════════════════════════════════════
+   Section — shared pattern
+═══════════════════════════════════════════════════════ */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Unified section heading style (task 4) ── */
+/* All section titles: uppercase, same weight, consistent letter-spacing */
+.sectionTitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  padding: 0 var(--space-1);
+}
+
+/* ── Scroll-in reveal for sections (task 3) ──
+   Start hidden; JS adds .visible via IntersectionObserver */
+.sectionReveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sectionReveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════
+   HERO SECTION
+═══════════════════════════════════════════════════════ */
+.heroSection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4) var(--space-6);
+  text-align: center;
+  /* overflow: hidden prevents floating sigil translateY from expanding
+     the page height on mobile — key fix for the scroll bug */
+  overflow: hidden;
+}
+
+/* ── Animated background orbs (task 2) — z-index 0, behind everything ── */
+.heroBg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.heroBgOrb1 {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  /* accentColor set via inline style; opacity ≤6% to keep 80/15/5 rule */
+  opacity: 0.06;
+  filter: blur(60px);
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  will-change: transform;
+  animation: orbDrift1 20s ease-in-out infinite;
+}
+
+.heroBgOrb2 {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  opacity: 0.04;
+  filter: blur(50px);
+  bottom: -40px;
+  right: -20px;
+  will-change: transform;
+  animation: orbDrift2 25s ease-in-out infinite;
+}
+
+@keyframes orbDrift1 {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  33% {
+    transform: translateX(calc(-50% - 20px)) translateY(15px) scale(1.08);
+  }
+
+  66% {
+    transform: translateX(calc(-50% + 20px)) translateY(-10px) scale(0.95);
+  }
+}
+
+@keyframes orbDrift2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  40% {
+    transform: translate(-15px, -20px) scale(1.1);
+  }
+
+  70% {
+    transform: translate(10px, 10px) scale(0.92);
+  }
+}
+
+/* All hero content sits above the orbs */
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+/* Sigil wrapper — fixed size prevents translateY from affecting flow */
+.sigilWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 180px;
+  /* overflow: hidden clips any possible overflow from scale/translate */
+  overflow: hidden;
+}
+
+/* Glow halo behind the sigil — synced pulse with floatY (task 1) */
+.sigilGlow {
+  position: absolute;
+  inset: 28px;
+  border-radius: var(--radius-full);
+  filter: blur(22px);
+  pointer-events: none;
+  /* Pulse synced to float cycle: same 3.5s duration, ease-in-out */
+  animation: sigilGlowPulse 3.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes sigilGlowPulse {
+  0%,
+  100% {
+    opacity: 0.1;
+    filter: blur(22px);
+  }
+
+  50% {
+    opacity: 0.28;
+    filter: blur(28px);
+  }
+}
+
+/* Float animation on the sigil SVG element */
+.sigilFloat {
+  animation: floatY 3.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Reveal on first mount + then float (task 1 reveal is already in animations.scss) */
+.sigilReveal {
+  animation:
+    revealScale 500ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    floatY 3.5s ease-in-out 500ms infinite;
+  will-change: transform;
+}
+
+/* Character name */
+.heroName {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+/* Class badge row */
+.heroClass {
+  display: flex;
+  justify-content: center;
+}
+
+/* XP block */
+.xpBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 340px;
+}
+
+/* LEVEL N — prominent label above XP bar */
+.levelLabel {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.xpBarWrapper {
+  width: 100%;
+}
+
+.xpMeta {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-2);
+}
+
+.xpCurrent {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.xpToNext {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ATTRIBUTES — HUD grid
+═══════════════════════════════════════════════════════ */
+.attrGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+/* Attribute card — press micro-reaction (task 5) */
+.attrCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) !important;
+  position: relative;
+  /* Micro-reaction: same pattern as Button — scale(0.97) on press */
+  transition:
+    transform 120ms ease,
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast) !important;
+}
+
+.attrCard:active {
+  transform: scale(0.97);
+}
+
+.attrCardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.attrIcon {
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.attrName {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attrValue {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+/* attrBarWrapper / attrBar — removed (Part 1: attributes show plain number, no bar) */
+
+/* Expanded detail area */
+.attrExpanded {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  animation: revealScale 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.attrExpandedBar {
+  /* ProgressBar fills full width */
+}
+
+.attrDescription {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.attrHistoryNote {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-disabled);
+  font-style: italic;
+}
+
+/* Chevron indicator */
+.attrChevron {
+  position: absolute;
+  bottom: var(--space-2);
+  right: var(--space-3);
+  font-size: 0.5rem;
+  color: var(--color-text-disabled);
+}
+
+/* Empty fallback wrapper */
+.emptyWrap {
+  grid-column: 1 / -1;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SKILLS — horizontal scroll
+═══════════════════════════════════════════════════════ */
+.skillsScroll {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  scrollbar-width: none;
+}
+
+.skillsScroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Skill card — press micro-reaction (task 5) */
+.skillCard {
+  flex-shrink: 0;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) !important;
+  cursor: pointer;
+  transition: transform 120ms ease !important;
+}
+
+.skillCard:active {
+  transform: scale(0.97);
+}
+
+.skillCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.skillCardName {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Form indicator row */
+.skillFormRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.skillFormLabel {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-disabled);
+  flex-shrink: 0;
+}
+
+.skillFormTrack {
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.skillFormFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 500ms ease;
+}
+
+.skillFormPct {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+  min-width: 26px;
+  text-align: right;
+}
+
+.skillLastPracticed {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-disabled);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skillCardXp {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════
+   CURRENT STATE — softer visual language
+═══════════════════════════════════════════════════════ */
+.stateCard {
+  background: color-mix(in srgb, var(--color-surface) 85%, var(--color-bg) 15%) !important;
+  border-radius: var(--radius-xl) !important;
+}
+
+.stateGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.statePill {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stateIcon {
+  font-size: var(--font-size-md);
+  line-height: 1;
+}
+
+.stateLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.stateBarTrack {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.stateBarFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  opacity: 0.6;
+  transition: width 600ms ease;
+}
+
+.stateValue {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  width: 2.5ch;
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TODAY'S GROWTH + RECENT EVENTS
+═══════════════════════════════════════════════════════ */
+.growthCard {
+  /* inherits Card default */
+}
+
+.eventList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.eventItem {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.eventDate {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-disabled);
+  white-space: nowrap;
+}
+
+.eventReason {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventAmount {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.emptyCard {
+  /* inherits Card default */
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHARACTER EVOLUTION
+═══════════════════════════════════════════════════════ */
+.evolutionCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.evolutionSubtitle {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-secondary);
+}
+
+.deltasGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.deltaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.deltaLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.deltaValue {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.evolutionStat {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.evolutionNum {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-right: var(--space-1);
+}
+
+.evolutionDeltas {
+  /* container for deltas block */
+}

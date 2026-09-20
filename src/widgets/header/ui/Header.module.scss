@@ -1,0 +1,56 @@
+.header {
+    height: var(--header-height);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.container {
+    width: min(calc(100% - (var(--space-4) * 2)), var(--content-width));
+    height: 100%;
+    margin-inline: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ── Brand ──────────────────────────────────────── */
+.brand {
+    font-size: var(--font-size-sm);
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    color: var(--color-text);
+    user-select: none;
+}
+
+/* ── Character button ───────────────────────────── */
+.characterBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: var(--color-surface-raised);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+}
+
+.levelBadge {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+}

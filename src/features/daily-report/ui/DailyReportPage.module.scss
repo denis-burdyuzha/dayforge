@@ -1,0 +1,215 @@
+.page {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ─── Report form ─────────────────────────────────────────────────── */
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+
+.subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.textareaWrap {
+  margin-bottom: var(--space-4);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 150ms;
+}
+
+.textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.textarea::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.completeBtnWrap {
+  margin-top: var(--space-2);
+}
+
+.completeBtn {
+  width: 100%;
+  padding: var(--space-4);
+  background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+  color: #fff;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 200ms, transform 100ms;
+  box-shadow: 0 4px 20px rgb(99 102 241 / 35%);
+}
+
+.completeBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.completeBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.completeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Completion view ─────────────────────────────────────────────── */
+
+.completionPage {
+  max-width: 600px;
+  margin: 0 auto;
+  animation: fadeInUp 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.completionHero {
+  text-align: center;
+  padding: var(--space-8) var(--space-4) var(--space-6);
+}
+
+.completionLabel {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-2);
+}
+
+.completionTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-4);
+}
+
+.xpBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+  color: #fff;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 24px rgb(99 102 241 / 40%);
+  animation: popIn 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 200ms both;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.sectionTitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--space-3);
+}
+
+.attrDeltasList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.attrDeltaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+}
+
+.attrDeltaName {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.attrDeltaValue {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-success);
+}
+
+.reportTextSection {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.reportTextCard {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.reportText {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* ─── Center / loading ─────────────────────────────────────────────── */
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60dvh;
+}

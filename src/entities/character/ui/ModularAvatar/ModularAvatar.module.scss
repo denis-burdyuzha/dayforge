@@ -1,0 +1,52 @@
+.avatarContainer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+}
+
+/* ── Sizing Presets ────────────────────────────────────────────────────────── */
+
+.sm {
+  width: 48px;
+  height: 58px;
+}
+
+.md {
+  width: 120px;
+  height: 144px;
+}
+
+.lg {
+  width: 200px;
+  height: 240px;
+}
+
+.xl {
+  width: 280px;
+  height: 336px;
+}
+
+/* ── SVG Root Styles & Keyframe Animations ─────────────────────────────────── */
+
+.svgRoot {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+
+  /* Subtle breathing animation applied to body group */
+  :global(.avatar-body-group) {
+    transform-origin: 100px 220px;
+    animation: avatarBreathing 4s ease-in-out infinite;
+  }
+}
+
+@keyframes avatarBreathing {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.008) translateY(-1.5px);
+  }
+}

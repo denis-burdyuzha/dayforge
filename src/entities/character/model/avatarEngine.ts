@@ -439,13 +439,13 @@ export interface BodyArchetypeConfig {
  */
 export function getBodyArchetype(tier: 1 | 2 | 3 | 4 | 5 | 6 | 7): BodyArchetypeConfig {
   if (tier <= 2) {
-    // Larval Archetype (Tiers 1-2, L1-4 Spark/Hatchling): Cute rounded pup/cub belly, soft smooth arcs
+    // Larval Archetype (Tiers 1-2, L1-4 Spark/Hatchling): Compact pup with large head, short legs (32px torso)
     return {
       id: "larval",
       headScale: 1.25,
-      torsoHeight: 55,
-      forelimbLen: 35,
-      hindlimbLen: 40,
+      torsoHeight: 32,
+      forelimbLen: 24.5,
+      hindlimbLen: 26.0,
       baseSpineArch: -8,
       classBioWeight: 0.2,
       bellyConvexity: 1.0,
@@ -454,13 +454,13 @@ export function getBodyArchetype(tier: 1 | 2 | 3 | 4 | 5 | 6 | 7): BodyArchetype
     };
   }
   if (tier <= 4) {
-    // Juvenile Archetype (Tiers 3-4, L5-19 Young/Awakened): Lean growing creature
+    // Juvenile Archetype (Tiers 3-4, L5-19 Young/Awakened): Adolescent growing fox (41px torso)
     return {
       id: "juvenile",
       headScale: 1.05,
-      torsoHeight: 75,
-      forelimbLen: 48,
-      hindlimbLen: 52,
+      torsoHeight: 41,
+      forelimbLen: 32.0,
+      hindlimbLen: 34.0,
       baseSpineArch: -2,
       classBioWeight: 0.6,
       bellyConvexity: 0.65,
@@ -469,13 +469,13 @@ export function getBodyArchetype(tier: 1 | 2 | 3 | 4 | 5 | 6 | 7): BodyArchetype
     };
   }
   if (tier === 5) {
-    // Adult Archetype (Tier 5, L20-34 Signature): Athletic signature form with chitinous armor
+    // Adult Archetype (Tier 5, L20-34 Signature): FIXED ANCHOR — 50px torso, 39px forelimb, 41.5px hindlimb
     return {
       id: "adult",
       headScale: 0.92,
-      torsoHeight: 88,
-      forelimbLen: 58,
-      hindlimbLen: 62,
+      torsoHeight: 50,
+      forelimbLen: 39.0,
+      hindlimbLen: 41.5,
       baseSpineArch: 3,
       classBioWeight: 1.0,
       bellyConvexity: 0.2,
@@ -483,13 +483,13 @@ export function getBodyArchetype(tier: 1 | 2 | 3 | 4 | 5 | 6 | 7): BodyArchetype
       spineSegmentation: 0.7,
     };
   }
-  // Apex Archetype (Tiers 6-7, L35+ Ascended/Mythic): Monumental titan with flat abs, sharp faceted armor
+  // Apex Archetype (Tiers 6-7, L35+ Ascended/Mythic): Majestic titan fox (58px torso, 45.5px forelimb, 48.5px hindlimb)
   return {
     id: "apex",
-    headScale: 0.85,
-    torsoHeight: 98,
-    forelimbLen: 68,
-    hindlimbLen: 72,
+    headScale: 0.84,
+    torsoHeight: 58,
+    forelimbLen: 45.5,
+    hindlimbLen: 48.5,
     baseSpineArch: 8,
     classBioWeight: 1.2,
     bellyConvexity: 0.0,
@@ -700,33 +700,33 @@ const MILESTONE_LIMB_ANGLES: Record<
   explorer: {
     1: {
       armLU: -8,
-      armLBend: 12,
-      armRU: 4,
+      armLBend: 8,
+      armRU: 8,
       armRBend: -8,
-      legLU: 10,
-      legLBend: 10,
-      legRU: -10,
-      legRBend: -10,
+      legLU: -7,
+      legLBend: 7,
+      legRU: 7,
+      legRBend: -7,
     },
     5: {
-      armLU: -38,
-      armLBend: 30,
-      armRU: 10,
-      armRBend: -40,
-      legLU: 16,
-      legLBend: 18,
-      legRU: -14,
-      legRBend: -12,
+      armLU: -12,
+      armLBend: 12,
+      armRU: 12,
+      armRBend: -12,
+      legLU: -10,
+      legLBend: 10,
+      legRU: 10,
+      legRBend: -10,
     },
     7: {
-      armLU: -45,
-      armLBend: 40,
-      armRU: 20,
-      armRBend: -55,
-      legLU: 18,
-      legLBend: 22,
-      legRU: -14,
-      legRBend: -16,
+      armLU: -14,
+      armLBend: 14,
+      armRU: 14,
+      armRBend: -14,
+      legLU: -12,
+      legLBend: 12,
+      legRU: 12,
+      legRBend: -12,
     },
   },
   strategist: {

@@ -23,12 +23,11 @@ export function CreatureCollarCrest({
   const { crestSize } = social;
   const { classArchetype } = evolution;
 
-  // Don't render if Social is too low
-  if (crestSize < 0.08) return null;
+  // Don't render if Social is too low or if Explorer class (low-poly fox pivot)
+  if (crestSize < 0.08 || classArchetype === "explorer") return null;
 
   const fillPrimary = isSilhouette ? "#020617" : palette.primaryBody;
   const fillAccent = isSilhouette ? "#020617" : palette.accent;
-  const fillMembrane = isSilhouette ? "#020617" : "url(#creature-membrane-grad)";
   const strokeAccent = isSilhouette ? "none" : palette.accent;
 
   // Scale factor: 0..1 → crest grows from barely visible to full
@@ -99,43 +98,6 @@ export function CreatureCollarCrest({
               <circle cx={100 - 10 * s} cy={119 - s * 5} r={1.5 + s} fill={fillAccent} />
               <circle cx={100} cy={116 - s * 6} r={1.5 + s} fill={fillAccent} />
               <circle cx={100 + 10 * s} cy={119 - s * 5} r={1.5 + s} fill={fillAccent} />
-            </>
-          )}
-        </g>
-      )}
-
-      {/* Explorer: feathered antenna-fin collar */}
-      {classArchetype === "explorer" && (
-        <g>
-          {/* Left fin */}
-          <path
-            d={`M ${90 - s * 4} 124 C ${82 - s * 10} ${118 - s * 10}, ${78 - s * 8} ${114 - s * 6}, ${84 - s * 6} 122`}
-            fill={fillMembrane}
-            stroke={strokeAccent}
-            strokeWidth="0.8"
-          />
-          {/* Right fin */}
-          <path
-            d={`M ${110 + s * 4} 124 C ${118 + s * 10} ${118 - s * 10}, ${122 + s * 8} ${114 - s * 6}, ${116 + s * 6} 122`}
-            fill={fillMembrane}
-            stroke={strokeAccent}
-            strokeWidth="0.8"
-          />
-          {s > 0.5 && !isSilhouette && (
-            <>
-              {/* Feather detail lines */}
-              <path
-                d={`M ${86 - s * 5} 123 L ${80 - s * 8} ${116 - s * 8}`}
-                stroke={palette.accent}
-                strokeWidth="0.7"
-                opacity="0.6"
-              />
-              <path
-                d={`M ${114 + s * 5} 123 L ${120 + s * 8} ${116 - s * 8}`}
-                stroke={palette.accent}
-                strokeWidth="0.7"
-                opacity="0.6"
-              />
             </>
           )}
         </g>

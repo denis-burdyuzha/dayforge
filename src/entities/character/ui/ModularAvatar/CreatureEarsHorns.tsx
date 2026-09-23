@@ -7,20 +7,11 @@ export function CreatureEarsHorns({
   params: AvatarParams;
   isSilhouette?: boolean;
 }) {
-  const { palette, posture, evolution, creativity } = params;
+  const { palette, evolution, creativity } = params;
   const { classArchetype, tier } = evolution;
-  const earTilt = (1 - posture.earAlertness) * 12; // degrees droop if relaxed
-
-  // ── CREATIVITY → Asymmetry ──
-  // asymmetryIntensity 0..1 → how pronounced the asymmetry
-  // asymmetrySeed → deterministic direction/magnitude (from identity hash)
   const { asymmetryIntensity, asymmetrySeed } = creativity;
-  // Left horn/ear gets offset; right stays baseline (or inverse)
   const asymDir = asymmetrySeed > 0.5 ? 1 : -1;
-  const asymHeightOffset = asymmetryIntensity * 12 * asymDir; // ±12px max
-  const asymAngleOffset = asymmetryIntensity * 8 * asymDir; // ±8° max
-  const asymScaleLeft = 1 + asymmetryIntensity * 0.15 * (asymmetrySeed > 0.5 ? 1 : -0.5);
-  const asymScaleRight = 1 + asymmetryIntensity * 0.15 * (asymmetrySeed > 0.5 ? -0.5 : 1);
+  const asymHeightOffset = asymmetryIntensity * 12 * asymDir;
 
   const fillPrimary = isSilhouette ? "#020617" : "url(#creature-body-grad)";
   const fillSecondary = isSilhouette ? "#020617" : palette.secondaryBody;
@@ -41,55 +32,58 @@ export function CreatureEarsHorns({
 
   return (
     <g className="creature-ears-horns">
-      {/* ── Explorer: Sleek Articulated Radar Sensors / Ears ── */}
+      {/* ── Explorer: Low-Poly Faceted Compact Fox Ears (Literal Points) ── */}
       {classArchetype === "explorer" && (
-        <g transform={`translate(100, 80) scale(${hScale}) translate(-100, -80)`}>
-          {/* Left Sensor Ear — with creativity asymmetry */}
-          <g
-            transform={`rotate(${-18 - earTilt + asymAngleOffset} 72 82) scale(${asymScaleLeft}) translate(0, ${asymHeightOffset * 0.3})`}
-          >
-            {/* Outer Chitin Spine */}
-            <path
-              d="M 80 96 C 55 58, 38 40, 32 60 C 48 80, 68 94, 76 100 Z"
-              fill={fillPrimary}
-              stroke={accentStroke}
-              strokeWidth="1"
+        <g className="lowpoly-fox-ears" strokeLinejoin="round">
+          {/* Left Faceted Fox Ear (Literal Points: Base 86,75 & 96,75 | Tip 78,60) */}
+          <g>
+            {/* Outer Spine Facet */}
+            <polygon
+              points="86,75 78,60 91,69"
+              fill={isSilhouette ? "#020617" : "rgba(15, 23, 42, 0.55)"}
+              stroke={isSilhouette ? "none" : palette.accent}
+              strokeWidth="1.2"
             />
-            {/* Inner Translucent Radar Membrane */}
-            <path d="M 76 94 C 58 62, 44 48, 38 64 C 50 78, 66 90, 72 96 Z" fill={fillMembrane} />
-          </g>
-
-          {/* Right Sensor Ear */}
-          <g
-            transform={`rotate(${18 + earTilt - asymAngleOffset * 0.3} 128 82) scale(${asymScaleRight})`}
-          >
-            {/* Outer Chitin Spine */}
-            <path
-              d="M 120 96 C 145 58, 162 40, 168 60 C 152 80, 132 94, 124 100 Z"
-              fill={fillPrimary}
-              stroke={accentStroke}
-              strokeWidth="1"
+            {/* Inner Ear Membrane Facet */}
+            <polygon
+              points="96,75 78,60 91,69"
+              fill={isSilhouette ? "#020617" : "rgba(249, 115, 22, 0.22)"}
+              stroke={isSilhouette ? "none" : palette.accent}
+              strokeWidth="1.2"
             />
-            {/* Inner Translucent Radar Membrane */}
-            <path
-              d="M 124 94 C 142 62, 156 48, 162 64 C 150 78, 134 90, 128 96 Z"
-              fill={fillMembrane}
+            {/* Base Anchor Facet */}
+            <polygon
+              points="86,75 96,75 91,69"
+              fill={isSilhouette ? "#020617" : "rgba(30, 41, 59, 0.35)"}
+              stroke={isSilhouette ? "none" : palette.accent}
+              strokeWidth="1.2"
             />
           </g>
 
-          {/* Tier 5+ Additional Secondary Radar Fins */}
-          {tier >= 5 && (
-            <g opacity="0.8">
-              <path
-                d="M 70 85 C 50 55, 30 45, 24 55 C 38 70, 58 82, 66 88 Z"
-                fill={palette.accent}
-              />
-              <path
-                d="M 130 85 C 150 55, 170 45, 176 55 C 162 70, 142 82, 134 88 Z"
-                fill={palette.accent}
-              />
-            </g>
-          )}
+          {/* Right Faceted Fox Ear (Literal Points: Base 104,75 & 114,75 | Tip 122,60) */}
+          <g>
+            {/* Outer Spine Facet */}
+            <polygon
+              points="114,75 122,60 109,69"
+              fill={isSilhouette ? "#020617" : "rgba(15, 23, 42, 0.55)"}
+              stroke={isSilhouette ? "none" : palette.accent}
+              strokeWidth="1.2"
+            />
+            {/* Inner Ear Membrane Facet */}
+            <polygon
+              points="104,75 122,60 109,69"
+              fill={isSilhouette ? "#020617" : "rgba(249, 115, 22, 0.22)"}
+              stroke={isSilhouette ? "none" : palette.accent}
+              strokeWidth="1.2"
+            />
+            {/* Base Anchor Facet */}
+            <polygon
+              points="104,75 114,75 109,69"
+              fill={isSilhouette ? "#020617" : "rgba(30, 41, 59, 0.35)"}
+              stroke={isSilhouette ? "none" : palette.accent}
+              strokeWidth="1.2"
+            />
+          </g>
         </g>
       )}
 

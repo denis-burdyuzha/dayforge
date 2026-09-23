@@ -18,7 +18,6 @@ export function CreatureBody({
   // ── DISCRETE BODY ARCHETYPE (L1-4 Larval, L5-19 Juvenile, L20-34 Adult, L35+ Apex) ──
   const archetype = getBodyArchetype(tier);
   const bellyConvexity = body.bellyConvexity ?? archetype.bellyConvexity;
-  const chestAngularity = body.chestAngularity ?? archetype.chestAngularity;
   const spineSegmentation = body.spineSegmentation ?? archetype.spineSegmentation;
 
   // Class Biomechanics Multipliers for 2nd Class Signal
@@ -54,7 +53,6 @@ export function CreatureBody({
   const spineArchOffset = archetype.baseSpineArch + (-3 + confidence * 6);
 
   const primaryFill = isSilhouette ? "#020617" : "url(#creature-body-grad)";
-  const bellyFill = isSilhouette ? "#020617" : "url(#creature-belly-grad)";
 
   // Dynamic Y-coordinates driven by archetype.torsoHeight (55px Larval .. 98px Apex)
   const yTorsoTop = 160 - archetype.torsoHeight * 0.45;
@@ -65,14 +63,12 @@ export function CreatureBody({
   const bellyBulgeY = yTorsoBottom + bellyConvexity * 8;
   const bellyExtraX = bellyConvexity * 8;
 
-  // 2. Chest Angularity: Larval (0.0) = smooth Bezier arcs, Apex (1.0) = sharp faceted chitinous armor
-  const armorFacetOffset = chestAngularity * 5;
-
   return (
     <g className="creature-body">
       {/* Torso Structure — Nape & Deltoids + Pectorals */}
-      <g className="creature-torso">
-        {/* Main Body Column: Curved Bezier for Larval/Juvenile vs Faceted Chitinous for Adult/Apex */}
+      {/* ── Low-Poly Triangulated Torso & Faceted Chest Mesh ── */}
+      <g className="creature-torso" strokeLinejoin="round">
+        {/* Default Biological Torso path for other classes */}
         <path
           d={`M ${100 - shoulderWidth} ${yTorsoTop} 
              C ${100 - shoulderWidth - deltoidBulge} ${yTorsoTop + (yTorsoBottom - yTorsoTop) * 0.2 + spineArchOffset}, 
@@ -91,49 +87,6 @@ export function CreatureBody({
           stroke={isSilhouette ? "none" : palette.secondaryBody}
           strokeWidth={bodyStrokeWidth}
         />
-
-        {/* Soft Rim-Light Overlay on Left Shoulder/Flank */}
-        {!isSilhouette && (
-          <path
-            d={`M ${100 - shoulderWidth} ${yTorsoTop} 
-               C ${100 - shoulderWidth - deltoidBulge} ${yTorsoTop + (yTorsoBottom - yTorsoTop) * 0.2 + spineArchOffset}, 
-                 ${100 - chestWidth - 6 - chestBulge - bellyExtraX} ${yTorsoTop + (yTorsoBottom - yTorsoTop) * (0.65 + bellyConvexity * 0.1)}, 
-                 ${100 - chestWidth + 2 - bellyExtraX * 0.5} ${yTorsoBottom}`}
-            fill="none"
-            stroke="url(#creature-rim-light-grad)"
-            strokeWidth="1.2"
-            filter="url(#avatar-rim-glow)"
-          />
-        )}
-
-        {/* Ventral Chest Armor Plate: Teardrop Arc (Larval) vs Faceted Chevron Shield (Apex) */}
-        {chestAngularity < 0.5 ? (
-          /* Smooth Oval / Teardrop Belly Plate */
-          <path
-            d={`M ${100 - shoulderWidth * 0.55} ${yTorsoTop + 7} 
-               C ${100 - chestWidth * 0.6 - chestBulge * 0.5} ${yTorsoTop + 30}, ${100 - chestWidth * 0.4} ${yTorsoBottom - 15}, 100 ${yTorsoBottom - 5 + bellyConvexity * 5} 
-               C ${100 + chestWidth * 0.4} ${yTorsoBottom - 15}, ${100 + chestWidth * 0.6 + chestBulge * 0.5} ${yTorsoTop + 30}, ${100 + shoulderWidth * 0.55} ${yTorsoTop + 7} 
-               C 100 ${yTorsoTop + 3}, 100 ${yTorsoTop + 3}, ${100 - shoulderWidth * 0.55} ${yTorsoTop + 7} Z`}
-            fill={bellyFill}
-            opacity="0.9"
-          />
-        ) : (
-          /* Faceted Angular Chitinous Shield Plate (Adult & Apex) */
-          <path
-            d={`M 100 ${yTorsoTop + 4} 
-               L ${100 - shoulderWidth * 0.55} ${yTorsoTop + 10} 
-               L ${100 - chestWidth * 0.55 - armorFacetOffset} ${yTorsoTop + (yTorsoBottom - yTorsoTop) * 0.45} 
-               L ${100 - chestWidth * 0.3} ${yTorsoBottom - 10} 
-               L 100 ${yTorsoBottom - 3} 
-               L ${100 + chestWidth * 0.3} ${yTorsoBottom - 10} 
-               L ${100 + chestWidth * 0.55 + armorFacetOffset} ${yTorsoTop + (yTorsoBottom - yTorsoTop) * 0.45} 
-               L ${100 + shoulderWidth * 0.55} ${yTorsoTop + 10} Z`}
-            fill={bellyFill}
-            stroke={isSilhouette ? "none" : palette.secondaryBody}
-            strokeWidth="0.8"
-            opacity="0.95"
-          />
-        )}
 
         {/* Feature 2: Single Luminescent Chest Core Ember */}
         {!isSilhouette && (
@@ -160,7 +113,7 @@ export function CreatureBody({
           </g>
         )}
 
-        {/* Pectoral & Scapular Contour Folds (CONTINUOUS from Strength bulk 0 to 1) */}
+        {/* Pectoral & Scapular Contour Folds */}
         {!isSilhouette && (
           <g opacity={pectoralOpacity}>
             <path
@@ -178,7 +131,7 @@ export function CreatureBody({
           </g>
         )}
 
-        {/* 3. Spine / Abdominal Segmentation Lines (Chitinous Plates on Adult & Apex) */}
+        {/* 3. Spine / Abdominal Segmentation Lines */}
         {!isSilhouette && spineSegmentation > 0.1 && (
           <g opacity={spineSegmentation * 0.75}>
             {/* Horizontal Segmented Chitin Ribs */}

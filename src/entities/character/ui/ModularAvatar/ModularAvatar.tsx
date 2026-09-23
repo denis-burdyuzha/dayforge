@@ -6,6 +6,7 @@ import { CreatureCollarCrest } from "./CreatureCollarCrest";
 import { CreatureFace } from "./CreatureFace";
 import { CreatureHead } from "./CreatureHead";
 import { CreatureMarkings } from "./CreatureMarkings";
+import { FoxAvatar } from "./creatures/fox";
 import { CreatureShadow } from "./CreatureShadow";
 import { CreatureSkillImprints } from "./CreatureSkillImprints";
 import { CreatureTail } from "./CreatureTail";
@@ -42,6 +43,15 @@ export function ModularAvatar({
     typeof size === "number"
       ? { width: `${size}px`, height: `${Math.round(size * 1.2)}px` }
       : undefined;
+
+  // ── Class Renderer Dispatch: Explorer → Isolated Fox Avatar ──
+  if (evolution.classArchetype === "explorer") {
+    return (
+      <div className={containerClasses} style={customStyle}>
+        <FoxAvatar params={params} isSilhouette={isSilhouette} />
+      </div>
+    );
+  }
 
   // Posture tilt angle in degrees
   const tiltAngle = posture.tiltAngle;
@@ -160,7 +170,7 @@ export function ModularAvatar({
           {!isSilhouette && (
             <>
               {/* ── Layer 7: Face & Eyes ── */}
-              <CreatureFace params={params} />
+              <CreatureFace params={params} isSilhouette={isSilhouette} />
 
               {/* ── Layer 8: Bioluminescent Markings ── */}
               <CreatureMarkings params={params} />

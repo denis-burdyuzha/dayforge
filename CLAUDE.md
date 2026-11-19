@@ -63,11 +63,10 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
 
 ## Git
 
-- Текущая ветка: `feature/lowpoly-avatar-style` (1 коммит поверх локального `main`).
-- Локальный `main` = 980dbde (20.09.2026); `origin/main` = 8510752 (11.08.2026) — **всё после 11.08 не запушено**.
-- Почти вся low-poly asset-driven работа (24.09–07.10.2026) **не закоммичена** (working tree). Не делать
-  `git checkout .`/`reset`/`clean` без явного согласия владельца.
-- `.ai-import/` не трогать и не коммитить. `id_df`, `.env.local` — секреты, не коммитить.
+- Текущая ветка: `feature/lowpoly-avatar-style` (отслеживает `origin/feature/lowpoly-avatar-style`), в `main` не коммитить.
+- `main` = 980dbde (20.09.2026), запушен. Работа 24.09–07.10.2026 сохранена WIP-коммитом 368942d (19.11.2026).
+- Не делать `git checkout .`/`reset`/`clean`/force-push без явного согласия владельца.
+- `.ai-import/` в .gitignore, не коммитить. `id_df`, `.env.local` — секреты (в .gitignore), не коммитить.
 
 ## Текущий фокус
 
@@ -81,8 +80,8 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
    писать прямо: «не проверено визуально».
 2. Одна правка за раз, затем проверка. Не складывать несколько исправлений в одну итерацию.
 3. При баге сначала найти и назвать корневую причину, потом чинить. Не лечить симптом.
-4. После изменений: `npx tsc --noEmit` и `npm run build`
-   (фактически: `npx tsc --noEmit -p tsconfig.app.json` — корневой `tsc --noEmit` ничего не проверяет).
+4. После изменений: `npx tsc --noEmit -p tsconfig.app.json` и `npm run build`
+   (НЕ `npx tsc --noEmit` в корне — он проверяет 0 файлов).
 5. Не делать скриншотов для владельца — тестировать самому и писать текстовый отчёт.
 6. Коммиты в формате commitlint (conventional commits): `feat(avatar): …`, `fix(db): …`, `docs: …`.
 7. Не предлагать заново отвергнутые подходы из `docs/ai-context/decisions.md`

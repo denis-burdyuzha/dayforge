@@ -1,3 +1,5 @@
+АРХИВ (до перехода на Claude). Актуальное — docs/ai-context/.
+
 # Dayforge — Project Brief
 
 ## Продукт

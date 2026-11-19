@@ -1,37 +1,65 @@
 import type { AvatarParams } from "../../../../model/avatarTypes";
+import { FOX_L1_POLYGONS } from "../../assets/FoxL1AssetData";
 
 /**
- * FoxRimLight — Renders the precise background outer silhouette perimeter contour
- * with stroke="#38bdf8", strokeWidth="1.5", and filter="url(#avatar-glow-filter)".
+ * FoxRimLight — Outer silhouette perimeter rim-light contour.
  *
- * Anatomically matched to the redesigned Fox mesh topology:
- *   - Curled: Smooth teardrop sleeping pup ball with chin resting on front paw.
- *   - Quadruped: Alert athletic fox standing on 4 grounded 3D legs, raised neck, forward-facing funnel ears.
- *   - Bipedal: Vertical Kitsune spirit with slender waist, delicate arms, and 5 sweeping S-curved tails.
+ * ── Curled (Larval / foxL1.svg asset) ──────────────────────────────────────
+ * Instead of hardcoding an approximated polygon path, we duplicate ALL polygons
+ * from the actual asset with fill="none" and stroke="#38bdf8".
+ *
+ * Because we apply the SAME transform as FoxAvatar's asset group
+ * (translate(tx, ty) scale(assetScale)), the stroke outlines land on top of
+ * every polygon edge, forming a perfect per-polygon glow halo that follows
+ * the real low-poly silhouette exactly — no approximation, no misalignment.
+ *
+ * The outer edges glow brightly because there is no adjacent polygon to cover
+ * them; inner shared edges cancel out perceptually (both sides glow equally).
+ *
+ * ── Quadruped / Bipedal ──────────────────────────────────────────────────────
+ * Legacy hand-tuned paths for procedural tiers — untouched.
  */
 export function FoxRimLight({
   poseMode = "bipedal",
+  assetTransform,
 }: {
   params: AvatarParams;
   poseMode?: "curled" | "quadruped" | "bipedal";
+  /**
+   * For curled pose: the CSS/SVG transform applied to the foxL1 asset group
+   * so that the rim-light overlay is perfectly registered with the mesh.
+   * Example: "translate(-14.5, -72.5) scale(0.50)"
+   */
+  assetTransform?: string;
 }) {
-  // ── 1. CURLED SLEEPING PUP SILHOUETTE ──
+  // ── 1. CURLED SLEEPING PUP SILHOUETTE (foxL1.svg asset) ─────────────────
   if (poseMode === "curled") {
     return (
       <g
         className="fox-outer-rim-light-curled"
+        transform={assetTransform}
         fill="none"
         stroke="#38bdf8"
-        strokeWidth="1.5"
+        strokeWidth="3"          // 3px in asset-space → ~1.5px in viewBox at scale 0.50
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"  // keeps 1.5px apparent width regardless of scale
         filter="url(#avatar-glow-filter)"
+        shapeRendering="geometricPrecision"
+        opacity="0.85"
       >
-        {/* Outer perimeter outline of circular sleeping pup */}
-        <path d="M 46,72 L 58,62 L 68,78 L 78,82 L 96,80 L 122,82 L 146,92 L 164,115 L 170,138 L 162,158 L 142,176 L 112,184 L 78,182 L 52,172 L 36,154 L 32,135 L 42,125 L 56,128 L 60,118 L 54,106 Z" />
+        {FOX_L1_POLYGONS.map((poly) => (
+          <polygon
+            key={`rim-${poly.id}`}
+            points={poly.points}
+            shapeRendering="geometricPrecision"
+          />
+        ))}
       </g>
     );
   }
 
-  // ── 2. QUADRUPED WILD FOX SILHOUETTE ──
+  // ── 2. QUADRUPED WILD FOX SILHOUETTE ────────────────────────────────────
   if (poseMode === "quadruped") {
     return (
       <g
@@ -47,7 +75,7 @@ export function FoxRimLight({
     );
   }
 
-  // ── 3. BIPEDAL KITSUNE SPIRIT SILHOUETTE ──
+  // ── 3. BIPEDAL KITSUNE SPIRIT SILHOUETTE ────────────────────────────────
   return (
     <g
       className="fox-outer-rim-light-bipedal"

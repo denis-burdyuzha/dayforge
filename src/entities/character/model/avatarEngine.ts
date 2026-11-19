@@ -236,6 +236,7 @@ export function computeAvatarParams(
   const tier = getEvolutionTier(character.level);
   const evolution: AvatarEvolutionStage = {
     tier,
+    level: character.level,
     classArchetype: classId,
   };
 
@@ -362,6 +363,48 @@ export function computeAvatarParams(
   // 10. Limb Angles Resolution
   const limbAngles = resolveLimbAngles(tier, classId, bulk, postureConfidence, focusLevel);
 
+  // ── 11. Fox-specific attribute visual channels (Explorer class only) ───────
+  const foxAttributes: NonNullable<import("./avatarTypes").AvatarParams["foxAttributes"]> = {
+    // Strength: shoulder spikes (threshold steps at 4/8/12/16), core highlight, core scale
+    strength: {
+      spikeCount: strengthVal >= 16 ? 4 : strengthVal >= 12 ? 3 : strengthVal >= 8 ? 2 : strengthVal >= 4 ? 1 : 0,
+      coreHighlightOpacity: Math.min(0.85, normalizeAttr(strengthVal, 1, 18) * 1.1),
+      coreScale: 1.0 + normalizeAttr(strengthVal, 1, 18) * 0.08, // 1.0..1.08
+    },
+    // Intelligence: 1..16 affected head facets (depth fixed to 1)
+    intelligence: {
+      subdivisionDepth: 1,
+      facetCount: Math.round(1 + normalizeAttr(intelligenceVal, 1, 18) * 15), // 1 at int=1, 8 at int=9, 16 at int=18
+      headWhitenMix: normalizeAttr(intelligenceVal, 1, 18),
+    },
+    // Focus: depth of field (body dims, head untouched), vignette (+17% vs 0.35), eye squeeze (secondary), particle convergence
+    focus: {
+      eyeSqueezeY: 1.0 - normalizeAttr(focusVal, 1, 18) * 0.12, // 1.0..0.88
+      depthOfField: normalizeAttr(focusVal, 1, 18),             // 0..1 → body saturate 100%→45%, brightness 100%→88%
+      vignetteOpacity: normalizeAttr(focusVal, 1, 18) * 0.41,   // 0..0.41
+      particleOrbitRadius: focusVal >= 2 ? 50 + normalizeAttr(focusVal, 1, 18) * 40 : -1, // @deprecated
+      particleConvergence: normalizeAttr(focusVal, 1, 18), // 0..1 → ring converges to head center
+    },
+    // Endurance: cold ash patina, scars on elongated torso facets, crimson limb veins (count grows, speed constant)
+    endurance: {
+      patinaStrength: normalizeAttr(enduranceVal, 1, 18) * 0.7,  // 0..0.7 desaturation
+      scratchCount: Math.round(1 + normalizeAttr(enduranceVal, 1, 18) * 5),  // 1 at end=1 → 6 at end=18
+      veinCount: Math.round(1 + normalizeAttr(enduranceVal, 1, 18) * 4),    // 1 at end=1 → max 5 at end=18
+    },
+    // Discipline: particle target shape (Fox = circle), rim stability, pose symmetry
+    discipline: {
+      particleTargetShape: disciplineVal >= 3 ? "circle" : "none",
+      rimJitterReduction: normalizeAttr(disciplineVal, 1, 18),    // 0..1
+      poseSymmetryEmphasis: normalizeAttr(disciplineVal, 1, 18),  // 0..1
+    },
+    // Social: collar subdivision, bond marks, warm hue shift
+    social: {
+      collarSubdivisionDepth: socialVal >= 12 ? 2 : socialVal >= 6 ? 1 : 0,
+      bondMarkCount: socialVal >= 16 ? 4 : socialVal >= 12 ? 3 : socialVal >= 8 ? 2 : socialVal >= 4 ? 1 : 0,
+      collarWarmShift: normalizeAttr(socialVal, 1, 18) * 0.8,    // 0..0.8
+    },
+  };
+
   return {
     identity,
     palette,
@@ -415,6 +458,7 @@ export function computeAvatarParams(
       asymmetryIntensity: creativityNormalized,
       asymmetrySeed: identity.patternSeed,
     },
+    foxAttributes,
   };
 }
 

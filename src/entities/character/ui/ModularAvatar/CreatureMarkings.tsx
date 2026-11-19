@@ -1,6 +1,28 @@
 import type { AvatarParams } from "../../model/avatarTypes";
 
-export function CreatureMarkings({ params }: { params: AvatarParams }) {
+interface L1MarkingsOffset {
+  /** Override centre-X for all marking coordinates (Larval tier, asset-bound) */
+  cx: number;
+  /** Override centre-Y for markings (Larval tier — head/collar zone of foxL1 mesh) */
+  cy: number;
+}
+
+/**
+ * CreatureMarkings — Bioluminescent anatomical marking patterns driven by Intelligence / Creativity.
+ *
+ * For non-Larval tiers (l1Offset is undefined) coordinates are the legacy hardcoded positions
+ * in viewBox (0 0 200 240) that match the procedural mesh.
+ *
+ * For Larval tier (l1Offset provided) coordinates are shifted to match foxL1.svg mesh geometry
+ * as projected into viewBox space via FoxAvatar's scale(0.42) transform.
+ */
+export function CreatureMarkings({
+  params,
+  l1Offset,
+}: {
+  params: AvatarParams;
+  l1Offset?: L1MarkingsOffset;
+}) {
   const { palette, markings, evolution, creativity } = params;
   const { patternType, complexity } = markings;
   const { tier } = evolution;
@@ -18,26 +40,38 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
   const asymDir = asymmetrySeed > 0.5 ? 1 : -1;
   const asymShift = asymmetryIntensity * 6 * asymDir; // ±6px horizontal shift
 
+  // ── Coordinate anchors ──
+  // For Larval tier: use l1Offset (asset-bound coords in viewBox space).
+  // For other tiers: legacy hardcoded coords referencing procedural mesh.
+  const baseCx = l1Offset ? l1Offset.cx : 100;
+  // Head marking Y for runes/dots/celestial — on forehead region
+  const headMarkY0 = l1Offset ? l1Offset.cy - 8 : 82;
+  const headMarkY1 = l1Offset ? l1Offset.cy - 5 : 85;
+  const headMarkY2 = l1Offset ? l1Offset.cy - 2 : 88;
+  // Spinal line Y range (only shown for tier >= 4)
+  const spineY0 = l1Offset ? l1Offset.cy + 20 : 130;
+  const spineY1 = l1Offset ? l1Offset.cy + 40 : 178;
+
   return (
     <g className="creature-markings" filter="url(#avatar-glow-filter)">
       {/* Cranial Neural Marking Lines (Intelligence: Integrated into biology) */}
       {patternType === "dots" && (
         <g opacity={baseOpacity}>
           <circle
-            cx={100 + asymShift * 0.3}
-            cy="82"
+            cx={baseCx + asymShift * 0.3}
+            cy={headMarkY0}
             r={1.2 + complexity * 0.8}
             fill={palette.markingColor}
           />
           <circle
-            cx={94 + asymShift * 0.5}
-            cy="85"
+            cx={baseCx - 6 + asymShift * 0.5}
+            cy={headMarkY1}
             r={0.8 + complexity * 0.6}
             fill={palette.markingColor}
           />
           <circle
-            cx={106 - asymShift * 0.2}
-            cy="85"
+            cx={baseCx + 6 - asymShift * 0.2}
+            cy={headMarkY1}
             r={0.8 + complexity * 0.6}
             fill={palette.markingColor}
           />
@@ -45,14 +79,14 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
           {complexity > 0.4 && (
             <>
               <circle
-                cx={90 + asymShift * 0.4}
-                cy="88"
+                cx={baseCx - 10 + asymShift * 0.4}
+                cy={headMarkY2}
                 r={0.6 + complexity * 0.4}
                 fill={palette.markingColor}
               />
               <circle
-                cx={110 - asymShift * 0.3}
-                cy="88"
+                cx={baseCx + 10 - asymShift * 0.3}
+                cy={headMarkY2}
                 r={0.6 + complexity * 0.4}
                 fill={palette.markingColor}
               />
@@ -61,14 +95,14 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
           {complexity > 0.7 && (
             <>
               <circle
-                cx={86 + asymShift * 0.5}
-                cy="82"
+                cx={baseCx - 14 + asymShift * 0.5}
+                cy={headMarkY0}
                 r={0.5 + complexity * 0.3}
                 fill={palette.markingColor}
               />
               <circle
-                cx={114 - asymShift * 0.4}
-                cy="82"
+                cx={baseCx + 14 - asymShift * 0.4}
+                cy={headMarkY0}
                 r={0.5 + complexity * 0.3}
                 fill={palette.markingColor}
               />
@@ -80,7 +114,7 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
       {patternType === "runes" && (
         <g opacity={baseOpacity}>
           <path
-            d={`M ${100 + asymShift * 0.2} 76 L ${100 + asymShift * 0.2} 86 M ${94 + asymShift * 0.4} 82 L ${106 - asymShift * 0.3} 82`}
+            d={`M ${baseCx + asymShift * 0.2} ${headMarkY0 - 6} L ${baseCx + asymShift * 0.2} ${headMarkY1} M ${baseCx - 6 + asymShift * 0.4} ${headMarkY0} L ${baseCx + 6 - asymShift * 0.3} ${headMarkY0}`}
             stroke={palette.markingColor}
             strokeWidth={baseStrokeWidth}
             strokeLinecap="round"
@@ -88,7 +122,7 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
           {/* Extra rune strokes at higher intelligence */}
           {complexity > 0.5 && (
             <path
-              d={`M ${92 + asymShift * 0.5} 78 L ${96 + asymShift * 0.3} 86 M ${108 - asymShift * 0.4} 78 L ${104 - asymShift * 0.2} 86`}
+              d={`M ${baseCx - 8 + asymShift * 0.5} ${headMarkY0 - 4} L ${baseCx - 4 + asymShift * 0.3} ${headMarkY1} M ${baseCx + 8 - asymShift * 0.4} ${headMarkY0 - 4} L ${baseCx + 4 - asymShift * 0.2} ${headMarkY1}`}
               stroke={palette.markingColor}
               strokeWidth={baseStrokeWidth * 0.7}
               strokeLinecap="round"
@@ -101,21 +135,21 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
       {patternType === "geometric" && (
         <g opacity={baseOpacity}>
           <path
-            d={`M ${100 + asymShift * 0.15} 74 L ${94 + asymShift * 0.3} 82 L ${100 + asymShift * 0.15} 86 L ${106 - asymShift * 0.2} 82 Z`}
+            d={`M ${baseCx + asymShift * 0.15} ${headMarkY0 - 8} L ${baseCx - 6 + asymShift * 0.3} ${headMarkY0} L ${baseCx + asymShift * 0.15} ${headMarkY0 + 4} L ${baseCx + 6 - asymShift * 0.2} ${headMarkY0} Z`}
             fill="none"
             stroke={palette.markingColor}
             strokeWidth={baseStrokeWidth}
           />
           <circle
-            cx={100 + asymShift * 0.15}
-            cy="80"
+            cx={baseCx + asymShift * 0.15}
+            cy={headMarkY0 - 2}
             r={1 + complexity * 0.8}
             fill={palette.accent}
           />
           {/* Outer geometric frame at high intelligence */}
           {complexity > 0.6 && (
             <path
-              d={`M ${100 + asymShift * 0.1} 71 L ${91 + asymShift * 0.35} 80 L ${100 + asymShift * 0.1} 89 L ${109 - asymShift * 0.25} 80 Z`}
+              d={`M ${baseCx + asymShift * 0.1} ${headMarkY0 - 11} L ${baseCx - 9 + asymShift * 0.35} ${headMarkY0 - 2} L ${baseCx + asymShift * 0.1} ${headMarkY0 + 7} L ${baseCx + 9 - asymShift * 0.25} ${headMarkY0 - 2} Z`}
               fill="none"
               stroke={palette.markingColor}
               strokeWidth={baseStrokeWidth * 0.6}
@@ -128,12 +162,12 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
       {patternType === "celestial" && (
         <g opacity={0.7 + complexity * 0.25}>
           <path
-            d={`M ${100 + asymShift * 0.1} 72 L ${93 + asymShift * 0.3} 81 L ${100 + asymShift * 0.1} 84 L ${107 - asymShift * 0.2} 81 Z`}
+            d={`M ${baseCx + asymShift * 0.1} ${headMarkY0 - 10} L ${baseCx - 7 + asymShift * 0.3} ${headMarkY0 - 1} L ${baseCx + asymShift * 0.1} ${headMarkY0 + 2} L ${baseCx + 7 - asymShift * 0.2} ${headMarkY0 - 1} Z`}
             fill={palette.accent}
             opacity={0.6 + complexity * 0.3}
           />
           <path
-            d={`M ${88 + asymShift * 0.4} 81 L ${112 - asymShift * 0.3} 81 M ${100 + asymShift * 0.1} 70 L ${100 + asymShift * 0.1} 88`}
+            d={`M ${baseCx - 12 + asymShift * 0.4} ${headMarkY0 - 1} L ${baseCx + 12 - asymShift * 0.3} ${headMarkY0 - 1} M ${baseCx + asymShift * 0.1} ${headMarkY0 - 12} L ${baseCx + asymShift * 0.1} ${headMarkY0 + 6}`}
             stroke={palette.markingColor}
             strokeWidth={baseStrokeWidth}
             strokeLinecap="round"
@@ -142,19 +176,19 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
           {complexity > 0.5 && (
             <g opacity={complexity * 0.6}>
               <path
-                d={`M ${84 + asymShift * 0.5} 76 L ${88 + asymShift * 0.4} 80`}
+                d={`M ${baseCx - 16 + asymShift * 0.5} ${headMarkY0 - 6} L ${baseCx - 12 + asymShift * 0.4} ${headMarkY0 - 2}`}
                 stroke={palette.markingColor}
                 strokeWidth="0.8"
                 strokeLinecap="round"
               />
               <path
-                d={`M ${116 - asymShift * 0.4} 76 L ${112 - asymShift * 0.3} 80`}
+                d={`M ${baseCx + 16 - asymShift * 0.4} ${headMarkY0 - 6} L ${baseCx + 12 - asymShift * 0.3} ${headMarkY0 - 2}`}
                 stroke={palette.markingColor}
                 strokeWidth="0.8"
                 strokeLinecap="round"
               />
               <path
-                d={`M ${100 + asymShift * 0.1} 68 L ${100 + asymShift * 0.1} 72`}
+                d={`M ${baseCx + asymShift * 0.1} ${headMarkY0 - 14} L ${baseCx + asymShift * 0.1} ${headMarkY0 - 10}`}
                 stroke={palette.markingColor}
                 strokeWidth="0.8"
                 strokeLinecap="round"
@@ -167,7 +201,7 @@ export function CreatureMarkings({ params }: { params: AvatarParams }) {
       {/* Dorsal Bioluminescent Spinal Line for Mature Organism */}
       {tier >= 4 && (
         <path
-          d={`M ${100 + asymShift * 0.1} 130 L ${100 + asymShift * 0.1} 178`}
+          d={`M ${baseCx + asymShift * 0.1} ${spineY0} L ${baseCx + asymShift * 0.1} ${spineY1}`}
           stroke={palette.markingColor}
           strokeWidth={baseStrokeWidth}
           strokeDasharray="4 6"

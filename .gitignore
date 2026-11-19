@@ -27,3 +27,6 @@ id_df.pub
 *.njsproj
 *.sln
 *.sw?
+
+# AI agent import (local only)
+.ai-import/

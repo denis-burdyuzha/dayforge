@@ -10,10 +10,13 @@ import type { AvatarParams } from "../../../../model/avatarTypes";
 export function FoxFace({
   isSilhouette = false,
   poseMode = "bipedal",
+  eyeSqueezeY = 1.0,
 }: {
   params: AvatarParams;
   isSilhouette?: boolean;
   poseMode?: "curled" | "quadruped" | "bipedal";
+  /** Focus attribute: vertical scale of eye polygon (0.88..1.0). Lower = squinted. */
+  eyeSqueezeY?: number;
 }) {
   const wireStroke = isSilhouette ? "none" : "rgba(56, 189, 248, 0.25)";
   const eyeLensFill = isSilhouette ? "#020617" : "url(#fox-eye-amber-grad)";
@@ -107,45 +110,55 @@ export function FoxFace({
   }
 
   // ── 3. BIPEDAL FRONTAL EYES ──
+  // eyeSqueezeY from Focus attribute: 1.0 (normal) → 0.88 (squinted analytical)
+  const leftEyeCY = 56;
+  const rightEyeCY = 56;
+
   return (
     <g className="fox-face-bipedal-eyes">
-      {/* Left Slanted Eye: Orbital Socket Plane */}
-      <polygon
-        points="82,56 90,49 100,56 92,63"
-        fill="#080d17"
-        stroke={wireStroke}
-        strokeWidth="0.4"
-      />
-      {/* Left Slanted Eye: Amber Lens */}
-      <polygon
-        points="86,56 90,51 96,56 92,61"
-        fill={eyeLensFill}
-        stroke={wireStroke}
-        strokeWidth="0.4"
-      />
-      <polygon points="89,55 91,52 94,56 91,59" fill="#ffea70" opacity="0.65" />
-      {/* Left Pupil Slit & Specular Dot */}
-      <polygon points="91,53 92,58 90,58" fill="#120800" />
-      <circle cx="89" cy="54.5" r="1.2" fill="#ffffff" />
+      {/* Left Eye group — scaleY applied around eye center (91, leftEyeCY) */}
+      <g transform={`translate(91,${leftEyeCY}) scale(1,${eyeSqueezeY}) translate(-91,-${leftEyeCY})`}>
+        {/* Left Slanted Eye: Orbital Socket Plane */}
+        <polygon
+          points="82,56 90,49 100,56 92,63"
+          fill="#080d17"
+          stroke={wireStroke}
+          strokeWidth="0.4"
+        />
+        {/* Left Slanted Eye: Amber Lens */}
+        <polygon
+          points="86,56 90,51 96,56 92,61"
+          fill={eyeLensFill}
+          stroke={wireStroke}
+          strokeWidth="0.4"
+        />
+        <polygon points="89,55 91,52 94,56 91,59" fill="#ffea70" opacity="0.65" />
+        {/* Left Pupil Slit & Specular Dot */}
+        <polygon points="91,53 92,58 90,58" fill="#120800" />
+        <circle cx="89" cy="54.5" r="1.2" fill="#ffffff" />
+      </g>
 
-      {/* Right Slanted Eye: Orbital Socket Plane */}
-      <polygon
-        points="100,56 110,49 118,56 110,63"
-        fill="#080d17"
-        stroke={wireStroke}
-        strokeWidth="0.4"
-      />
-      {/* Right Slanted Eye: Amber Lens */}
-      <polygon
-        points="104,56 110,51 114,56 110,61"
-        fill={eyeLensFill}
-        stroke={wireStroke}
-        strokeWidth="0.4"
-      />
-      <polygon points="106,55 109,52 111,56 109,59" fill="#ffea70" opacity="0.65" />
-      {/* Right Pupil Slit & Specular Dot */}
-      <polygon points="109,53 110,58 108,58" fill="#120800" />
-      <circle cx="111" cy="54.5" r="1.2" fill="#ffffff" />
+      {/* Right Eye group — scaleY applied around eye center (110, rightEyeCY) */}
+      <g transform={`translate(110,${rightEyeCY}) scale(1,${eyeSqueezeY}) translate(-110,-${rightEyeCY})`}>
+        {/* Right Slanted Eye: Orbital Socket Plane */}
+        <polygon
+          points="100,56 110,49 118,56 110,63"
+          fill="#080d17"
+          stroke={wireStroke}
+          strokeWidth="0.4"
+        />
+        {/* Right Slanted Eye: Amber Lens */}
+        <polygon
+          points="104,56 110,51 114,56 110,61"
+          fill={eyeLensFill}
+          stroke={wireStroke}
+          strokeWidth="0.4"
+        />
+        <polygon points="106,55 109,52 111,56 109,59" fill="#ffea70" opacity="0.65" />
+        {/* Right Pupil Slit & Specular Dot */}
+        <polygon points="109,53 110,58 108,58" fill="#120800" />
+        <circle cx="111" cy="54.5" r="1.2" fill="#ffffff" />
+      </g>
 
       {/* Nose Tip */}
       <polygon points="97,78 103,78 100,80" fill={noseFill} stroke={wireStroke} strokeWidth="0.4" />

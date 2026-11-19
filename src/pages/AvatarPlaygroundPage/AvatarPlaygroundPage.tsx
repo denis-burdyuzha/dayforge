@@ -23,18 +23,20 @@ export function AvatarPlaygroundPage() {
   const initialLevel = Number(searchParams?.get("level")) || 1;
   const initialClass = (searchParams?.get("class") as CharacterClassId) || "warrior";
   const initialStr = Number(searchParams?.get("strength")) || 1;
+  const bigView = searchParams?.get("big") === "1";
   const initialSil = searchParams?.get("silhouette") === "true";
 
   const [level, setLevel] = useState<number>(initialLevel);
   const [selectedClass, setSelectedClass] = useState<CharacterClassId>(initialClass);
 
   const [strength, setStrength] = useState<number>(initialStr);
-  const [endurance, setEndurance] = useState<number>(1);
-  const [discipline, setDiscipline] = useState<number>(1);
-  const [intelligence, setIntelligence] = useState<number>(1);
-  const [focus, setFocus] = useState<number>(1);
-  const [social, setSocial] = useState<number>(1);
-  const [creativity, setCreativity] = useState<number>(1);
+  const initialAttr = (key: string, fallback = 1) => Number(searchParams?.get(key)) || fallback;
+  const [endurance, setEndurance] = useState<number>(initialAttr("endurance"));
+  const [discipline, setDiscipline] = useState<number>(initialAttr("discipline"));
+  const [intelligence, setIntelligence] = useState<number>(initialAttr("intelligence"));
+  const [focus, setFocus] = useState<number>(initialAttr("focus"));
+  const [social, setSocial] = useState<number>(initialAttr("social"));
+  const [creativity, setCreativity] = useState<number>(initialAttr("creativity"));
 
   const [activePresetSkillIds, setActivePresetSkillIds] = useState<string[]>(["prog"]);
   const [customSkillName, setCustomSkillName] = useState<string>("");
@@ -392,8 +394,11 @@ export function AvatarPlaygroundPage() {
 
         {/* Right Side: Avatar Render & Params Inspector */}
         <div className={styles.renderPanel}>
-          <div className={styles.avatarWrapper}>
-            <ModularAvatar params={avatarParams} size={300} silhouetteOnly={silhouetteOnly} />
+          <div
+            className={styles.avatarWrapper}
+            style={bigView ? { position: "fixed", inset: 0, zIndex: 999, borderRadius: 0 } : undefined}
+          >
+            <ModularAvatar params={avatarParams} size={bigView ? 820 : 300} silhouetteOnly={silhouetteOnly} />
           </div>
 
           <div className={styles.debugInfo}>

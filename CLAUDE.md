@@ -40,7 +40,8 @@ scripts/annotateFoxZones.mjs          запекает id групп из SVG в
 
 - `ModularAvatar.tsx` — диспетчер по классу (сейчас только `explorer` → `creatures/fox/FoxAvatar.tsx`;
   остальные классы рендерятся СТАРЫМ органическим рендером `Creature*.tsx`).
-- `attributeFx/` — УНИВЕРСАЛЬНЫЕ эффекты 7 атрибутов для всех классов (anatomy, fxContext, fxPalette, fxSeed,
+- Атрибуты сейчас: `model/aspect.ts` (аспект) + `ui/AttributeRuneRing/` (круг рун). Тело эффектов не несёт.
+- `attributeFx/` — ОТЛОЖЕНО (только при `legacyAttributeFx` в Playground): универсальные эффекты 7 атрибутов (anatomy, fxContext, fxPalette, fxSeed,
   bodyTone, compute<Attr>.ts + <Attr>Fx.tsx, AttributeFxLayer, тест инвариантов). Ничего лисьего внутри.
 - `creatures/fox/` — FoxAvatar, foxAnatomy (адаптер лисы для attributeFx), foxZones, foxZoneRegistry, foxFxMatrix,
   foxEvolutionConfig.
@@ -65,15 +66,15 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
 
 ## Git
 
-- Текущая ветка: `feature/lowpoly-avatar-style` (отслеживает `origin/feature/lowpoly-avatar-style`), в `main` не коммитить.
+- Текущая ветка: `feature/avatar-aspect-runes` (от `feature/lowpoly-avatar-style`), в `main` не коммитить.
 - `main` = 980dbde (20.09.2026), запушен. Работа 24.09–07.10.2026 сохранена WIP-коммитом 368942d (19.11.2026).
 - Не делать `git checkout .`/`reset`/`clean`/force-push без явного согласия владельца.
 - `.ai-import/` в .gitignore, не коммитить. `id_df`, `.env.local` — секреты (в .gitignore), не коммитить.
 
 ## Текущий фокус
 
-Аватар Лисы (Explorer): атрибуты v2 + разделение пространства (21.11.2026); по визуальному обзору ждём решений
-владельца (см. `docs/ai-context/avatar-system.md` §3 «Визуальный обзор» и `progress.md`).
+Атрибуты: аспект (цвет rim/ауры) + круг рун вокруг аватара (21.11.2026, ветка `feature/avatar-aspect-runes`);
+эффекты на теле v2 отложены (тег `avatar-attribute-fx-v2`, чекбокс в Playground). Открытые вопросы — `progress.md`.
 Дальше: Волк (Warrior) по тому же asset-driven циклу → Ворон, Сова, Олень → история прогресса → AI-слой.
 
 ## ПРАВИЛА работы

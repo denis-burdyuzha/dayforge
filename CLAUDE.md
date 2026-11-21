@@ -40,8 +40,10 @@ scripts/annotateFoxZones.mjs          запекает id групп из SVG в
 
 - `ModularAvatar.tsx` — диспетчер по классу (сейчас только `explorer` → `creatures/fox/FoxAvatar.tsx`;
   остальные классы рендерятся СТАРЫМ органическим рендером `Creature*.tsx`).
-- `creatures/fox/` — FoxAvatar, FoxAttributeFX, foxZones, foxZoneRegistry, foxFxMatrix, foxEvolutionConfig,
-  InternalFacetSubdivision, LimbVeins, DisciplineFormation, PulseLine.
+- `attributeFx/` — УНИВЕРСАЛЬНЫЕ эффекты 7 атрибутов для всех классов (anatomy, fxContext, fxPalette, fxSeed,
+  bodyTone, compute<Attr>.ts + <Attr>Fx.tsx, AttributeFxLayer, тест инвариантов). Ничего лисьего внутри.
+- `creatures/fox/` — FoxAvatar, foxAnatomy (адаптер лисы для attributeFx), foxZones, foxZoneRegistry, foxFxMatrix,
+  foxEvolutionConfig.
 - `assets/` — FoxL{1..5}AssetData.ts (полигоны + zone) и FoxZonedAsset (общий рендер полигонов).
 - `creatureFxPalette.ts` — палитры классов (тело, цвет кристаллов Discipline).
 
@@ -51,9 +53,9 @@ scripts/annotateFoxZones.mjs          запекает id групп из SVG в
 npm run dev            # Vite dev server; плейграунд аватара: /dev/avatar?class=explorer&level=35&social=10
 npm run build          # tsc -b && vite build  ← это НАСТОЯЩАЯ проверка типов
 npx tsc --noEmit -p tsconfig.app.json   # быстрая проверка типов приложения
-npm run lint           # eslint . (сейчас 27 ошибок, в т.ч. rules-of-hooks в FoxAttributeFX)
+npm run lint           # eslint . (сейчас 9 ошибок: сортировка импортов в нетронутых файлах)
 npm run format         # prettier --write
-npm test               # vitest run — тестов в проекте НЕТ
+npm test               # vitest run — тесты attributeFx (на Windows запускать из X:\DayForge, не x:)
 npx supabase db push   # применить миграции к привязанному проекту
 npx supabase gen types typescript --linked > src/shared/api/supabase/database.types.ts  # (скрипта в package.json нет)
 ```
@@ -70,8 +72,8 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
 
 ## Текущий фокус
 
-Аватар Лисы (Explorer): открытая задача №1 — привести атрибут **Social** к решению владельца
-(см. `docs/ai-context/avatar-system.md` → Social, и `progress.md` → открытые задачи).
+Аватар Лисы (Explorer): атрибуты v2 реализованы (21.11.2026), ждут визуального ревью владельца; открыт вопрос
+о кристаллах Discipline за канвасом (см. `docs/ai-context/avatar-system.md` §3, §6 и `progress.md`).
 Дальше: Волк (Warrior) по тому же asset-driven циклу → Ворон, Сова, Олень → история прогресса → AI-слой.
 
 ## ПРАВИЛА работы

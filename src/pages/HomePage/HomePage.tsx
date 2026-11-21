@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useAppState } from "@/entities/auth/model/useAppState";
+import {
+  ATTRIBUTE_COLORS,
+  ATTRIBUTE_LABELS_RU,
+  isAttributeKey,
+} from "@/entities/character/model/aspect";
 import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import {
   computeFormPercentage,
@@ -12,7 +17,7 @@ import {
 } from "@/entities/character/model/characterTypes";
 import { characterClasses } from "@/entities/character/model/classes";
 import { useCharacterData } from "@/entities/character/model/useCharacterData";
-import { AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
+import { AttributeRune, AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 import { Badge } from "@/shared/ui/Badge/ui/Badge";
 import { Card } from "@/shared/ui/Card/ui/Card";
@@ -102,12 +107,14 @@ function useSectionReveal<T extends HTMLElement>() {
 // ---------------------------------------------------------------------------
 
 function AttributeCard({
+  code,
   label,
   icon,
   description,
   value,
   accentColor,
 }: {
+  code: string;
   label: string;
   icon: string;
   description: string;
@@ -132,7 +139,11 @@ function AttributeCard({
       }}
     >
       <div className={styles.attrCardHeader}>
-        <span className={styles.attrIcon}>{icon}</span>
+        {isAttributeKey(code) ? (
+          <AttributeRune attribute={code} value={value} size={24} />
+        ) : (
+          <span className={styles.attrIcon}>{icon}</span>
+        )}
         <span className={styles.attrName}>{label}</span>
         {/* Plain number — no progress bar */}
         <span className={styles.attrValue} style={{ color: accentColor }}>
@@ -297,11 +308,12 @@ const HomePage = () => {
             attributes.map((attr) => (
               <AttributeCard
                 key={attr.id}
-                label={attr.name}
+                code={attr.code}
+                label={isAttributeKey(attr.code) ? ATTRIBUTE_LABELS_RU[attr.code] : attr.name}
                 icon={getAttrIcon(attr.code)}
                 description={attr.description || "Прокачивается через реальные действия."}
                 value={attr.value}
-                accentColor={accentColor}
+                accentColor={isAttributeKey(attr.code) ? ATTRIBUTE_COLORS[attr.code] : accentColor}
               />
             ))
           ) : (

@@ -39,6 +39,10 @@ export const ATTRIBUTE_LABELS_RU: Record<AttributeKey, string> = {
   creativity: "Креативность",
 };
 
+export function isAttributeKey(code: string): code is AttributeKey {
+  return (ATTRIBUTE_ORDER as readonly string[]).includes(code);
+}
+
 /** Minimum attribute value that can become the aspect */
 export const ASPECT_MIN_VALUE = 3;
 

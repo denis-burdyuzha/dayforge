@@ -15,8 +15,8 @@ import {
   getAspect,
 } from "../../model/aspect";
 import type { AttributeKey } from "../../model/types";
+import { AttributeRune } from "./AttributeRune";
 import styles from "./AttributeRuneRing.module.scss";
-import { type GlyphShape, RUNE_FRAME_POINTS, RUNE_GLYPHS, RUNE_TICKS } from "./runeGlyphs";
 import { computeRingLayout, getRuneLevel, getRuneVisual, RUNE_INACTIVE_COLOR } from "./runeLayout";
 
 export interface AttributeRuneRingProps {
@@ -30,26 +30,6 @@ export interface AttributeRuneRingProps {
 }
 
 const FLASH_MS = 400;
-
-function Glyph({ shape, color }: { shape: GlyphShape; color: string }) {
-  switch (shape.kind) {
-    case "polygon":
-      return <polygon points={shape.points} />;
-    case "polyline":
-      return <polyline points={shape.points} />;
-    case "line":
-      return <line x1={shape.x1} y1={shape.y1} x2={shape.x2} y2={shape.y2} />;
-    case "circle":
-      return (
-        <circle
-          cx={shape.cx}
-          cy={shape.cy}
-          r={shape.r}
-          {...(shape.filled ? { fill: color, stroke: "none" } : {})}
-        />
-      );
-  }
-}
 
 /**
  * AttributeRuneRing — the 7 attributes as runes on a circle around the avatar.
@@ -126,7 +106,6 @@ export function AttributeRuneRing({
         const color = visual.active ? ATTRIBUTE_COLORS[p.attribute] : RUNE_INACTIVE_COLOR;
         const label = `${ATTRIBUTE_LABELS_RU[p.attribute]} · ${v}`;
         const isAspect = p.attribute === aspect;
-        const glow = visual.glow > 0 ? `drop-shadow(0 0 ${visual.glow}px ${color})` : undefined;
         // Tooltip sits next to the rune on its inner side (towards the centre) so it never leaves
         // the ring: right of left-side runes, left of right-side runes, below/above top/bottom ones.
         const gap = p.size / 2 + 6;
@@ -160,39 +139,7 @@ export function AttributeRuneRing({
               onBlur={() => setActive((a) => (a === p.attribute ? null : a))}
               onClick={() => setActive(p.attribute)}
             >
-              <svg
-                viewBox="-4 -4 32 32"
-                width={p.size}
-                height={p.size}
-                overflow="visible"
-                aria-hidden="true"
-                style={glow ? { filter: glow } : undefined}
-              >
-                <g
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  opacity={visual.opacity}
-                >
-                  <g strokeWidth={2}>
-                    {RUNE_GLYPHS[p.attribute].map((shape, i) => (
-                      <Glyph key={i} shape={shape} color={color} />
-                    ))}
-                  </g>
-                  {visual.frame && (
-                    <polygon
-                      points={RUNE_FRAME_POINTS}
-                      strokeWidth={1.5}
-                      opacity={visual.frameOpacity}
-                    />
-                  )}
-                  {visual.ticks &&
-                    RUNE_TICKS.map((t, i) => (
-                      <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} strokeWidth={1.5} />
-                    ))}
-                </g>
-              </svg>
+              <AttributeRune attribute={p.attribute} value={v} size={p.size} />
             </button>
             {active === p.attribute && (
               <span role="tooltip" className={styles.tooltip} style={tooltipPos}>

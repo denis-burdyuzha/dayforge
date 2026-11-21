@@ -5,6 +5,7 @@
  * No progression/attribute/class logic calculation happens inside the Renderer.
  */
 
+import type { AvatarAspect } from "./aspect";
 import type { AttributeKey } from "./types";
 
 export interface AvatarIdentity {
@@ -165,4 +166,10 @@ export interface AvatarParams {
 
   /** Raw attribute values 1..18 — input for the universal attribute FX system (attributeFx/) */
   attributeValues: Record<AttributeKey, number>;
+
+  /**
+   * Dominant attribute (≥ 3): colours rim light and aura (× intensity) in every class renderer.
+   * null → renderer keeps its own default glow colour. Body fills never change.
+   */
+  aspect: AvatarAspect | null;
 }

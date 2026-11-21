@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { ATTRIBUTE_LABELS_RU } from "@/entities/character/model/aspect";
 import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import type { CharacterSkillWithStats } from "@/entities/character/model/characterSkillTypes";
 import type { Character, CharacterAttribute } from "@/entities/character/model/characterTypes";
@@ -431,6 +432,21 @@ export function AvatarPlaygroundPage() {
               legacyAttributeFx={legacyFx}
             />
           </div>
+
+          <p data-testid="aspect-info" style={{ margin: "8px 0", fontSize: "14px" }}>
+            Аспект:{" "}
+            {avatarParams.aspect ? (
+              <>
+                <span style={{ color: avatarParams.aspect.color, fontWeight: 700 }}>
+                  ● {ATTRIBUTE_LABELS_RU[avatarParams.aspect.attribute]} (
+                  {avatarParams.aspect.attribute})
+                </span>
+                {" · "}интенсивность {avatarParams.aspect.intensity.toFixed(2)}
+              </>
+            ) : (
+              <span>нет (цвет класса)</span>
+            )}
+          </p>
 
           <div className={styles.debugInfo}>
             <h4>Computed Params Summary</h4>

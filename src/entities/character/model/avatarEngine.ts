@@ -5,6 +5,7 @@
  * into a pure AvatarParams data contract consumed by ModularAvatar renderer.
  */
 
+import { applyAspectGlow, resolveAvatarAspect } from "./aspect";
 import { createAvatarIdentity } from "./avatarIdentity";
 import type {
   AvatarColorPalette,
@@ -320,21 +321,39 @@ export function computeAvatarParams(
     }
   }
 
+  // 4.5 Aspect: the dominant attribute (≥ 3) colours rim light + aura for every class renderer
+  const aspect = resolveAvatarAspect({
+    strength: strengthVal,
+    endurance: enduranceVal,
+    intelligence: intelligenceVal,
+    focus: focusVal,
+    discipline: disciplineVal,
+    social: socialVal,
+    creativity: creativityVal,
+  });
+  palette.glow = aspect?.color ?? accentColor;
+
   // 5. Effects (Aura & Ethereal Mist)
   const effects: AvatarEffectItem[] = [];
-  if (tier >= 3) {
-    const auraIntensityMap: Record<number, number> = {
-      3: 0.18,
-      4: 0.3,
-      5: 0.45,
-      6: 0.6,
-      7: 0.75,
-    };
+  const auraIntensityMap: Record<number, number> = {
+    3: 0.18,
+    4: 0.3,
+    5: 0.45,
+    6: 0.6,
+    7: 0.75,
+  };
+  const tierAura = tier >= 3 ? (auraIntensityMap[tier] ?? 0.18) : 0;
+  const auraGlow = applyAspectGlow(
+    { rimOpacity: 0, rimStrokeWidth: 0, auraOpacity: tierAura, auraRadius: 0 },
+    accentColor,
+    aspect,
+  );
+  if (auraGlow.auraOpacity > 0) {
     effects.push({
       id: "aura-core",
       type: "aura",
-      intensity: auraIntensityMap[tier] ?? 0.18,
-      color: accentColor,
+      intensity: auraGlow.auraOpacity,
+      color: auraGlow.color,
     });
   }
 
@@ -428,6 +447,7 @@ export function computeAvatarParams(
       asymmetrySeed: identity.patternSeed,
     },
     attributeValues,
+    aspect,
   };
 }
 

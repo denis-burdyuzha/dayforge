@@ -1,5 +1,7 @@
 import type React from "react";
+import { useId } from "react";
 
+import { applyAspectGlow } from "../../../../model/aspect";
 import type { AvatarParams } from "../../../../model/avatarTypes";
 import { AttributeFxLayer } from "../../attributeFx/AttributeFxLayer";
 import { createBodyToneResolver } from "../../attributeFx/bodyTone";
@@ -17,6 +19,9 @@ export interface FoxAvatarProps {
   /** Dev-only: render the archived on-body attribute FX v2 (playground toggle) */
   legacyAttributeFx?: boolean;
 }
+
+/** Rim light / aura colour of the fox when the character has no aspect */
+const FOX_DEFAULT_GLOW = "#38bdf8";
 
 // ── Static spark position templates (tier particles) ──
 const SPARK_DEFS = [
@@ -54,6 +59,19 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
   const AssetComponent = tierConfig.component;
   const { scale, tx, ty, tierIndex } = tierConfig;
   const bodyTransform = `translate(${tx}, ${ty}) scale(${scale})`;
+
+  // 1b. Aspect (dominant attribute) recolours rim light + aura; without it the fox keeps its cyan
+  const glow = applyAspectGlow(
+    {
+      rimOpacity: fx.rimGlowOpacity,
+      rimStrokeWidth: fx.rimStrokeWidth,
+      auraOpacity: fx.auraOpacity,
+      auraRadius: fx.auraRadius,
+    },
+    FOX_DEFAULT_GLOW,
+    params.aspect,
+  );
+  const auraGradientId = `fox-aura-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
   // 2. Universal attribute FX context (anatomy + geometry + palette + seed)
   const anatomy = getFoxAnatomy(tierIndex);
@@ -95,9 +113,9 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
           </filter>
 
           {/* Radial aura background gradient */}
-          <radialGradient id="creature-aura-radial" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
-            <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.25" />
+          <radialGradient id={auraGradientId} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={glow.color} stopOpacity="0.8" />
+            <stop offset="60%" stopColor={glow.color} stopOpacity="0.25" />
             <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
           </radialGradient>
         </defs>
@@ -107,26 +125,28 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
           <>
             <CreatureShadow params={params} />
 
-            {fx.auraOpacity > 0 && fx.auraRadius > 0 && (
+            {glow.auraOpacity > 0 && glow.auraRadius > 0 && (
               <CreatureAura
                 params={params}
-                overrideOpacity={fx.auraOpacity}
-                overrideRadius={fx.auraRadius}
+                overrideOpacity={glow.auraOpacity}
+                overrideRadius={glow.auraRadius}
+                gradientId={auraGradientId}
               />
             )}
 
-            {fx.rimStrokeWidth > 0 && fx.rimGlowOpacity > 0 && (
+            {glow.rimStrokeWidth > 0 && glow.rimOpacity > 0 && (
               <g
+                className="avatar-rim-light"
                 filter="url(#avatar-glow-filter)"
-                opacity={fx.rimGlowOpacity}
+                opacity={glow.rimOpacity}
                 style={{ pointerEvents: "none" }}
               >
                 <g transform={bodyTransform}>
                   <AssetComponent
                     isSilhouette={true}
-                    overrideFill="#38bdf8"
-                    overrideStroke="#38bdf8"
-                    overrideStrokeWidth={fx.rimStrokeWidth}
+                    overrideFill={glow.color}
+                    overrideStroke={glow.color}
+                    overrideStrokeWidth={glow.rimStrokeWidth}
                   />
                 </g>
               </g>

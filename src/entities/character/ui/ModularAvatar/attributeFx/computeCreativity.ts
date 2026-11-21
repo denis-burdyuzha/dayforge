@@ -56,17 +56,28 @@ export function computeCreativitySign(ctx: FxContext): PersonalSign | null {
   };
 
   const grow = (from: string, steps: number): string[] => {
+    // Seeded walk with backtracking: a dead-end polygon is dropped from the chain (and stays
+    // excluded), the walk resumes from the previous polygon. No polygon is ever repeated.
     const chain = [from];
     visited.add(from);
-    let cur = from;
-    for (let i = 0; i < steps; i++) {
+    let longest = [...chain];
+    for (let guard = 0; chain.length - 1 < steps && guard < steps * 40; guard++) {
+      const cur = chain[chain.length - 1]!;
       const nx = nextFrom(cur);
-      if (!nx) break;
-      visited.add(nx);
-      chain.push(nx);
-      cur = nx;
+      if (nx) {
+        visited.add(nx);
+        chain.push(nx);
+        if (chain.length > longest.length) longest = [...chain];
+      } else {
+        if (chain.length <= 1) break;
+        chain.pop(); // `cur` stays in visited → never retried
+      }
     }
-    return chain;
+    const result = chain.length >= longest.length ? chain : longest;
+    // release polygons tried during backtracking that are not part of the final chain
+    const keep = new Set(result);
+    for (const id of [...visited]) if (!keep.has(id)) visited.delete(id);
+    return result;
   };
 
   const path = grow(startPool[Math.floor(rng() * startPool.length)]!, n);

@@ -7,9 +7,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { computeAvatarParams } from "../../../model/avatarEngine";
+import type { CharacterAttribute } from "../../../model/characterTypes";
 import { getFoxAnatomy } from "../creatures/fox/foxAnatomy";
 import { FOX_TIER_CONFIG } from "../creatures/fox/foxEvolutionConfig";
 import type { FoxTierIndex } from "../creatures/fox/foxZones";
+import { ModularAvatar } from "../ModularAvatar";
 import { distToOutline, pointInPoly } from "./anatomy";
 import { AttributeFxLayer } from "./AttributeFxLayer";
 import { createBodyToneResolver } from "./bodyTone";
@@ -98,6 +101,36 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
     expect(fxStep(2, 7)).toBe(1);
     expect(fxStep(18, 7)).toBe(7);
     expect(fxStep(9, 8)).toBe(3);
+  });
+
+  it("full ModularAvatar renders for every fox tier × preset (real computeAvatarParams)", () => {
+    for (const level of [1, 3, 5, 10, 20, 35, 50]) {
+      for (const v of Object.values(PRESETS)) {
+        const attrs: CharacterAttribute[] = Object.entries(v).map(([code, value], i) => ({
+          id: `a${i}`,
+          attributeId: `attr-${code}`,
+          code,
+          name: code,
+          value,
+        }));
+        const params = computeAvatarParams(
+          {
+            id: "char-A",
+            profileId: "p",
+            name: "n",
+            class: "explorer",
+            level,
+            totalXp: 0,
+            createdAt: "",
+          },
+          attrs,
+          [],
+          null,
+        );
+        const html = renderToStaticMarkup(<ModularAvatar params={params} size={300} />);
+        expect(html).toContain("Explorer Fox Avatar");
+      }
+    }
   });
 
   for (const tier of TIERS) {

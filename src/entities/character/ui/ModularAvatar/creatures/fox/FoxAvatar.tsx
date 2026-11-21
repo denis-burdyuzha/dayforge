@@ -56,6 +56,7 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({ params, isSilhouette = fal
   const ctx = createFxContext({ anatomy, classId, values, seedKey, transform: { tx, ty, scale } });
   const resolveFill = createBodyToneResolver({
     torsoZones: anatomy.zones.torso,
+    strength: values.strength,
     discipline: values.discipline,
     seedKey,
   });

@@ -1,7 +1,7 @@
 /**
  * FxContext — everything an attribute effect needs: anatomy + derived geometry, palette,
- * raw attribute values, per-character seed key, asset→canvas transform and the shared
- * crystal orbit (used by Discipline for placement and by Social to keep stars away from it).
+ * raw attribute values, per-character seed key, asset→canvas transform and the silhouette
+ * probes used to place crystals (Discipline) and keep stars clear of them (Social).
  */
 
 import type { AttributeKey } from "../../../model/types";
@@ -29,8 +29,6 @@ export interface AssetTransform {
 export interface CrystalOrbit {
   /** canvas coords */
   center: Pt;
-  /** canvas px */
-  radius: number;
   /** crystal size in canvas px */
   crystalSize: number;
   /** minimal clearance between a crystal centre and the silhouette, canvas px */
@@ -96,12 +94,8 @@ function buildOrbit(
   };
   const crystalSize = Math.max(6, Math.min(12, halfDiag * 0.13));
   const minGap = crystalSize * 1.5 + 10;
-  let maxSil = 0;
-  for (let i = 0; i < 36; i++)
-    maxSil = Math.max(maxSil, silhouetteDistance((i / 36) * Math.PI * 2));
   return {
     center,
-    radius: maxSil + minGap,
     crystalSize,
     minGap,
     silhouetteDistance,

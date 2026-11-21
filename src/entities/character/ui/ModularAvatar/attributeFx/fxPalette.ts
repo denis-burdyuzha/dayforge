@@ -53,6 +53,18 @@ export function darken(hex: string, amount: number): string {
   return rgbToHex(r * (1 - amount), g * (1 - amount), b * (1 - amount));
 }
 
+/** Mix colour `a` towards colour `b` by `amount` (0..1) */
+export function mixHex(a: string, b: string, amount: number): string {
+  const x = hexToRgb(a);
+  const y = hexToRgb(b);
+  if (!x || !y) return a;
+  return rgbToHex(
+    x[0] + (y[0] - x[0]) * amount,
+    x[1] + (y[1] - x[1]) * amount,
+    x[2] + (y[2] - x[2]) * amount,
+  );
+}
+
 /** Palette for a class: body / accent come from the existing class palettes, light is shared. */
 export function getFxPalette(classId: string): FxPalette {
   const key: ClassArchetype =

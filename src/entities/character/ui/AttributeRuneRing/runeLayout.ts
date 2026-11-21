@@ -10,7 +10,7 @@ export const ASPECT_RUNE_SCALE = 1.15;
 export const RING_RADIUS_FACTOR = 0.46;
 export const RUNE_INACTIVE_COLOR = "#64748b";
 
-/** 0: v ≤ 1 · 1: 2–5 · 2: 6–11 · 3: 12–17 · 4: 18 */
+/** 0: v ≤ 1 · 1: 2–5 (opacity 0.7→0.85) · 2: 6–11 · 3: 12–17 · 4: 18 */
 export type RuneLevel = 0 | 1 | 2 | 3 | 4;
 
 export function getRuneLevel(v: number): RuneLevel {
@@ -50,7 +50,7 @@ export function getRuneVisual(v: number): RuneVisual {
       return {
         level,
         active: true,
-        opacity: 0.5 + ((Math.min(5, Math.max(2, v)) - 2) / 3) * 0.3,
+        opacity: 0.7 + ((Math.min(5, Math.max(2, v)) - 2) / 3) * 0.15,
         frame: false,
         frameOpacity: 0,
         glow: 0,

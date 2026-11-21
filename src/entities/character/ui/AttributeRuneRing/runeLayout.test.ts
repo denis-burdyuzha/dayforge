@@ -11,8 +11,8 @@ describe("rune states", () => {
 
   it("visuals follow the spec", () => {
     expect(getRuneVisual(1)).toMatchObject({ active: false, opacity: 0.25, frame: false, glow: 0 });
-    expect(getRuneVisual(2).opacity).toBeCloseTo(0.5);
-    expect(getRuneVisual(5).opacity).toBeCloseTo(0.8);
+    expect(getRuneVisual(2).opacity).toBeCloseTo(0.7);
+    expect(getRuneVisual(5).opacity).toBeCloseTo(0.85);
     expect(getRuneVisual(8)).toMatchObject({
       opacity: 0.9,
       frame: true,

@@ -5,7 +5,7 @@
  * into a pure AvatarParams data contract consumed by ModularAvatar renderer.
  */
 
-import { applyAspectGlow, resolveAvatarAspect } from "./aspect";
+import { applyAspectGlow, NEUTRAL_GLOW_COLOR, resolveAvatarAspect } from "./aspect";
 import { createAvatarIdentity } from "./avatarIdentity";
 import type {
   AvatarColorPalette,
@@ -331,7 +331,7 @@ export function computeAvatarParams(
     social: socialVal,
     creativity: creativityVal,
   });
-  palette.glow = aspect?.color ?? accentColor;
+  palette.glow = aspect?.color ?? NEUTRAL_GLOW_COLOR;
 
   // 5. Effects (Aura & Ethereal Mist)
   const effects: AvatarEffectItem[] = [];
@@ -345,7 +345,6 @@ export function computeAvatarParams(
   const tierAura = tier >= 3 ? (auraIntensityMap[tier] ?? 0.18) : 0;
   const auraGlow = applyAspectGlow(
     { rimOpacity: 0, rimStrokeWidth: 0, auraOpacity: tierAura, auraRadius: 0 },
-    accentColor,
     aspect,
   );
   if (auraGlow.auraOpacity > 0) {

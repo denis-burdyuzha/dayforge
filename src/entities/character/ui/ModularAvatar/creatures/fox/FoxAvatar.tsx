@@ -1,7 +1,7 @@
 import type React from "react";
 import { useId } from "react";
 
-import { applyAspectGlow } from "../../../../model/aspect";
+import { applyAspectGlow, isWarmAccent, tintToColor } from "../../../../model/aspect";
 import type { AvatarParams } from "../../../../model/avatarTypes";
 import { AttributeFxLayer } from "../../attributeFx/AttributeFxLayer";
 import { createBodyToneResolver } from "../../attributeFx/bodyTone";
@@ -13,6 +13,12 @@ import { getFoxAnatomy } from "./foxAnatomy";
 import { getFoxTierConfig } from "./foxEvolutionConfig";
 import { getFoxFxConfig } from "./foxFxMatrix";
 
+/** Tail tips include their shaded rust/brown facets, so the warm test is looser than the default */
+const TAIL_TIP_MIN_SAT = 0.12;
+const TAIL_TIP_MIN_LIGHT = 0.12;
+
+type FillPoly = { id: string; zone: string; defaultFill: string };
+
 export interface FoxAvatarProps {
   params: AvatarParams;
   isSilhouette?: boolean;
@@ -20,23 +26,21 @@ export interface FoxAvatarProps {
   legacyAttributeFx?: boolean;
 }
 
-/** Rim light / aura colour of the fox when the character has no aspect */
-const FOX_DEFAULT_GLOW = "#38bdf8";
-
-// ── Static spark position templates (tier particles) ──
+// ── Static spark position templates (tier particles). Cool sparks are neutral white: cyan is reserved
+// for the Intelligence aspect. ──
 const SPARK_DEFS = [
   { cx: 28, cy: 95, r: 3.2, color: "#ff8800", opacity: 0.8 },
-  { cx: 174, cy: 68, r: 2.4, color: "#38bdf8", opacity: 0.85 },
+  { cx: 174, cy: 68, r: 2.4, color: "#e2e8f0", opacity: 0.85 },
   { cx: 22, cy: 165, r: 3.8, color: "#ff5500", opacity: 0.65 },
-  { cx: 178, cy: 152, r: 2.0, color: "#38bdf8", opacity: 0.9 },
+  { cx: 178, cy: 152, r: 2.0, color: "#e2e8f0", opacity: 0.9 },
   { cx: 100, cy: 24, r: 2.8, color: "#ffaa00", opacity: 0.75 },
   { cx: 162, cy: 198, r: 2.2, color: "#ff6600", opacity: 0.55 },
-  { cx: 40, cy: 45, r: 2.6, color: "#38bdf8", opacity: 0.8 },
+  { cx: 40, cy: 45, r: 2.6, color: "#e2e8f0", opacity: 0.8 },
   { cx: 155, cy: 110, r: 3.0, color: "#ff8800", opacity: 0.7 },
   { cx: 30, cy: 130, r: 2.5, color: "#ffbb00", opacity: 0.6 },
-  { cx: 170, cy: 35, r: 3.4, color: "#38bdf8", opacity: 0.85 },
+  { cx: 170, cy: 35, r: 3.4, color: "#e2e8f0", opacity: 0.85 },
   { cx: 115, cy: 15, r: 2.3, color: "#ff7700", opacity: 0.75 },
-  { cx: 145, cy: 215, r: 2.7, color: "#38bdf8", opacity: 0.65 },
+  { cx: 145, cy: 215, r: 2.7, color: "#e2e8f0", opacity: 0.65 },
 ];
 
 /**
@@ -60,7 +64,7 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
   const { scale, tx, ty, tierIndex } = tierConfig;
   const bodyTransform = `translate(${tx}, ${ty}) scale(${scale})`;
 
-  // 1b. Aspect (dominant attribute) recolours rim light + aura; without it the fox keeps its cyan
+  // 1b. Aspect (dominant attribute) recolours rim light + aura; without it — neutral soft white
   const glow = applyAspectGlow(
     {
       rimOpacity: fx.rimGlowOpacity,
@@ -68,7 +72,6 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
       auraOpacity: fx.auraOpacity,
       auraRadius: fx.auraRadius,
     },
-    FOX_DEFAULT_GLOW,
     params.aspect,
   );
   const auraGradientId = `fox-aura-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -78,11 +81,26 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
   const values = params.attributeValues;
   const seedKey = params.identity.seedKey;
   const ctx = createFxContext({ anatomy, classId, values, seedKey, transform: { tx, ty, scale } });
+  // Tail tips: the warm glowing tips of the tail zones take the aspect colour (lightness kept).
+  // Without an aspect they stay as in the asset.
+  const tailZones = new Set(anatomy.zones.tail ?? []);
+  const aspectColor = params.aspect?.color ?? null;
+  const tailTipFill = aspectColor
+    ? (poly: FillPoly) =>
+        tailZones.has(poly.zone) &&
+        isWarmAccent(poly.defaultFill, TAIL_TIP_MIN_SAT, TAIL_TIP_MIN_LIGHT)
+          ? tintToColor(poly.defaultFill, aspectColor)
+          : undefined
+    : null;
   // On-body attribute FX v2 are archived: only the playground toggle turns them (and the Strength
   // torso tone) on. The body carries no attribute effects in the app.
-  const resolveFill = legacyAttributeFx
+  const bodyTone = legacyAttributeFx
     ? createBodyToneResolver({ torsoZones: anatomy.zones.torso, strength: values.strength })
-    : undefined;
+    : null;
+  const resolveFill =
+    tailTipFill || bodyTone
+      ? (poly: FillPoly) => tailTipFill?.(poly) ?? bodyTone?.(poly)
+      : undefined;
 
   // 3. Tier particles: count, radius and centre depend ONLY on the tier
   const bodyCenter = ctx.toCanvas(ctx.geo.torsoCenter);
@@ -162,7 +180,7 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
                       cx={Math.round(pos.cx * 10) / 10}
                       cy={Math.round(pos.cy * 10) / 10}
                       r={src?.r ?? 2.5}
-                      fill={src?.color ?? "#38bdf8"}
+                      fill={src?.color ?? "#e2e8f0"}
                       opacity={src?.opacity ?? 0.7}
                     />
                   );

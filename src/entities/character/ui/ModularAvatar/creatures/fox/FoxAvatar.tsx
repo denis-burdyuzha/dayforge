@@ -57,8 +57,6 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({ params, isSilhouette = fal
   const resolveFill = createBodyToneResolver({
     torsoZones: anatomy.zones.torso,
     strength: values.strength,
-    discipline: values.discipline,
-    seedKey,
   });
 
   // 3. Tier particles: count, radius and centre depend ONLY on the tier

@@ -11,7 +11,7 @@ import { computeAvatarParams } from "../../../model/avatarEngine";
 import type { CharacterAttribute } from "../../../model/characterTypes";
 import { getFoxAnatomy } from "../creatures/fox/foxAnatomy";
 import { FOX_TIER_CONFIG } from "../creatures/fox/foxEvolutionConfig";
-import type { FoxTierIndex } from "../creatures/fox/foxZones";
+import { type FoxTierIndex, getTierPolys } from "../creatures/fox/foxZones";
 import { ModularAvatar } from "../ModularAvatar";
 import { AttributeFxLayer } from "./AttributeFxLayer";
 import { createBodyToneResolver } from "./bodyTone";
@@ -140,16 +140,51 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
         expect(html).not.toMatch(/<(polygon|polyline|line|circle|rect|path)\b/);
         expect(html).not.toMatch(/attr-fx-discipline/);
         expect(computeDisciplineCrystals(ctx)).toBeNull();
-        // Strength contrast is identity at v=1 (Discipline tone scatter is the documented exception)
+        // The asset fill is untouched: every polygon keeps its own colour
         const tone = createBodyToneResolver({
           torsoZones: ctx.anatomy.zones.torso,
-          strength: 1,
-          discipline: 18,
-          seedKey: "char-A",
+          strength: PRESETS["Новичок"]!.strength,
         });
-        expect(
-          tone({ id: "x", zone: ctx.anatomy.zones.torso[0]!, defaultFill: "#336699" }),
-        ).toBeUndefined();
+        for (const poly of getTierPolys(tier)) {
+          expect(tone(poly), poly.id).toBeUndefined();
+        }
+      });
+
+      it("«Новичок»: rendered asset polygons keep their exact default fills", () => {
+        const level = ({ 1: 1, 2: 3, 3: 10, 4: 35, 5: 50 } as const)[tier];
+        const attrs: CharacterAttribute[] = Object.entries(PRESETS["Новичок"]!).map(
+          ([code, value], i) => ({
+            id: `a${i}`,
+            attributeId: `attr-${code}`,
+            code,
+            name: code,
+            value,
+          }),
+        );
+        const params = computeAvatarParams(
+          {
+            id: "char-A",
+            profileId: "p",
+            name: "n",
+            class: "explorer",
+            level,
+            totalXp: 0,
+            createdAt: "",
+          },
+          attrs,
+          [],
+          null,
+        );
+        const html = renderToStaticMarkup(<ModularAvatar params={params} size={300} />);
+        const rendered = new Map<string, string[]>();
+        for (const m of html.matchAll(/<polygon id="([^"]+)"[^>]*?fill="([^"]+)"/g)) {
+          rendered.set(m[1]!, [...(rendered.get(m[1]!) ?? []), m[2]!]);
+        }
+        for (const poly of getTierPolys(tier)) {
+          const fills = rendered.get(poly.id) ?? [];
+          // main asset copy must carry the default fill (the rim-light copy is a separate overlay)
+          expect(fills.includes(poly.defaultFill), poly.id).toBe(true);
+        }
       });
 
       for (const [name, v] of Object.entries(PRESETS)) {

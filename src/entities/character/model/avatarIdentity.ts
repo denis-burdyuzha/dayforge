@@ -9,7 +9,7 @@
 import type { AvatarIdentity } from "./avatarTypes";
 
 /** 32-bit FNV-1a hash implementation */
-function fnv1a(str: string): number {
+export function fnv1a(str: string): number {
   let hash = 0x811c9dc5;
   for (let i = 0; i < str.length; i++) {
     hash ^= str.charCodeAt(i);
@@ -30,6 +30,7 @@ export function createAvatarIdentity(characterId: string | undefined): AvatarIde
   const baseSeed = fnv1a(key);
 
   return {
+    seedKey: key,
     bodySeed: seededFloat(baseSeed, "body"),
     faceSeed: seededFloat(baseSeed, "face"),
     eyeSeed: seededFloat(baseSeed, "eye"),

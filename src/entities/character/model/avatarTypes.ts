@@ -5,7 +5,11 @@
  * No progression/attribute/class logic calculation happens inside the Renderer.
  */
 
+import type { AttributeKey } from "./types";
+
 export interface AvatarIdentity {
+  /** Stable per-character key (character id) — base for deterministic attribute FX seeds */
+  seedKey: string;
   bodySeed: number;
   faceSeed: number;
   eyeSeed: number;
@@ -159,50 +163,6 @@ export interface AvatarParams {
   /** If true, renders creature in pure dark silhouette mode to test silhouette quality */
   silhouetteOnly?: boolean;
 
-  /**
-   * Fox-specific visual attribute channels.
-   * Only consumed by FoxAvatar — other creatures ignore these fields.
-   */
-  foxAttributes?: {
-    /** Strength: shoulder spike count (0..4), core highlight opacity (0..1), core scale (1.0..1.08) */
-    strength: {
-      spikeCount: number;         // 0..4 stepped at 4/8/12/16 Str
-      coreHighlightOpacity: number; // 0..1
-      coreScale: number;          // 1.0..1.08 (only non-curled poses)
-    };
-    /** Intelligence: head facet subdivision depth (fixed to 1), facet count scaling with value (1..9) */
-    intelligence: {
-      subdivisionDepth: number;   // 1 = depth 1
-      facetCount: number;         // 1..9 facets selected for subdivision
-      headWhitenMix: number;      // 0..1 normalized intelligence
-    };
-    /** Focus: depth of field (body dimming, head untouched), canvas vignette opacity (0..0.41), eye vertical squeeze (0.88..1.0), particle ring convergence */
-    focus: {
-      eyeSqueezeY: number;        // 0.88..1.0 (lower = squinted) — secondary channel
-      /** 0..1 — body zones (torso/limbs/tail) desaturate to ~45% and dim to ~88%; head zone untouched */
-      depthOfField: number;
-      vignetteOpacity: number;    // 0..0.41
-      particleOrbitRadius: number; // px override, -1 = use tier default (@deprecated: use particleConvergence)
-      /** 0..1 — convergence of particle ring toward head center & tighter radius (via ParticleConfig.radius) */
-      particleConvergence: number;
-    };
-    /** Endurance: cold ash patina on torso (0..1), elongated-facet scars on torso (1..6), crimson limb veins (1..12) */
-    endurance: {
-      patinaStrength: number;     // 0..1 desaturation + cold ash-blue tint
-      scratchCount: number;       // 1..6 scars on the most elongated torso facets
-      veinCount: number;          // 1..12 pulsing crimson veins on limb zones (constant pulse speed)
-    };
-    /** Discipline: particle target shape, rim stability (jitter reduction), pose symmetry emphasis */
-    discipline: {
-      particleTargetShape: "none" | "circle" | "square" | "triangle" | "spiral" | "arc";
-      rimJitterReduction: number; // 0..1 — how stable/non-flickering rim-light appears
-      poseSymmetryEmphasis: number; // 0..1
-    };
-    /** Social: collar facet subdivision depth (0..2), bond mark count (0..4), collar warm hue shift (0..1) */
-    social: {
-      collarSubdivisionDepth: number; // 0..2
-      bondMarkCount: number;          // 0..4
-      collarWarmShift: number;        // 0..1 warm tone mix on collar zone
-    };
-  };
+  /** Raw attribute values 1..18 — input for the universal attribute FX system (attributeFx/) */
+  attributeValues: Record<AttributeKey, number>;
 }

@@ -41,21 +41,33 @@ export function AvatarPlaygroundPage() {
   const [activePresetSkillIds, setActivePresetSkillIds] = useState<string[]>(["prog"]);
   const [customSkillName, setCustomSkillName] = useState<string>("");
   const [silhouetteOnly, setSilhouetteOnly] = useState<boolean>(initialSil);
+  // Character id = seed of the attribute FX (same id → same picture, different id → different picture)
+  const [charId, setCharId] = useState<string>(
+    searchParams?.get("charId") || "playground-dev-char-id",
+  );
 
-  // Quick preset helper handlers
-  const setAllAttributes = (val: number) => {
-    setStrength(val);
-    setEndurance(val);
-    setDiscipline(val);
-    setIntelligence(val);
-    setFocus(val);
-    setSocial(val);
-    setCreativity(val);
+  type AttrPreset = Partial<Record<"str" | "end" | "dis" | "int" | "foc" | "soc" | "cre", number>>;
+  const applyPreset = (base: number, p: AttrPreset) => {
+    setStrength(p.str ?? base);
+    setEndurance(p.end ?? base);
+    setDiscipline(p.dis ?? base);
+    setIntelligence(p.int ?? base);
+    setFocus(p.foc ?? base);
+    setSocial(p.soc ?? base);
+    setCreativity(p.cre ?? base);
   };
+  const ATTRIBUTE_PRESETS: Array<{ label: string; base: number; values: AttrPreset }> = [
+    { label: "Новичок", base: 1, values: {} },
+    { label: "Атлет", base: 2, values: { str: 14, end: 12, dis: 10 } },
+    { label: "Учёный", base: 2, values: { int: 15, foc: 12, cre: 8 } },
+    { label: "Душа компании", base: 2, values: { soc: 15, cre: 12 } },
+    { label: "Всё на 18", base: 18, values: {} },
+    { label: "Всё на 9", base: 9, values: {} },
+  ];
 
   // Build synthetic character data
   const character: Character = {
-    id: "playground-dev-char-id",
+    id: charId,
     profileId: "playground-profile",
     name: "Dayforge Creature",
     class: selectedClass,
@@ -207,24 +219,15 @@ export function AvatarPlaygroundPage() {
 
             <h3>Быстрые пресеты атрибутов & Тест Силуэта</h3>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
-              <button
-                onClick={() => setAllAttributes(1)}
-                style={{ padding: "6px 10px", borderRadius: "4px" }}
-              >
-                Weak (all 1)
-              </button>
-              <button
-                onClick={() => setAllAttributes(8)}
-                style={{ padding: "6px 10px", borderRadius: "4px" }}
-              >
-                Balanced (all 8)
-              </button>
-              <button
-                onClick={() => setAllAttributes(18)}
-                style={{ padding: "6px 10px", borderRadius: "4px" }}
-              >
-                Strong (all 18)
-              </button>
+              {ATTRIBUTE_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset(p.base, p.values)}
+                  style={{ padding: "6px 10px", borderRadius: "4px" }}
+                >
+                  {p.label}
+                </button>
+              ))}
               <button
                 onClick={() => setSilhouetteOnly(!silhouetteOnly)}
                 style={{
@@ -236,6 +239,15 @@ export function AvatarPlaygroundPage() {
               >
                 {silhouetteOnly ? "✓ SILHOUETTE ONLY" : "👁 SILHOUETTE ONLY"}
               </button>
+            </div>
+
+            <div className={styles.field}>
+              <label>Character ID (seed эффектов):</label>
+              <input
+                className={styles.textInput}
+                value={charId}
+                onChange={(e) => setCharId(e.target.value)}
+              />
             </div>
 
             <div className={styles.field}>
@@ -396,9 +408,15 @@ export function AvatarPlaygroundPage() {
         <div className={styles.renderPanel}>
           <div
             className={styles.avatarWrapper}
-            style={bigView ? { position: "fixed", inset: 0, zIndex: 999, borderRadius: 0 } : undefined}
+            style={
+              bigView ? { position: "fixed", inset: 0, zIndex: 999, borderRadius: 0 } : undefined
+            }
           >
-            <ModularAvatar params={avatarParams} size={bigView ? 820 : 300} silhouetteOnly={silhouetteOnly} />
+            <ModularAvatar
+              params={avatarParams}
+              size={bigView ? 820 : 300}
+              silhouetteOnly={silhouetteOnly}
+            />
           </div>
 
           <div className={styles.debugInfo}>

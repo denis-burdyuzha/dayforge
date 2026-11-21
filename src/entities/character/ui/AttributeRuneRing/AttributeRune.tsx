@@ -9,6 +9,8 @@ export interface AttributeRuneProps {
   value: number;
   /** rendered size, px (ring: 28; glow scales proportionally) */
   size?: number;
+  /** glyph only, full attribute colour, no frame / glow / ticks (skill icons) */
+  plain?: boolean;
   className?: string;
 }
 
@@ -40,9 +42,13 @@ export function AttributeRune({
   attribute,
   value,
   size = RUNE_SIZE,
+  plain = false,
   className,
 }: AttributeRuneProps) {
-  const visual = getRuneVisual(value);
+  const state = getRuneVisual(value);
+  const visual = plain
+    ? { ...state, active: true, opacity: 1, frame: false, glow: 0, ticks: false }
+    : state;
   const color = visual.active ? ATTRIBUTE_COLORS[attribute] : RUNE_INACTIVE_COLOR;
   const glowPx = (visual.glow * size) / RUNE_SIZE;
   const glow = glowPx > 0 ? `drop-shadow(0 0 ${glowPx.toFixed(1)}px ${color})` : undefined;

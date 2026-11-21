@@ -364,6 +364,18 @@
 /* ═══════════════════════════════════════════════════════
    SKILLS — horizontal scroll
 ═══════════════════════════════════════════════════════ */
+/* Skill rows (SkillCard) */
+.skillsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-3);
+}
+
+/* Title plate under the rune ring */
+.titlePlate {
+  margin-top: calc(-1 * var(--space-1));
+}
+
 .skillsScroll {
   display: flex;
   gap: var(--space-3);

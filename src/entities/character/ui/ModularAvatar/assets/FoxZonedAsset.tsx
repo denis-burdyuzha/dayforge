@@ -1,4 +1,5 @@
 import React from "react";
+
 import type { FoxBaseAssetProps, FoxZonePoly } from "./foxAssetTypes";
 
 interface FoxZonedAssetProps extends FoxBaseAssetProps {

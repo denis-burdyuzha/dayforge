@@ -8,17 +8,15 @@ import {
 } from "@/entities/character/model/aspect";
 import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import {
-  computeFormPercentage,
-  formatLastPracticed,
-} from "@/entities/character/model/characterSkillTypes";
-import {
   xpRequiredForLevel,
   xpWithinCurrentLevel,
 } from "@/entities/character/model/characterTypes";
 import { characterClasses } from "@/entities/character/model/classes";
+import { pickTitleSkill, toSkillView } from "@/entities/character/model/skillPresentation";
 import { useCharacterData } from "@/entities/character/model/useCharacterData";
 import { AttributeRune, AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
+import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
 import { Badge } from "@/shared/ui/Badge/ui/Badge";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
@@ -63,14 +61,6 @@ function daysSince(isoDate: string): number {
 function formatXpDate(isoDate: string): string {
   const d = new Date(isoDate);
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-}
-
-/** Form percentage → display color */
-function formColor(pct: number): string {
-  if (pct >= 90) return "var(--color-success)";
-  if (pct >= 70) return "var(--color-primary)";
-  if (pct >= 40) return "var(--color-warning)";
-  return "var(--color-danger)";
 }
 
 // ---------------------------------------------------------------------------
@@ -243,6 +233,10 @@ const HomePage = () => {
   // Compute avatar params for modular vector avatar
   const avatarParams = computeAvatarParams(character, attributes, characterSkills, todayState);
 
+  // Skills: presentation (rank, icon, form) + the title skill shown under the avatar
+  const skillViews = characterSkills.map((skill) => toSkillView(skill, attributes));
+  const titleSkill = pickTitleSkill(skillViews);
+
   return (
     <div className={styles.page}>
       {/* ══════════════════════════════════════════════════════════
@@ -267,6 +261,8 @@ const HomePage = () => {
               </div>
             </AttributeRuneRing>
           </div>
+
+          <SkillTitlePlate skill={titleSkill} className={styles.titlePlate} />
 
           <h1 className={styles.heroName}>{character.name}</h1>
 
@@ -333,42 +329,14 @@ const HomePage = () => {
       <RevealSection>
         <h2 className={styles.sectionTitle}>Навыки</h2>
         {characterSkills.length > 0 ? (
-          <div className={styles.skillsScroll}>
-            {characterSkills.map((skill) => {
-              const form = computeFormPercentage(skill.lastPracticedAt);
-              const lastPracticed = formatLastPracticed(skill.lastPracticedAt);
-              const fColor = formColor(form);
-              return (
-                <Card key={skill.id} className={styles.skillCard}>
-                  <div className={styles.skillCardHeader}>
-                    <span className={styles.skillCardName}>{skill.name}</span>
-                    <Badge variant="default">Ур. {skill.level}</Badge>
-                  </div>
-
-                  {/* Form indicator */}
-                  <div className={styles.skillFormRow}>
-                    <span className={styles.skillFormLabel}>Форма</span>
-                    <div className={styles.skillFormTrack}>
-                      <div
-                        className={styles.skillFormFill}
-                        style={{ width: `${form}%`, background: fColor }}
-                      />
-                    </div>
-                    <span className={styles.skillFormPct} style={{ color: fColor }}>
-                      {form}%
-                    </span>
-                  </div>
-
-                  <span className={styles.skillLastPracticed}>
-                    {lastPracticed === "никогда" ? "🕐 Ещё не практиковали" : `🕐 ${lastPracticed}`}
-                  </span>
-
-                  <span className={styles.skillCardXp}>
-                    {skill.totalXp} XP · {skill.totalHours.toFixed(1)} ч
-                  </span>
-                </Card>
-              );
-            })}
+          <div className={styles.skillsList}>
+            {skillViews.map((skill) => (
+              <SkillCard
+                key={skill.id}
+                skill={skill}
+                attributeValues={avatarParams.attributeValues}
+              />
+            ))}
           </div>
         ) : (
           <Card className={styles.emptyCard}>

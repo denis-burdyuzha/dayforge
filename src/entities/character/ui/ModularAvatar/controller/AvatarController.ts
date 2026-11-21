@@ -1,7 +1,8 @@
 import type { AvatarParams } from "@/entities/character/model/avatarTypes";
+
 import {
-  FOX_L1_NODE_BINDING_MAP,
   type AvatarBodyRegion,
+  FOX_L1_NODE_BINDING_MAP,
   type SemanticBodyRegionBinding,
 } from "../registry/AvatarNodeRegistry";
 

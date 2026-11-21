@@ -1,12 +1,11 @@
-import React from "react";
+import type React from "react";
+
+import type { FoxBaseAssetProps } from "../../assets/foxAssetTypes";
 import { FoxL1BaseAsset } from "../../assets/FoxL1BaseAsset";
 import { FoxL2BaseAsset } from "../../assets/FoxL2BaseAsset";
 import { FoxL3BaseAsset } from "../../assets/FoxL3BaseAsset";
 import { FoxL4BaseAsset } from "../../assets/FoxL4BaseAsset";
 import { FoxL5BaseAsset } from "../../assets/FoxL5BaseAsset";
-
-
-import type { FoxBaseAssetProps } from "../../assets/foxAssetTypes";
 import type { FoxTierIndex } from "./foxZones";
 
 export interface FoxTierConfigItem {
@@ -93,7 +92,9 @@ export function getFoxTierConfigForLevel(level: number): FoxTierConfigItem {
 /**
  * Unified resolver for fox tier config accepting either a level number or object { level?, tier? }
  */
-export function getFoxTierConfig(input?: { level?: number; tier?: number } | number): FoxTierConfigItem {
+export function getFoxTierConfig(
+  input?: { level?: number; tier?: number } | number,
+): FoxTierConfigItem {
   if (typeof input === "number") {
     return getFoxTierConfigForLevel(input);
   }
@@ -108,4 +109,3 @@ export function getFoxTierConfig(input?: { level?: number; tier?: number } | num
   if (tier <= 6) return FOX_TIER_CONFIG[35];
   return FOX_TIER_CONFIG[50];
 }
-

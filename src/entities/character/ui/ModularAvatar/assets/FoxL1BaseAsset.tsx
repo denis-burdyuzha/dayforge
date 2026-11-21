@@ -1,6 +1,7 @@
 ﻿import React from "react";
-import { FOX_L1_POLYGONS } from "./FoxL1AssetData";
+
 import type { FoxBaseAssetProps } from "./foxAssetTypes";
+import { FOX_L1_POLYGONS } from "./FoxL1AssetData";
 import { FoxZonedAsset } from "./FoxZonedAsset";
 
 export type { FoxBaseAssetProps } from "./foxAssetTypes";

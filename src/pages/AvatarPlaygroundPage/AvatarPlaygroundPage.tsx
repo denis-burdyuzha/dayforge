@@ -1,12 +1,21 @@
 import { useState } from "react";
 
 import { ATTRIBUTE_LABELS_RU } from "@/entities/character/model/aspect";
+import { ATTRIBUTE_LABELS_RU as ATTR_RU, ATTRIBUTE_ORDER } from "@/entities/character/model/aspect";
 import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import type { CharacterSkillWithStats } from "@/entities/character/model/characterSkillTypes";
 import type { Character, CharacterAttribute } from "@/entities/character/model/characterTypes";
+import {
+  displaySkillName,
+  getSkillRank,
+  pickTitleSkill,
+  type SkillView,
+} from "@/entities/character/model/skillPresentation";
 import type { CharacterClassId } from "@/entities/character/model/types";
+import type { AttributeKey } from "@/entities/character/model/types";
 import { AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
+import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
 
 import styles from "./AvatarPlaygroundPage.module.scss";
 
@@ -17,6 +26,19 @@ const PRESET_SKILLS = [
   { id: "read", name: "Чтение", level: 3 },
   { id: "des", name: "Дизайн", level: 4 },
   { id: "mus", name: "Музыка", level: 2 },
+];
+
+/** Test skills for the title plate / skill cards (0–3 used, set by the «Тестовые навыки» control) */
+interface TestSkill {
+  name: string;
+  level: number;
+  form: number;
+  attr: AttributeKey;
+}
+const DEFAULT_TEST_SKILLS: TestSkill[] = [
+  { name: "Программирование", level: 12, form: 90, attr: "intelligence" },
+  { name: "Бег", level: 5, form: 60, attr: "endurance" },
+  { name: "Вязание", level: 3, form: 25, attr: "creativity" },
 ];
 
 export function AvatarPlaygroundPage() {
@@ -44,6 +66,12 @@ export function AvatarPlaygroundPage() {
   const [customSkillName, setCustomSkillName] = useState<string>("");
   const [silhouetteOnly, setSilhouetteOnly] = useState<boolean>(initialSil);
   // Archived on-body attribute FX v2 (attributeFx/) — playground-only toggle, off by default
+  const [testSkillCount, setTestSkillCount] = useState<number>(
+    Math.min(3, Math.max(0, Number(searchParams?.get("skills")) || 0)),
+  );
+  const [testSkills, setTestSkills] = useState<TestSkill[]>(DEFAULT_TEST_SKILLS);
+  const updateTestSkill = (i: number, patch: Partial<TestSkill>) =>
+    setTestSkills((prev) => prev.map((t, k) => (k === i ? { ...t, ...patch } : t)));
   const [legacyFx, setLegacyFx] = useState<boolean>(searchParams?.get("legacyFx") === "1");
   // Character id = seed of the attribute FX (same id → same picture, different id → different picture)
   const [charId, setCharId] = useState<string>(
@@ -147,6 +175,19 @@ export function AvatarPlaygroundPage() {
 
   const avatarParams = computeAvatarParams(character, attributes, skills, null);
   avatarParams.silhouetteOnly = silhouetteOnly;
+
+  const testSkillViews: SkillView[] = testSkills.slice(0, testSkillCount).map((t, i) => ({
+    id: `test-skill-${i}`,
+    name: displaySkillName(t.name),
+    level: t.level,
+    rank: getSkillRank(t.level),
+    totalXp: t.level * 50,
+    lastPracticedAt: null,
+    form: t.form,
+    primaryAttribute: t.attr,
+    attributes: [t.attr],
+  }));
+  const titleSkill = pickTitleSkill(testSkillViews);
 
   const toggleSkill = (id: string) => {
     setActivePresetSkillIds((prev) =>
@@ -389,6 +430,74 @@ export function AvatarPlaygroundPage() {
           </section>
 
           <section className={styles.section}>
+            <h3>Тестовые навыки (титул и карточки)</h3>
+            <div className={styles.field}>
+              <label>
+                Количество: <strong>{testSkillCount}</strong>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="3"
+                value={testSkillCount}
+                onChange={(e) => setTestSkillCount(Number(e.target.value))}
+                data-testid="test-skill-count"
+              />
+            </div>
+            {testSkills.slice(0, testSkillCount).map((t, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1.4fr) 52px 52px minmax(0, 1fr)",
+                  gap: "6px",
+                  marginBottom: "6px",
+                }}
+              >
+                <input
+                  className={styles.textInput}
+                  value={t.name}
+                  aria-label="Название навыка"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { name: e.target.value })}
+                />
+                <input
+                  className={styles.textInput}
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={t.level}
+                  aria-label="Уровень"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { level: Number(e.target.value) || 1 })}
+                />
+                <input
+                  className={styles.textInput}
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={t.form}
+                  aria-label="Форма %"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { form: Number(e.target.value) || 0 })}
+                />
+                <select
+                  value={t.attr}
+                  aria-label="Основной атрибут"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { attr: e.target.value as AttributeKey })}
+                >
+                  {ATTRIBUTE_ORDER.map((a) => (
+                    <option key={a} value={a}>
+                      {ATTR_RU[a]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </section>
+
+          <section className={styles.section}>
             <h3>Навыки (Нейронные отпечатки)</h3>
             <div className={styles.checkboxGroup}>
               {PRESET_SKILLS.map((sk) => (
@@ -447,7 +556,16 @@ export function AvatarPlaygroundPage() {
                 />
               </AttributeRuneRing>
             )}
+            {!bigView && <SkillTitlePlate skill={titleSkill} />}
           </div>
+
+          {testSkillViews.length > 0 && (
+            <div style={{ display: "grid", gap: "8px" }}>
+              {testSkillViews.map((sk) => (
+                <SkillCard key={sk.id} skill={sk} attributeValues={avatarParams.attributeValues} />
+              ))}
+            </div>
+          )}
 
           <p data-testid="aspect-info" style={{ margin: "8px 0", fontSize: "14px" }}>
             Аспект:{" "}

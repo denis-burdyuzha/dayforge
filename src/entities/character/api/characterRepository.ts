@@ -129,7 +129,9 @@ export const characterRepository = {
   async getCharacterSkills(characterId: string): Promise<CharacterSkill[]> {
     const { data, error } = await supabase
       .from("character_skills")
-      .select("id, character_id, name, total_hours, total_xp, last_practiced_at, created_at")
+      .select(
+        "id, character_id, name, total_hours, total_xp, last_practiced_at, created_at, primary_attribute_id, secondary_attribute_id",
+      )
       .eq("character_id", characterId)
       .order("total_xp", { ascending: false });
 
@@ -145,6 +147,8 @@ export const characterRepository = {
       totalXp: row.total_xp,
       lastPracticedAt: row.last_practiced_at,
       createdAt: row.created_at,
+      primaryAttributeId: row.primary_attribute_id,
+      secondaryAttributeId: row.secondary_attribute_id,
     }));
   },
 };

@@ -54,7 +54,7 @@ scripts/annotateFoxZones.mjs          запекает id групп из SVG в
 npm run dev            # Vite dev server; плейграунд аватара: /dev/avatar?class=explorer&level=35&social=10
 npm run build          # tsc -b && vite build  ← это НАСТОЯЩАЯ проверка типов
 npx tsc --noEmit -p tsconfig.app.json   # быстрая проверка типов приложения
-npm run lint           # eslint . (сейчас 9 ошибок: сортировка импортов в нетронутых файлах)
+npm run lint           # eslint . (src/ чистый; падает только на .ai-import/ — архив, ESLint его не игнорирует)
 npm run format         # prettier --write
 npm test               # vitest run — тесты attributeFx (на Windows запускать из X:\DayForge, не x:)
 npx supabase db push   # применить миграции к привязанному проекту

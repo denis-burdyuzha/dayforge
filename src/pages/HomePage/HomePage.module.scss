@@ -149,16 +149,21 @@
   width: 100%;
 }
 
-/* Sigil wrapper — fixed size prevents translateY from affecting flow */
+/* Sigil wrapper — holds the rune ring (fixed-size box: the avatar float never affects flow) */
 .sigilWrapper {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 180px;
-  height: 180px;
-  /* overflow: hidden clips any possible overflow from scale/translate */
-  overflow: hidden;
+  max-width: 100%;
+}
+
+/* Avatar box inside the ring: glow + floating avatar (runes do not float) */
+.sigilAvatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Glow halo behind the sigil — synced pulse with floatY (task 1) */

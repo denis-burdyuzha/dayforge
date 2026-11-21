@@ -12,6 +12,7 @@ import {
 } from "@/entities/character/model/characterTypes";
 import { characterClasses } from "@/entities/character/model/classes";
 import { useCharacterData } from "@/entities/character/model/useCharacterData";
+import { AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 import { Badge } from "@/shared/ui/Badge/ui/Badge";
 import { Card } from "@/shared/ui/Card/ui/Card";
@@ -35,6 +36,9 @@ const ATTRIBUTE_ICONS: Record<string, string> = {
   social: "🤝",
   creativity: "🎨",
 };
+
+/** Rune ring diameter around the 200×240 hero avatar (fits a 390px-wide screen) */
+const HERO_RING_SIZE = 340;
 
 function getAttrIcon(code: string): string {
   return ATTRIBUTE_ICONS[code] ?? "✨";
@@ -243,10 +247,14 @@ const HomePage = () => {
         <div className={styles.heroContent}>
           {/* Modular Vector Avatar */}
           <div className={styles.sigilWrapper}>
-            <div className={styles.sigilGlow} style={{ background: accentColor }} />
-            <div className={styles.sigilReveal}>
-              <ModularAvatar params={avatarParams} size="lg" />
-            </div>
+            <AttributeRuneRing attributes={avatarParams.attributeValues} size={HERO_RING_SIZE}>
+              <div className={styles.sigilAvatar}>
+                <div className={styles.sigilGlow} style={{ background: accentColor }} />
+                <div className={styles.sigilReveal}>
+                  <ModularAvatar params={avatarParams} size="lg" />
+                </div>
+              </div>
+            </AttributeRuneRing>
           </div>
 
           <h1 className={styles.heroName}>{character.name}</h1>

@@ -5,6 +5,7 @@ import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import type { CharacterSkillWithStats } from "@/entities/character/model/characterSkillTypes";
 import type { Character, CharacterAttribute } from "@/entities/character/model/characterTypes";
 import type { CharacterClassId } from "@/entities/character/model/types";
+import { AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 
 import styles from "./AvatarPlaygroundPage.module.scss";
@@ -422,15 +423,30 @@ export function AvatarPlaygroundPage() {
           <div
             className={styles.avatarWrapper}
             style={
-              bigView ? { position: "fixed", inset: 0, zIndex: 999, borderRadius: 0 } : undefined
+              bigView
+                ? { position: "fixed", inset: 0, zIndex: 999, borderRadius: 0 }
+                : { padding: "8px" }
             }
           >
-            <ModularAvatar
-              params={avatarParams}
-              size={bigView ? 820 : 300}
-              silhouetteOnly={silhouetteOnly}
-              legacyAttributeFx={legacyFx}
-            />
+            {bigView ? (
+              // big=1: the bare avatar at 820px for close inspection (no rune ring)
+              <ModularAvatar
+                params={avatarParams}
+                size={820}
+                silhouetteOnly={silhouetteOnly}
+                legacyAttributeFx={legacyFx}
+              />
+            ) : (
+              // Same composition as the character page hero: 200×240 avatar inside a 340px rune ring
+              <AttributeRuneRing attributes={avatarParams.attributeValues} size={340}>
+                <ModularAvatar
+                  params={avatarParams}
+                  size="lg"
+                  silhouetteOnly={silhouetteOnly}
+                  legacyAttributeFx={legacyFx}
+                />
+              </AttributeRuneRing>
+            )}
           </div>
 
           <p data-testid="aspect-info" style={{ margin: "8px 0", fontSize: "14px" }}>

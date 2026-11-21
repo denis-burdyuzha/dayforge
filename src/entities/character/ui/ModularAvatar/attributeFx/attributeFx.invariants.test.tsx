@@ -13,7 +13,6 @@ import { getFoxAnatomy } from "../creatures/fox/foxAnatomy";
 import { FOX_TIER_CONFIG } from "../creatures/fox/foxEvolutionConfig";
 import type { FoxTierIndex } from "../creatures/fox/foxZones";
 import { ModularAvatar } from "../ModularAvatar";
-import { distToOutline, pointInPoly } from "./anatomy";
 import { AttributeFxLayer } from "./AttributeFxLayer";
 import { createBodyToneResolver } from "./bodyTone";
 import { computeCreativitySign } from "./computeCreativity";
@@ -22,7 +21,7 @@ import { computeEnduranceScars } from "./computeEndurance";
 import { computeIntelligenceNetwork } from "./computeIntelligence";
 import { computeSocialConstellation } from "./computeSocial";
 import { computeStrengthSpikes } from "./computeStrength";
-import { type AttributeValues, createFxContext, type FxContext } from "./fxContext";
+import { type AttributeValues, createFxContext, FX_TOP_BAND, type FxContext } from "./fxContext";
 import { fxStep } from "./fxSeed";
 
 const TIERS: FoxTierIndex[] = [1, 2, 3, 4, 5];
@@ -175,7 +174,7 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
 
         it(`${name}: effects do not overlap`, () => {
           const ctx = ctxFor(tier, v);
-          const { geo, orbit } = ctx;
+          const { geo, silhouette } = ctx;
           const blocked = new Set([...geo.forehead, ...geo.nape]);
           const sign = computeCreativitySign(ctx);
           for (const id of [...(sign?.path ?? []), ...(sign?.branches.flat() ?? [])]) {
@@ -185,16 +184,19 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
           const head = new Set(geo.headPolys);
           for (const id of net?.facets ?? []) expect(head.has(id)).toBe(true);
 
-          const hull = geo.silhouetteHull.map(ctx.toCanvas);
+          const bandY = 240 * FX_TOP_BAND;
           const crystals = computeDisciplineCrystals(ctx);
           for (const c of crystals?.crystals ?? []) {
-            const a = Math.atan2(c.p[1] - orbit.center[1], c.p[0] - orbit.center[0]);
-            const d = Math.hypot(c.p[0] - orbit.center[0], c.p[1] - orbit.center[1]);
-            expect(orbit.isInsideSilhouette(c.p)).toBe(false);
-            expect(d + 1e-6).toBeGreaterThanOrEqual(orbit.silhouetteDistance(a) + orbit.minGap);
+            // whole crystal inside the canvas, below the Social band, ≥4px clear of the silhouette
+            expect(c.p[0] - crystals!.halfW).toBeGreaterThanOrEqual(0);
+            expect(c.p[0] + crystals!.halfW).toBeLessThanOrEqual(200);
+            expect(c.p[1] - crystals!.halfH).toBeGreaterThanOrEqual(bandY);
+            expect(c.p[1] + crystals!.halfH).toBeLessThanOrEqual(240);
+            expect(silhouette.distanceTo(c.p)).toBeGreaterThanOrEqual(crystals!.radius + 4);
           }
           const social = computeSocialConstellation(ctx);
           const stars = social?.stars ?? [];
+          expect(stars.length).toBeLessThanOrEqual(5);
           for (let i = 0; i < stars.length; i++) {
             for (let j = i + 1; j < stars.length; j++) {
               const d = Math.hypot(
@@ -205,13 +207,12 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
             }
           }
           for (const s of stars) {
-            expect(pointInPoly(s.p[0], s.p[1], hull)).toBe(false);
-            expect(distToOutline(s.p, hull)).toBeGreaterThanOrEqual(8);
-            expect(s.p[1]).toBeLessThanOrEqual(240 * 0.7);
-            if (crystals) {
-              const d = Math.hypot(s.p[0] - crystals.center[0], s.p[1] - crystals.center[1]);
-              expect(Math.abs(d - crystals.orbitRadius)).toBeGreaterThanOrEqual(12);
-            }
+            // whole star inside the Social band and the canvas (6px), ≥8px from the silhouette
+            expect(s.p[1] + s.r).toBeLessThanOrEqual(bandY);
+            expect(s.p[1] - s.r).toBeGreaterThanOrEqual(6);
+            expect(s.p[0] - s.r).toBeGreaterThanOrEqual(6);
+            expect(s.p[0] + s.r).toBeLessThanOrEqual(194);
+            expect(silhouette.distanceTo(s.p)).toBeGreaterThanOrEqual(8 + s.r);
           }
         });
       }
@@ -221,10 +222,12 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
         expect(computeStrengthSpikes(ctx)).toHaveLength(7);
         expect(computeEnduranceScars(ctx)).toHaveLength(4);
         expect(computeIntelligenceNetwork(ctx)!.facets).toHaveLength(10);
-        expect(computeDisciplineCrystals(ctx)!.crystals).toHaveLength(6);
+        // as many as fit (≤6 crystals in free slots, ≤5 stars in the top band)
+        const formation = computeDisciplineCrystals(ctx)!;
+        expect(formation.crystals).toHaveLength(Math.min(6, formation.freeSlots.length));
         const social = computeSocialConstellation(ctx)!;
-        expect(social.stars).toHaveLength(8);
-        expect(social.threads).toHaveLength(7);
+        expect(social.stars.length).toBeLessThanOrEqual(5);
+        expect(social.threads).toHaveLength(Math.max(0, social.stars.length - 1));
         const sign = computeCreativitySign(ctx)!;
         expect(sign.path.length - 1).toBe(14);
         expect(sign.branches.map((b) => b.length - 1)).toEqual([3, 3]);

@@ -9,6 +9,7 @@ import {
   type AnatomyGeometry,
   bboxOf,
   type CreatureAnatomy,
+  distToSegment,
   getAnatomyGeometry,
   pointInPoly,
   type Pt,
@@ -26,16 +27,18 @@ export interface AssetTransform {
   scale: number;
 }
 
-export interface CrystalOrbit {
-  /** canvas coords */
-  center: Pt;
+/**
+ * Outer space split (canvas): the top 35% belongs to Social only; the rest of the space around the
+ * silhouette (sides and bottom) belongs to Discipline only.
+ */
+export const FX_TOP_BAND = 0.35;
+
+export interface SilhouetteProbe {
   /** crystal size in canvas px */
   crystalSize: number;
-  /** minimal clearance between a crystal centre and the silhouette, canvas px */
-  minGap: number;
-  /** furthest silhouette point along a ray from the centre (canvas px) */
-  silhouetteDistance: (angleRad: number) => number;
-  isInsideSilhouette: (p: Pt) => boolean;
+  /** distance (canvas px) from a point to the silhouette; 0 when inside */
+  distanceTo: (p: Pt) => number;
+  isInside: (p: Pt) => boolean;
 }
 
 export interface FxContext {
@@ -48,7 +51,7 @@ export interface FxContext {
   /** asset units per 1 canvas px */
   unit: number;
   toCanvas: (p: Pt) => Pt;
-  orbit: CrystalOrbit;
+  silhouette: SilhouetteProbe;
 }
 
 interface CanvasPoly {
@@ -59,18 +62,19 @@ interface CanvasPoly {
   maxY: number;
 }
 
-function buildOrbit(
+function buildSilhouette(
   geo: AnatomyGeometry,
   anatomy: CreatureAnatomy,
   t: AssetTransform,
-): CrystalOrbit {
+): SilhouetteProbe {
   const toCanvas = (p: Pt): Pt => [t.tx + p[0] * t.scale, t.ty + p[1] * t.scale];
   const polys: CanvasPoly[] = anatomy.polygons.map((p) => {
     const pts = p.points.map(toCanvas);
     const bb = bboxOf(pts);
     return { pts, minX: bb.minX, minY: bb.minY, maxX: bb.maxX, maxY: bb.maxY };
   });
-  const isInsideSilhouette = (p: Pt): boolean =>
+  const outer = geo.outerEdges.map((e) => [toCanvas(e.a), toCanvas(e.b)] as const);
+  const isInside = (p: Pt): boolean =>
     polys.some(
       (q) =>
         p[0] >= q.minX &&
@@ -79,46 +83,38 @@ function buildOrbit(
         p[1] <= q.maxY &&
         pointInPoly(p[0], p[1], q.pts),
     );
+  const distanceTo = (p: Pt): number => {
+    if (isInside(p)) return 0;
+    let m = Infinity;
+    for (const [a, b] of outer) m = Math.min(m, distToSegment(p, a, b));
+    return m;
+  };
   const sb = geo.silhouetteBBox;
-  const center = toCanvas([sb.cx, sb.cy]);
   const halfDiag = (Math.hypot(sb.w, sb.h) / 2) * t.scale;
-  const maxR = halfDiag + 10;
-  const silhouetteDistance = (angle: number): number => {
-    const c = Math.cos(angle);
-    const s = Math.sin(angle);
-    let inside = 0;
-    for (let r = 0; r <= maxR; r += 2) {
-      if (isInsideSilhouette([center[0] + r * c, center[1] + r * s])) inside = r;
-    }
-    return inside;
-  };
   const crystalSize = Math.max(6, Math.min(12, halfDiag * 0.13));
-  const minGap = crystalSize * 1.5 + 10;
-  return {
-    center,
-    crystalSize,
-    minGap,
-    silhouetteDistance,
-    isInsideSilhouette,
-  };
+  return { crystalSize, distanceTo, isInside };
 }
 
-const orbitCache = new WeakMap<CreatureAnatomy, Map<string, CrystalOrbit>>();
+const silhouetteCache = new WeakMap<CreatureAnatomy, Map<string, SilhouetteProbe>>();
 
-/** Orbit is expensive (ray-marching) — cached per anatomy + transform */
-function getOrbit(geo: AnatomyGeometry, anatomy: CreatureAnatomy, t: AssetTransform): CrystalOrbit {
-  let byTransform = orbitCache.get(anatomy);
+/** Canvas-space silhouette probe — cached per anatomy + transform */
+function getSilhouette(
+  geo: AnatomyGeometry,
+  anatomy: CreatureAnatomy,
+  t: AssetTransform,
+): SilhouetteProbe {
+  let byTransform = silhouetteCache.get(anatomy);
   if (!byTransform) {
     byTransform = new Map();
-    orbitCache.set(anatomy, byTransform);
+    silhouetteCache.set(anatomy, byTransform);
   }
   const key = `${t.tx}|${t.ty}|${t.scale}`;
-  let orbit = byTransform.get(key);
-  if (!orbit) {
-    orbit = buildOrbit(geo, anatomy, t);
-    byTransform.set(key, orbit);
+  let probe = byTransform.get(key);
+  if (!probe) {
+    probe = buildSilhouette(geo, anatomy, t);
+    byTransform.set(key, probe);
   }
-  return orbit;
+  return probe;
 }
 
 export function createFxContext(input: {
@@ -139,6 +135,6 @@ export function createFxContext(input: {
     transform,
     unit: 1 / transform.scale,
     toCanvas: (p) => [transform.tx + p[0] * transform.scale, transform.ty + p[1] * transform.scale],
-    orbit: getOrbit(geo, anatomy, transform),
+    silhouette: getSilhouette(geo, anatomy, transform),
   };
 }

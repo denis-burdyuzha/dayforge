@@ -20,20 +20,36 @@ function facetShade(base: string, light: string, k: number): string {
  */
 export function DisciplineFx({ ctx }: { ctx: FxContext }): React.ReactElement | null {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scaleFactor, setScaleFactor] = useState<number>(1.25);
+  // Canvas → overlay mapping. The sibling <svg> renders the 200×240 viewBox with "xMidYMid meet", so the
+  // canvas is letter-boxed whenever the box is not exactly 200:240 — measure it instead of assuming it.
+  const [map, setMap] = useState<{ scale: number; ox: number; oy: number }>({
+    scale: 1.25,
+    ox: 0,
+    oy: 0,
+  });
 
   useLayoutEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    const svg = el?.parentElement?.querySelector("svg");
+    if (!el || !svg) return;
     const update = () => {
-      const width = el.clientWidth;
-      if (width > 0) setScaleFactor(width / FX_CANVAS.w);
+      const o = el.getBoundingClientRect();
+      const r = svg.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return;
+      const scale = Math.min(r.width / FX_CANVAS.w, r.height / FX_CANVAS.h);
+      setMap({
+        scale,
+        ox: r.left - o.left + (r.width - FX_CANVAS.w * scale) / 2,
+        oy: r.top - o.top + (r.height - FX_CANVAS.h * scale) / 2,
+      });
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(el);
+    observer.observe(svg);
     return () => observer.disconnect();
   }, []);
+  const scaleFactor = map.scale;
 
   const formation = computeDisciplineCrystals(ctx);
   const { accent, light } = ctx.palette;
@@ -73,8 +89,8 @@ export function DisciplineFx({ ctx }: { ctx: FxContext }): React.ReactElement | 
           key={`disc-crystal-${i}`}
           style={{
             position: "absolute",
-            left: `${((c.p[0] / FX_CANVAS.w) * 100).toFixed(2)}%`,
-            top: `${((c.p[1] / FX_CANVAS.h) * 100).toFixed(2)}%`,
+            left: `${(map.ox + c.p[0] * map.scale).toFixed(1)}px`,
+            top: `${(map.oy + c.p[1] * map.scale).toFixed(1)}px`,
             transform: "translate(-50%, -50%)",
             perspective: `${(300 * scaleFactor).toFixed(1)}px`,
           }}

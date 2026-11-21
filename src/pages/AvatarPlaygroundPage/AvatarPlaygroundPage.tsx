@@ -41,6 +41,8 @@ export function AvatarPlaygroundPage() {
   const [activePresetSkillIds, setActivePresetSkillIds] = useState<string[]>(["prog"]);
   const [customSkillName, setCustomSkillName] = useState<string>("");
   const [silhouetteOnly, setSilhouetteOnly] = useState<boolean>(initialSil);
+  // Archived on-body attribute FX v2 (attributeFx/) — playground-only toggle, off by default
+  const [legacyFx, setLegacyFx] = useState<boolean>(searchParams?.get("legacyFx") === "1");
   // Character id = seed of the attribute FX (same id → same picture, different id → different picture)
   const [charId, setCharId] = useState<string>(
     searchParams?.get("charId") || "playground-dev-char-id",
@@ -241,6 +243,16 @@ export function AvatarPlaygroundPage() {
               </button>
             </div>
 
+            <label className={styles.checkboxLabel} style={{ marginBottom: "12px" }}>
+              <input
+                type="checkbox"
+                checked={legacyFx}
+                onChange={(e) => setLegacyFx(e.target.checked)}
+                data-testid="legacy-fx-toggle"
+              />
+              <span>Старые эффекты атрибутов (v2)</span>
+            </label>
+
             <div className={styles.field}>
               <label>Character ID (seed эффектов):</label>
               <input
@@ -416,6 +428,7 @@ export function AvatarPlaygroundPage() {
               params={avatarParams}
               size={bigView ? 820 : 300}
               silhouetteOnly={silhouetteOnly}
+              legacyAttributeFx={legacyFx}
             />
           </div>
 

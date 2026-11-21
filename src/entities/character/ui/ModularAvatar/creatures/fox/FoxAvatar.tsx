@@ -14,6 +14,8 @@ import { getFoxFxConfig } from "./foxFxMatrix";
 export interface FoxAvatarProps {
   params: AvatarParams;
   isSilhouette?: boolean;
+  /** Dev-only: render the archived on-body attribute FX v2 (playground toggle) */
+  legacyAttributeFx?: boolean;
 }
 
 // ── Static spark position templates (tier particles) ──
@@ -37,7 +39,11 @@ const SPARK_DEFS = [
  * + universal attribute FX (../../attributeFx). ZERO mesh mutation: attribute effects are overlays
  * and fill-tone modifiers only.
  */
-export const FoxAvatar: React.FC<FoxAvatarProps> = ({ params, isSilhouette = false }) => {
+export const FoxAvatar: React.FC<FoxAvatarProps> = ({
+  params,
+  isSilhouette = false,
+  legacyAttributeFx = false,
+}) => {
   const { evolution } = params;
   const level = evolution.level ?? 1;
   const classId = evolution.classArchetype ?? "explorer";
@@ -54,10 +60,11 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({ params, isSilhouette = fal
   const values = params.attributeValues;
   const seedKey = params.identity.seedKey;
   const ctx = createFxContext({ anatomy, classId, values, seedKey, transform: { tx, ty, scale } });
-  const resolveFill = createBodyToneResolver({
-    torsoZones: anatomy.zones.torso,
-    strength: values.strength,
-  });
+  // On-body attribute FX v2 are archived: only the playground toggle turns them (and the Strength
+  // torso tone) on. The body carries no attribute effects in the app.
+  const resolveFill = legacyAttributeFx
+    ? createBodyToneResolver({ torsoZones: anatomy.zones.torso, strength: values.strength })
+    : undefined;
 
   // 3. Tier particles: count, radius and centre depend ONLY on the tier
   const bodyCenter = ctx.toCanvas(ctx.geo.torsoCenter);
@@ -144,7 +151,7 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({ params, isSilhouette = fal
             )}
 
             {/* Attribute FX behind the body (Social constellation) */}
-            <AttributeFxLayer ctx={ctx} layer="back" />
+            {legacyAttributeFx && <AttributeFxLayer ctx={ctx} layer="back" />}
           </>
         )}
 
@@ -160,16 +167,16 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({ params, isSilhouette = fal
             {isSilhouette ? (
               <AssetComponent isSilhouette={true} />
             ) : (
-              <AssetComponent resolveFill={resolveFill} />
+              <AssetComponent {...(resolveFill ? { resolveFill } : {})} />
             )}
           </g>
 
-          {!isSilhouette && <AttributeFxLayer ctx={ctx} layer="front" />}
+          {!isSilhouette && legacyAttributeFx && <AttributeFxLayer ctx={ctx} layer="front" />}
         </g>
       </svg>
 
       {/* ── Foreground: Discipline crystals (HTML/CSS-3D overlay) ── */}
-      {!isSilhouette && <AttributeFxLayer ctx={ctx} layer="overlay" />}
+      {!isSilhouette && legacyAttributeFx && <AttributeFxLayer ctx={ctx} layer="overlay" />}
     </div>
   );
 };

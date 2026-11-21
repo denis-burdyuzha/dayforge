@@ -20,6 +20,11 @@ export interface ModularAvatarProps {
   size?: ModularAvatarSize | number;
   className?: string;
   silhouetteOnly?: boolean;
+  /**
+   * Dev-only: render the archived on-body attribute FX v2 (attributeFx/). Off everywhere in the app;
+   * only the /dev/avatar playground toggles it.
+   */
+  legacyAttributeFx?: boolean;
 }
 
 export function ModularAvatar({
@@ -27,6 +32,7 @@ export function ModularAvatar({
   size = "lg",
   className,
   silhouetteOnly = false,
+  legacyAttributeFx = false,
 }: ModularAvatarProps) {
   const { palette, posture, body, evolution } = params;
   const isSilhouette = silhouetteOnly || Boolean(params.silhouetteOnly);
@@ -48,7 +54,11 @@ export function ModularAvatar({
   if (evolution.classArchetype === "explorer") {
     return (
       <div className={containerClasses} style={customStyle}>
-        <FoxAvatar params={params} isSilhouette={isSilhouette} />
+        <FoxAvatar
+          params={params}
+          isSilhouette={isSilhouette}
+          legacyAttributeFx={legacyAttributeFx}
+        />
       </div>
     );
   }

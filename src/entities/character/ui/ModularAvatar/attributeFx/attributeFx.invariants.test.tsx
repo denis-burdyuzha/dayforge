@@ -132,6 +132,40 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
     }
   });
 
+  it("app render has no on-body attribute FX; the playground toggle (legacyAttributeFx) restores them", () => {
+    const all18 = Object.fromEntries(Object.keys(PRESETS["Новичок"]!).map((k) => [k, 18]));
+    for (const level of [1, 10, 50]) {
+      const attrs: CharacterAttribute[] = Object.entries(all18).map(([code, value], i) => ({
+        id: `a${i}`,
+        attributeId: `attr-${code}`,
+        code,
+        name: code,
+        value,
+      }));
+      const params = computeAvatarParams(
+        {
+          id: "char-A",
+          profileId: "p",
+          name: "n",
+          class: "explorer",
+          level,
+          totalXp: 0,
+          createdAt: "",
+        },
+        attrs,
+        [],
+        null,
+      );
+      const off = renderToStaticMarkup(<ModularAvatar params={params} size={300} />);
+      expect(off).not.toMatch(/attr-fx-/);
+      const on = renderToStaticMarkup(
+        <ModularAvatar params={params} size={300} legacyAttributeFx />,
+      );
+      expect(on).toMatch(/attr-fx-front/);
+      expect(on).toMatch(/attr-fx-discipline/);
+    }
+  });
+
   for (const tier of TIERS) {
     describe(`L${tier}`, () => {
       it("«Новичок»: no attribute FX elements at all", () => {

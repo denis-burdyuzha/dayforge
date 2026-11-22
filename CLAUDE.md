@@ -38,8 +38,8 @@ scripts/annotateFoxZones.mjs          запекает id групп из SVG в
 
 Аватар (самое важное): `src/entities/character/ui/ModularAvatar/`
 
-- `ModularAvatar.tsx` — диспетчер по классу (сейчас только `explorer` → `creatures/fox/FoxAvatar.tsx`;
-  остальные классы рендерятся СТАРЫМ органическим рендером `Creature*.tsx`).
+- `ModularAvatar.tsx` — диспетчер по классу: `explorer` → `creatures/fox/FoxAvatar.tsx`, `warrior` →
+  `creatures/wolf/WolfAvatar.tsx`; creator/strategist/wanderer — СТАРЫЙ органический рендер `Creature*.tsx`.
 - Атрибуты сейчас: `model/aspect.ts` (аспект) + `ui/AttributeRuneRing/` (круг рун). Тело эффектов не несёт.
 - `attributeFx/` — ОТЛОЖЕНО (только при `legacyAttributeFx` в Playground): универсальные эффекты 7 атрибутов (anatomy, fxContext, fxPalette, fxSeed,
   bodyTone, compute<Attr>.ts + <Attr>Fx.tsx, AttributeFxLayer, тест инвариантов). Ничего лисьего внутри.
@@ -77,7 +77,8 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
 Атрибуты: аспект (цвет rim/ауры + сигил за аватаром) + вращающийся круг рун (22.11.2026, в `main`); эффекты на
 теле v2 отложены (тег `avatar-attribute-fx-v2`, чекбокс в Playground). Миграцию онбординга (20261122150000) нужно
 применить `npx supabase db push`. Открытые вопросы — `progress.md`.
-Дальше: Волк (Warrior) по тому же asset-driven циклу → Ворон, Сова, Олень → история прогресса → AI-слой.
+Волк (Warrior) готов (22.11.2026, `scripts/buildWolfAssets.mjs`). Дальше: Ворон, Сова, Олень по образцу волка →
+история прогресса → AI-слой.
 
 ## ПРАВИЛА работы
 

@@ -7,6 +7,7 @@ import { CreatureFace } from "./CreatureFace";
 import { CreatureHead } from "./CreatureHead";
 import { CreatureMarkings } from "./CreatureMarkings";
 import { FoxAvatar } from "./creatures/fox";
+import { WolfAvatar } from "./creatures/wolf";
 import { CreatureShadow } from "./CreatureShadow";
 import { CreatureSkillImprints } from "./CreatureSkillImprints";
 import { CreatureTail } from "./CreatureTail";
@@ -50,7 +51,7 @@ export function ModularAvatar({
       ? { width: `${size}px`, height: `${Math.round(size * 1.2)}px` }
       : undefined;
 
-  // ── Class Renderer Dispatch: Explorer → Isolated Fox Avatar ──
+  // ── Class Renderer Dispatch: Explorer → Fox, Warrior → Wolf; other classes → legacy organic renderer ──
   if (evolution.classArchetype === "explorer") {
     return (
       <div className={containerClasses} style={customStyle}>
@@ -59,6 +60,15 @@ export function ModularAvatar({
           isSilhouette={isSilhouette}
           legacyAttributeFx={legacyAttributeFx}
         />
+      </div>
+    );
+  }
+
+  // ── Warrior → low-poly Wolf (same pipeline as the fox; the archived v2 FX toggle does not apply) ──
+  if (evolution.classArchetype === "warrior") {
+    return (
+      <div className={containerClasses} style={customStyle}>
+        <WolfAvatar params={params} isSilhouette={isSilhouette} />
       </div>
     );
   }

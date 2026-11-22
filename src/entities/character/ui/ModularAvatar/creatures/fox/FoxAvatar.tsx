@@ -9,6 +9,7 @@ import { createFxContext } from "../../attributeFx/fxContext";
 import { CreatureAura } from "../../CreatureAura";
 import { CreatureShadow } from "../../CreatureShadow";
 import styles from "../../ModularAvatar.module.scss";
+import { tierSparkPositions } from "../../tierSparks";
 import { getFoxAnatomy } from "./foxAnatomy";
 import { getFoxTierConfig } from "./foxEvolutionConfig";
 import { getFoxFxConfig } from "./foxFxMatrix";
@@ -25,23 +26,6 @@ export interface FoxAvatarProps {
   /** Dev-only: render the archived on-body attribute FX v2 (playground toggle) */
   legacyAttributeFx?: boolean;
 }
-
-// ── Static spark position templates (tier particles). Cool sparks are neutral white: cyan is reserved
-// for the Intelligence aspect. ──
-const SPARK_DEFS = [
-  { cx: 28, cy: 95, r: 3.2, color: "#ff8800", opacity: 0.8 },
-  { cx: 174, cy: 68, r: 2.4, color: "#e2e8f0", opacity: 0.85 },
-  { cx: 22, cy: 165, r: 3.8, color: "#ff5500", opacity: 0.65 },
-  { cx: 178, cy: 152, r: 2.0, color: "#e2e8f0", opacity: 0.9 },
-  { cx: 100, cy: 24, r: 2.8, color: "#ffaa00", opacity: 0.75 },
-  { cx: 162, cy: 198, r: 2.2, color: "#ff6600", opacity: 0.55 },
-  { cx: 40, cy: 45, r: 2.6, color: "#e2e8f0", opacity: 0.8 },
-  { cx: 155, cy: 110, r: 3.0, color: "#ff8800", opacity: 0.7 },
-  { cx: 30, cy: 130, r: 2.5, color: "#ffbb00", opacity: 0.6 },
-  { cx: 170, cy: 35, r: 3.4, color: "#e2e8f0", opacity: 0.85 },
-  { cx: 115, cy: 15, r: 2.3, color: "#ff7700", opacity: 0.75 },
-  { cx: 145, cy: 215, r: 2.7, color: "#e2e8f0", opacity: 0.65 },
-];
 
 /**
  * FoxAvatar — level-driven 5-tier asset architecture + tier FX matrix (rim glow, aura, particles)
@@ -104,14 +88,7 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
 
   // 3. Tier particles: count, radius and centre depend ONLY on the tier
   const bodyCenter = ctx.toCanvas(ctx.geo.torsoCenter);
-  const ringRadius = fx.particles.radius;
-  const sparkPositions = Array.from({ length: fx.particles.count }, (_, i) => {
-    const s = SPARK_DEFS[i % SPARK_DEFS.length] ?? { cx: 100, cy: 90 };
-    return {
-      cx: bodyCenter[0] + (s.cx - 100) * (ringRadius / 85),
-      cy: bodyCenter[1] + (s.cy - 90) * (ringRadius / 85),
-    };
-  });
+  const sparks = tierSparkPositions(fx.particles.count, bodyCenter, fx.particles.radius);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -170,21 +147,18 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
               </g>
             )}
 
-            {sparkPositions.length > 0 && (
+            {sparks.length > 0 && (
               <g className="creature-ember-sparks" filter="url(#avatar-glow-filter)">
-                {sparkPositions.map((pos, i) => {
-                  const src = SPARK_DEFS[i % SPARK_DEFS.length];
-                  return (
-                    <circle
-                      key={`evo-spark-${i}`}
-                      cx={Math.round(pos.cx * 10) / 10}
-                      cy={Math.round(pos.cy * 10) / 10}
-                      r={src?.r ?? 2.5}
-                      fill={src?.color ?? "#e2e8f0"}
-                      opacity={src?.opacity ?? 0.7}
-                    />
-                  );
-                })}
+                {sparks.map((sp, i) => (
+                  <circle
+                    key={`evo-spark-${i}`}
+                    cx={sp.cx}
+                    cy={sp.cy}
+                    r={sp.r}
+                    fill={sp.color}
+                    opacity={sp.opacity}
+                  />
+                ))}
               </g>
             )}
 

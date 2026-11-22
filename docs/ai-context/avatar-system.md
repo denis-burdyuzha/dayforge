@@ -13,7 +13,8 @@ Character + attributes + character_skills + daily_state
   → AvatarParams                     entities/character/model/avatarTypes.ts
   → <ModularAvatar params size/>     ui/ModularAvatar/ModularAvatar.tsx
       ├─ classArchetype === "explorer" → creatures/fox/FoxAvatar.tsx   (asset-driven пайплайн)
-      └─ остальные 4 класса          → Creature*.tsx                    (СТАРЫЙ органический Безье-рендер, отвергнут)
+      ├─ classArchetype === "warrior"  → creatures/wolf/WolfAvatar.tsx (тот же пайплайн, без зон; 22.11.2026)
+      └─ creator / strategist / wanderer → Creature*.tsx                (СТАРЫЙ органический Безье-рендер, отвергнут)
 ```
 
 Используется на HomePage (`size="lg"`, внутри `AttributeRuneRing` size 340) и в `/dev/avatar` (AvatarPlaygroundPage:
@@ -75,7 +76,7 @@ AI-референс → векторизация (полигоны `segment_X_po
 | L5  | head (67), ears (13), eyes (9), snout (37), torso (112), arms (107), legs (97), **tailArray (493)**                       |
 
 Кончик хвоста (`tailTip`) размечен только на L2; на L5 все хвосты — одна группа `tailArray`.
-`foxL{2..5}_old.svg` — неразмеченные копии (не используются). `wolfL1.svg` — 672 полигона, 78 вне групп, AssetData нет.
+`foxL{2..5}_old.svg` — неразмеченные копии (не используются). Волк — §4.
 
 ### Слои FoxAvatar (снизу вверх)
 
@@ -278,22 +279,40 @@ DisciplineFx измеряет реальный прямоугольник SVG и
 
 ## 4. Остальные классы
 
-| Класс      | Животное | Статус                                                                                                             |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
-| Explorer   | Лиса     | 5 ассетов-тиров, эффекты атрибутов v2                                                                              |
-| Warrior    | Волк     | `creatures/wolf/` — старый процедурный TSX-волк (не подключён); `wolfL1.svg` не размечен в AssetData; палитра есть |
-| Creator    | Ворон    | нет; старый органический рендер                                                                                    |
-| Strategist | Сова     | нет; старый органический рендер                                                                                    |
-| Wanderer   | Олень    | нет; старый органический рендер                                                                                    |
+| Класс      | Животное | Статус                                                                                     |
+| ---------- | -------- | ------------------------------------------------------------------------------------------ |
+| Класс      | Животное | Статус                                                                                     |
+| ---------- | -------- | ------------------------------------------------------------------------------------------ |
+| Explorer   | Лиса     | 5 ассетов-тиров с зонами, аспект + сигил + кольцо рун, кончики хвостов в цвете аспекта     |
+| Warrior    | Волк     | 5 ассетов-тиров БЕЗ зон, аспект + сигил + кольцо рун; без перекраски хвоста (22.11.2026)   |
+| Creator    | Ворон    | нет; старый органический рендер                                                            |
+| Strategist | Сова     | нет; старый органический рендер                                                            |
+| Wanderer   | Олень    | нет; старый органический рендер                                                            |
 
-Новый класс: референсы → векторизация → разметка `<g id>` → AssetData → папка `creatures/<animal>/` (Avatar +
-адаптер `build<Animal>Anatomy` с зонами head/torso/eyes/limbs/tail) → эффекты атрибутов подключаются без изменений.
+**Волк (`creatures/wolf/`, 22.11.2026).** Старый процедурный TSX-волк удалён.
+
+- Исходники `src/assets/images/baseForm/warrior/wolfL{1..5}.svg` (только треугольники, у каждого своя заливка; не
+  изменяются). `node scripts/buildWolfAssets.mjs` → `creatures/wolf/assets/WolfL{N}AssetData.ts`: полигоны в
+  порядке документа (z-order), исходные цвета (как у лисы — без палитры класса), `WOLF_L{N}_FIT`.
+- Полигонов: L1 672, L2 721, L3 838, L4 560, L5 1375.
+- Вписывание — правило лисы (выведено из её конфигов): bbox полигонов вписан в 168 × 208 (поля 16px канваса
+  200 × 240) с центром (100, 120). Поэтому волк занимает ту же «рамку», что лиса того же тира; но L2/L3 у волка
+  шире и площе (профиль 1.75 : 1 против 1.23 у лисы) — упирается в ширину и выглядит ниже лисы.
+- `WolfL{N}BaseAsset` рендерит общий `FoxZonedAsset` (зону заменяет константа `"unassigned"`, `wolfAssetTypes.ts`).
+- Тиры по уровню — те же пороги, что у лисы: 1–2, 3–9, 10–34, 35–49, 50+ (`wolfEvolutionConfig.ts`).
+- `WOLF_FX_MATRIX` — копия значений `FOX_FX_MATRIX`. Общие модули: `tierFx.ts` (типы), `tierSparks.ts` (шаблоны
+  тировых искр; центр орбиты у волка — (100, 120), у лисы — центроид торса из анатомии).
+- Нет: зон/анатомии, перекраски кончиков хвоста, эффектов атрибутов v2 (переключатель в Playground для warrior
+  ничего не делает). Тест: `creatures/wolf/wolfAvatar.test.tsx`.
+
+Новый класс по образцу волка: SVG на тир → скрипт-генератор данных (+ fit по правилу лисы) → `creatures/<animal>/`
+(BaseAsset’ы, evolutionConfig, FxMatrix, Avatar) → ветка в `ModularAvatar`. Зоны нужны только для эффектов на теле.
 
 ## 5. Мёртвый код (не импортируется нигде)
 
 - Процедурная Лиса: `FoxBody, FoxHead, FoxEars, FoxLimbs, FoxTail, FoxFace, FoxRimLight, FoxCollarCrest, FoxBackCrest` (+ `avatarShading.ts`).
 - `registry/AvatarNodeRegistry.ts` и `controller/AvatarController.ts`.
-- `assets/foxL1ViewBoxCoords.ts`, `foxL{2..5}_old.svg`, `creatures/wolf/*`.
+- `assets/foxL1ViewBoxCoords.ts`, `foxL{2..5}_old.svg`.
 - `entities/character/ui/CharacterSigil.tsx` + `model/avatarParams.ts`.
 - Скилл-импринты у Лисы не рендерятся.
 

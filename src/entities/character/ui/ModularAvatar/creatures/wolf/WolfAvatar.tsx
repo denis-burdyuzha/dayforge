@@ -1,99 +1,139 @@
+import type React from "react";
+import { useId } from "react";
+
+import { applyAspectGlow } from "../../../../model/aspect";
 import type { AvatarParams } from "../../../../model/avatarTypes";
 import { CreatureAura } from "../../CreatureAura";
-import { CreatureMarkings } from "../../CreatureMarkings";
 import { CreatureShadow } from "../../CreatureShadow";
-import { CreatureSkillImprints } from "../../CreatureSkillImprints";
 import styles from "../../ModularAvatar.module.scss";
-import { WolfBody } from "./WolfBody";
-import { WolfFace } from "./WolfFace";
-import { WolfHead } from "./WolfHead";
-import { WolfLimbs } from "./WolfLimbs";
-import { WolfTail } from "./WolfTail";
+import { tierSparkPositions } from "../../tierSparks";
+import { getWolfTierConfig } from "./wolfEvolutionConfig";
+import { getWolfFxConfig } from "./wolfFxMatrix";
 
 export interface WolfAvatarProps {
   params: AvatarParams;
   isSilhouette?: boolean;
 }
 
-export function WolfAvatar({ params, isSilhouette = false }: WolfAvatarProps) {
-  const { palette, posture, body } = params;
+/** The fit rule centres every wolf asset on the canvas point (100, 120) — the tier particles orbit it */
+const WOLF_BODY_CENTER = [100, 120] as const;
 
-  const tiltAngle = posture.tiltAngle;
-  const scale = body.scale * body.proportionScale;
+/**
+ * WolfAvatar (Warrior) — the same low-poly pipeline as the fox: one SVG asset per tier (own colours, fitted
+ * by the fox rule) + tier FX matrix (rim light, aura, particles, colour grading). Rim light and aura take
+ * the aspect colour (neutral soft white without an aspect). No zones, no tail-tip recolouring and no
+ * archived on-body attribute FX v2.
+ */
+export const WolfAvatar: React.FC<WolfAvatarProps> = ({ params, isSilhouette = false }) => {
+  const level = params.evolution.level ?? 1;
+
+  // 1. Level-driven SVG asset router + tier FX matrix
+  const tierConfig = getWolfTierConfig(level);
+  const fx = getWolfFxConfig(level);
+  const AssetComponent = tierConfig.component;
+  const bodyTransform = `translate(${tierConfig.tx}, ${tierConfig.ty}) scale(${tierConfig.scale})`;
+
+  // 2. Aspect recolours rim light + aura (shared rule with the fox)
+  const glow = applyAspectGlow(
+    {
+      rimOpacity: fx.rimGlowOpacity,
+      rimStrokeWidth: fx.rimStrokeWidth,
+      auraOpacity: fx.auraOpacity,
+      auraRadius: fx.auraRadius,
+    },
+    params.aspect,
+  );
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const auraGradientId = `wolf-aura-${uid}`;
+  const glowFilterId = `wolf-glow-${uid}`;
+
+  // 3. Tier particles: count, radius and centre depend ONLY on the tier
+  const sparks = tierSparkPositions(fx.particles.count, WOLF_BODY_CENTER, fx.particles.radius);
 
   return (
-    <svg
-      viewBox="0 0 200 240"
-      xmlns="http://www.w3.org/2000/svg"
-      className={styles.svgRoot}
-      aria-label="Dayforge Warrior Low-Poly Wolf Avatar"
-      role="img"
-    >
-      <defs>
-        {/* Glow filter */}
-        <filter id="avatar-glow-filter" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-
-        {/* Radial aura background gradient */}
-        <radialGradient id="creature-aura-radial" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={palette.glow} stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {!isSilhouette && (
-        <>
-          {/* Ground Drop Shadow */}
-          <CreatureShadow params={params} />
-
-          {/* Ambient Aura Glow */}
-          <CreatureAura params={params} />
-
-          {/* 6 Floating Ember Sparks */}
-          <g className="creature-ember-sparks" filter="url(#avatar-glow-filter)">
-            <circle cx="38" cy="108" r="3.0" fill={palette.accent} opacity="0.75" />
-            <circle cx="168" cy="80" r="2.2" fill="#ff4400" opacity="0.60" />
-            <circle cx="32" cy="178" r="3.5" fill="#ff3300" opacity="0.40" />
-            <circle cx="170" cy="165" r="1.8" fill="#ff6600" opacity="0.80" />
-            <circle cx="95" cy="35" r="2.5" fill="#ff5500" opacity="0.70" />
-            <circle cx="148" cy="210" r="2.0" fill="#ff4400" opacity="0.50" />
-          </g>
-        </>
-      )}
-
-      {/* Main Wolf Group */}
-      <g
-        className={isSilhouette ? "" : "avatar-body-group"}
-        transform={`translate(100, ${160 + (posture.hoverOffsetY ?? 0)}) scale(${scale}) translate(-100, -160) rotate(${tiltAngle} 100 210)`}
-        style={isSilhouette ? { fill: "#020617", stroke: "none" } : undefined}
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <svg
+        viewBox="0 0 200 240"
+        xmlns="http://www.w3.org/2000/svg"
+        className={styles.svgRoot}
+        aria-label={`Dayforge Warrior Wolf Avatar (${tierConfig.name} Lvl ${level})`}
+        role="img"
+        overflow="visible"
       >
-        {/* Layer 1: Tail (behind body) */}
-        <WolfTail params={params} isSilhouette={isSilhouette} />
+        <defs>
+          <filter id={glowFilterId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <radialGradient id={auraGradientId} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={glow.color} stopOpacity="0.8" />
+            <stop offset="60%" stopColor={glow.color} stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
+          </radialGradient>
+        </defs>
 
-        {/* Layer 2: Torso */}
-        <WolfBody params={params} isSilhouette={isSilhouette} />
-
-        {/* Layer 3: Limbs */}
-        <WolfLimbs params={params} isSilhouette={isSilhouette} />
-
-        {/* Layer 4: Head */}
-        <WolfHead params={params} isSilhouette={isSilhouette} />
-
+        {/* ── Background: shadow, aura, rim light, tier particles ── */}
         {!isSilhouette && (
           <>
-            {/* Layer 5: Face */}
-            <WolfFace params={params} isSilhouette={isSilhouette} />
+            <CreatureShadow params={params} />
 
-            {/* Layer 6: Markings */}
-            <CreatureMarkings params={params} />
+            {glow.auraOpacity > 0 && glow.auraRadius > 0 && (
+              <CreatureAura
+                params={params}
+                overrideOpacity={glow.auraOpacity}
+                overrideRadius={glow.auraRadius}
+                gradientId={auraGradientId}
+              />
+            )}
 
-            {/* Layer 7: Skill Imprints */}
-            <CreatureSkillImprints params={params} />
+            {glow.rimStrokeWidth > 0 && glow.rimOpacity > 0 && (
+              <g
+                className="avatar-rim-light"
+                filter={`url(#${glowFilterId})`}
+                opacity={glow.rimOpacity}
+                style={{ pointerEvents: "none" }}
+              >
+                <g transform={bodyTransform}>
+                  <AssetComponent
+                    isSilhouette={true}
+                    overrideFill={glow.color}
+                    overrideStroke={glow.color}
+                    overrideStrokeWidth={glow.rimStrokeWidth}
+                  />
+                </g>
+              </g>
+            )}
+
+            {sparks.length > 0 && (
+              <g className="creature-ember-sparks" filter={`url(#${glowFilterId})`}>
+                {sparks.map((sp, i) => (
+                  <circle
+                    key={`evo-spark-${i}`}
+                    cx={sp.cx}
+                    cy={sp.cy}
+                    r={sp.r}
+                    fill={sp.color}
+                    opacity={sp.opacity}
+                  />
+                ))}
+              </g>
+            )}
           </>
         )}
-      </g>
-    </svg>
+
+        {/* ── Body group (breathing animation) ── */}
+        <g
+          className={isSilhouette ? "" : "avatar-body-group"}
+          style={isSilhouette ? { fill: "#020617", stroke: "none" } : undefined}
+        >
+          <g
+            transform={bodyTransform}
+            style={fx.filterStyle !== "none" ? { filter: fx.filterStyle } : undefined}
+          >
+            <AssetComponent isSilhouette={isSilhouette} />
+          </g>
+        </g>
+      </svg>
+    </div>
   );
-}
+};

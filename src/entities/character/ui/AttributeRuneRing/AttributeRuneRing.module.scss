@@ -6,6 +6,7 @@
 /* Avatar in the centre at its own size */
 .avatar {
   position: absolute;
+  z-index: 1;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);

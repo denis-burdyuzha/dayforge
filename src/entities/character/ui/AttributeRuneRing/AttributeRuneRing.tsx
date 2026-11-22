@@ -15,9 +15,16 @@ import {
   getAspect,
 } from "../../model/aspect";
 import type { AttributeKey } from "../../model/types";
+import { AspectSigil } from "./AspectSigil";
 import { AttributeRune } from "./AttributeRune";
 import styles from "./AttributeRuneRing.module.scss";
-import { computeRingLayout, getRuneLevel, getRuneVisual, RUNE_INACTIVE_COLOR } from "./runeLayout";
+import {
+  ASPECT_SIGIL_FACTOR,
+  computeRingLayout,
+  getRuneLevel,
+  getRuneVisual,
+  RUNE_INACTIVE_COLOR,
+} from "./runeLayout";
 
 export interface AttributeRuneRingProps {
   /** attribute values 1..18 (missing → 1) */
@@ -26,6 +33,8 @@ export interface AttributeRuneRingProps {
   size: number;
   /** the avatar; rendered in the centre at its own size */
   children: ReactNode;
+  /** draw the aspect sigil (0.78 x size) behind the avatar */
+  showAspectSigil?: boolean;
   className?: string;
 }
 
@@ -40,6 +49,7 @@ export function AttributeRuneRing({
   attributes,
   size,
   children,
+  showAspectSigil = false,
   className,
 }: AttributeRuneRingProps) {
   const values = Object.fromEntries(ATTRIBUTE_ORDER.map((a) => [a, attributes[a] ?? 1])) as Record<
@@ -96,6 +106,8 @@ export function AttributeRuneRing({
       style={{ width: outer, height: outer }}
       data-testid="attribute-rune-ring"
     >
+      {showAspectSigil && <AspectSigil attributes={values} diameter={size * ASPECT_SIGIL_FACTOR} />}
+
       <div ref={avatarRef} className={styles.avatar}>
         {children}
       </div>

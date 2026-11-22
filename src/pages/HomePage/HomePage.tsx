@@ -252,7 +252,11 @@ const HomePage = () => {
         <div className={styles.heroContent}>
           {/* Modular Vector Avatar */}
           <div className={styles.sigilWrapper}>
-            <AttributeRuneRing attributes={avatarParams.attributeValues} size={HERO_RING_SIZE}>
+            <AttributeRuneRing
+              attributes={avatarParams.attributeValues}
+              size={HERO_RING_SIZE}
+              showAspectSigil
+            >
               <div className={styles.sigilAvatar}>
                 <div className={styles.sigilGlow} style={{ background: accentColor }} />
                 <div className={styles.sigilReveal}>

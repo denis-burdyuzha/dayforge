@@ -13,7 +13,11 @@ import {
 } from "@/entities/character/model/skillPresentation";
 import type { CharacterClassId } from "@/entities/character/model/types";
 import type { AttributeKey } from "@/entities/character/model/types";
-import { AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
+import {
+  ASPECT_SIGIL_FACTOR,
+  AspectSigil,
+  AttributeRuneRing,
+} from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
 
@@ -557,15 +561,29 @@ export function AvatarPlaygroundPage() {
           >
             {bigView ? (
               // big=1: the bare avatar at 820px for close inspection (no rune ring)
-              <ModularAvatar
-                params={avatarParams}
-                size={820}
-                silhouetteOnly={silhouetteOnly}
-                legacyAttributeFx={legacyFx}
-              />
+              <div style={{ position: "relative" }}>
+                {!silhouetteOnly && (
+                  <AspectSigil
+                    attributes={avatarParams.attributeValues}
+                    diameter={820 * ASPECT_SIGIL_FACTOR}
+                  />
+                )}
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <ModularAvatar
+                    params={avatarParams}
+                    size={820}
+                    silhouetteOnly={silhouetteOnly}
+                    legacyAttributeFx={legacyFx}
+                  />
+                </div>
+              </div>
             ) : (
               // Same composition as the character page hero: 200×240 avatar inside a 340px rune ring
-              <AttributeRuneRing attributes={avatarParams.attributeValues} size={340}>
+              <AttributeRuneRing
+                attributes={avatarParams.attributeValues}
+                size={340}
+                showAspectSigil={!silhouetteOnly}
+              >
                 <ModularAvatar
                   params={avatarParams}
                   size="lg"

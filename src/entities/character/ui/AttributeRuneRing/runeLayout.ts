@@ -137,3 +137,12 @@ export function computeRingLayout(
   }
   return { radius, runes: place(radius) };
 }
+
+/** Aspect sigil diameter relative to the rune-ring area */
+export const ASPECT_SIGIL_FACTOR = 0.78;
+
+/** Aspect sigil opacity by the aspect value: 3 → 0.18, 18 → 0.45, linear */
+export function getSigilOpacity(value: number): number {
+  const t = Math.min(1, Math.max(0, (value - 3) / 15));
+  return 0.18 + 0.27 * t;
+}

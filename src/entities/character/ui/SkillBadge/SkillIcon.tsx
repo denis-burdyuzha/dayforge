@@ -56,7 +56,15 @@ export function SkillIcon({ name, primaryAttribute, form, size, iconSize }: Skil
         />
       </svg>
       <span className={styles.iconGlyph}>
-        {icon.kind === "rune" && icon.attribute ? (
+        {icon.kind === "icon" ? (
+          // lucide glyphs fill their box almost edge to edge (rune glyphs have a frame margin) → ×0.8
+          <icon.Icon
+            size={Math.round(iconSize * 0.8)}
+            color={icon.color}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        ) : icon.attribute ? (
           <AttributeRune attribute={icon.attribute} value={18} size={iconSize} plain />
         ) : (
           <span

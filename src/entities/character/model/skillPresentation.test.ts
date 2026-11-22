@@ -1,3 +1,17 @@
+import {
+  BookOpen,
+  Car,
+  Clapperboard,
+  Code2,
+  Dumbbell,
+  Flower2,
+  Footprints,
+  Languages,
+  type LucideIcon,
+  Music,
+  Palette,
+  TrendingUp,
+} from "lucide-react";
 import { describe, expect, it } from "vitest";
 
 import { ATTRIBUTE_COLORS } from "./aspect";
@@ -51,11 +65,30 @@ describe("skill icon", () => {
     for (const [name, cat] of cases) expect(detectSkillIconCategory(name), name).toBe(cat);
   });
 
-  it("no icon library → rune of the main attribute in its colour", () => {
+  it("keyword → lucide icon in the main attribute colour; no match → rune of the attribute", () => {
     const icon = getSkillIcon("Программирование", "intelligence");
-    expect(icon).toMatchObject({ kind: "rune", attribute: "intelligence", category: "code" });
+    expect(icon).toMatchObject({ kind: "icon", category: "code", Icon: Code2 });
     expect(icon.color).toBe(ATTRIBUTE_COLORS.intelligence);
-    expect(getSkillIcon("Вязание", "creativity")).toMatchObject({ kind: "rune", category: null });
+    const expected: Record<string, LucideIcon> = {
+      "Тренировки в зале": Dumbbell,
+      Бег: Footprints,
+      Чтение: BookOpen,
+      "Английский язык": Languages,
+      Вождение: Car,
+      Дизайн: Palette,
+      Видеомонтаж: Clapperboard,
+      Гитара: Music,
+      SEO: TrendingUp,
+      Медитация: Flower2,
+    };
+    for (const [name, Icon] of Object.entries(expected)) {
+      expect(getSkillIcon(name, "focus"), name).toMatchObject({ kind: "icon", Icon });
+    }
+    expect(getSkillIcon("Вязание", "creativity")).toMatchObject({
+      kind: "rune",
+      attribute: "creativity",
+      category: null,
+    });
   });
 });
 

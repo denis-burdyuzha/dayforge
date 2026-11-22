@@ -3,6 +3,21 @@
  * under the avatar. Pure functions (tested in skillPresentation.test.ts).
  */
 
+import {
+  BookOpen,
+  Car,
+  Clapperboard,
+  Code2,
+  Dumbbell,
+  Flower2,
+  Footprints,
+  Languages,
+  type LucideIcon,
+  Music,
+  Palette,
+  TrendingUp,
+} from "lucide-react";
+
 import { ATTRIBUTE_COLORS, isAttributeKey, NEUTRAL_GLOW_COLOR } from "./aspect";
 import type { CharacterSkillWithStats } from "./characterSkillTypes";
 import type { CharacterAttribute } from "./characterTypes";
@@ -68,32 +83,35 @@ export function detectSkillIconCategory(skillName: string): SkillIconCategory | 
   return null;
 }
 
-/**
- * The project has no icon library (checked package.json / node_modules, 21.11.2026), so every skill is
- * drawn with the rune glyph of its main attribute. The keyword category is still resolved and exposed:
- * once a library is added, `kind: "icon"` can be returned for matched categories here — callers already
- * branch on `kind`.
- */
-export const SKILL_ICON_LIBRARY_AVAILABLE = false;
+/** Lucide icon per keyword category (rendered with stroke-width 2 in the main attribute colour) */
+export const SKILL_ICON_COMPONENTS: Record<SkillIconCategory, LucideIcon> = {
+  code: Code2,
+  fitness: Dumbbell,
+  running: Footprints,
+  reading: BookOpen,
+  language: Languages,
+  driving: Car,
+  design: Palette,
+  video: Clapperboard,
+  music: Music,
+  marketing: TrendingUp,
+  meditation: Flower2,
+};
 
 export type SkillIcon =
-  | { kind: "icon"; category: SkillIconCategory; color: string }
-  | {
-      kind: "rune";
-      attribute: AttributeKey | null;
-      category: SkillIconCategory | null;
-      color: string;
-    };
+  | { kind: "icon"; category: SkillIconCategory; Icon: LucideIcon; color: string }
+  | { kind: "rune"; attribute: AttributeKey | null; category: null; color: string };
 
 export function getSkillColor(primaryAttribute: AttributeKey | null): string {
   return primaryAttribute ? ATTRIBUTE_COLORS[primaryAttribute] : NEUTRAL_GLOW_COLOR;
 }
 
+/** Keyword match → lucide icon; no match → rune glyph of the main attribute (neutral dot without one) */
 export function getSkillIcon(skillName: string, primaryAttribute: AttributeKey | null): SkillIcon {
   const category = detectSkillIconCategory(skillName);
   const color = getSkillColor(primaryAttribute);
-  if (category && SKILL_ICON_LIBRARY_AVAILABLE) return { kind: "icon", category, color };
-  return { kind: "rune", attribute: primaryAttribute, category, color };
+  if (category) return { kind: "icon", category, Icon: SKILL_ICON_COMPONENTS[category], color };
+  return { kind: "rune", attribute: primaryAttribute, category: null, color };
 }
 
 // ── View model ──

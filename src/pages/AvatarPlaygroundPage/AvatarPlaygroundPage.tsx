@@ -35,6 +35,17 @@ interface TestSkill {
   form: number;
   attr: AttributeKey;
 }
+/** Attribute → short preset key used by applyPreset */
+const PRESET_KEY = {
+  strength: "str",
+  endurance: "end",
+  intelligence: "int",
+  focus: "foc",
+  discipline: "dis",
+  social: "soc",
+  creativity: "cre",
+} as const satisfies Record<AttributeKey, string>;
+
 const DEFAULT_TEST_SKILLS: TestSkill[] = [
   { name: "Программирование", level: 12, form: 90, attr: "intelligence" },
   { name: "Бег", level: 5, form: 60, attr: "endurance" },
@@ -95,6 +106,13 @@ export function AvatarPlaygroundPage() {
     { label: "Душа компании", base: 2, values: { soc: 15, cre: 12 } },
     { label: "Всё на 18", base: 18, values: {} },
     { label: "Всё на 9", base: 9, values: {} },
+    // «Аспект: X» — X = 15, the next two attributes in ATTRIBUTE_ORDER (cyclic) = 6, the rest = 2
+    ...ATTRIBUTE_ORDER.map((attr, i) => {
+      const next = [1, 2].map((d) => ATTRIBUTE_ORDER[(i + d) % ATTRIBUTE_ORDER.length]!);
+      const values: AttrPreset = { [PRESET_KEY[attr]]: 15 };
+      for (const n of next) values[PRESET_KEY[n]] = 6;
+      return { label: `Аспект: ${ATTR_RU[attr]}`, base: 2, values };
+    }),
   ];
 
   // Build synthetic character data

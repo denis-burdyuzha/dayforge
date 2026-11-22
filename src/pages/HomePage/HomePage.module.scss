@@ -268,6 +268,11 @@
   /* minmax(0, 1fr): a long name ("Выносливость") + rune + value must not widen a column past the screen */
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
+
+  /* Narrow phones: two columns leave < 95px for the longest name → one column, names never truncated */
+  @media (max-width: 419.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Attribute card — press micro-reaction (task 5) */
@@ -291,7 +296,8 @@
 .attrCardHeader {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  /* 6px (not 8): at 420px two columns leave exactly enough room for «Выносливость» */
+  gap: 6px;
 }
 
 .attrIcon {
@@ -305,9 +311,8 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* never truncated: the name keeps its full width (layout guarantees the room, see .attrGrid) */
+  min-width: max-content;
   white-space: nowrap;
 }
 

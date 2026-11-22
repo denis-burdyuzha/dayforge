@@ -16,6 +16,8 @@ export default defineConfig([
     "dist",
     "coverage",
     "node_modules",
+    // Gemini/Antigravity archive (in .gitignore, not source of truth)
+    ".ai-import",
   ]),
 
   {

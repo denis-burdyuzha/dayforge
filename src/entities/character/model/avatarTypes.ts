@@ -5,7 +5,12 @@
  * No progression/attribute/class logic calculation happens inside the Renderer.
  */
 
+import type { AvatarAspect } from "./aspect";
+import type { AttributeKey } from "./types";
+
 export interface AvatarIdentity {
+  /** Stable per-character key (character id) — base for deterministic attribute FX seeds */
+  seedKey: string;
   bodySeed: number;
   faceSeed: number;
   eyeSeed: number;
@@ -95,6 +100,8 @@ export interface AvatarCreatureFace {
 export interface AvatarEvolutionStage {
   /** Tier: 1 Spark, 2 Hatchling, 3 Young, 4 Awakened, 5 Signature, 6 Ascended, 7 Mythic */
   tier: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  /** Exact character level */
+  level?: number;
   classArchetype: "warrior" | "creator" | "explorer" | "strategist" | "wanderer";
 }
 
@@ -156,4 +163,13 @@ export interface AvatarParams {
   };
   /** If true, renders creature in pure dark silhouette mode to test silhouette quality */
   silhouetteOnly?: boolean;
+
+  /** Raw attribute values 1..18 — input for the universal attribute FX system (attributeFx/) */
+  attributeValues: Record<AttributeKey, number>;
+
+  /**
+   * Dominant attribute (≥ 3): colours rim light and aura (× intensity) in every class renderer.
+   * null → renderer keeps its own default glow colour. Body fills never change.
+   */
+  aspect: AvatarAspect | null;
 }

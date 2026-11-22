@@ -18,11 +18,9 @@ export function CreatureTail({
 
   // Tail stance rotation offset
   let tailRotation = 0;
-  if (tailStance === "tucked")
-    tailRotation = 42; // Tucked down between legs in fear
+  if (tailStance === "tucked") tailRotation = 42;
   else if (tailStance === "low") tailRotation = 20;
-  else if (tailStance === "raised")
-    tailRotation = -18; // Proud/attack posture raised
+  else if (tailStance === "raised") tailRotation = -18;
   else if (tailStance === "flowing") tailRotation = -10;
 
   return (
@@ -59,25 +57,6 @@ export function CreatureTail({
               r={4.5 + tier}
               fill={palette.accent}
               filter="url(#avatar-glow-filter)"
-            />
-          )}
-        </g>
-      )}
-
-      {classArchetype === "explorer" && (
-        <g>
-          {/* Sleek Feathered / Radar Fin Tail */}
-          <path
-            d="M 120 174 C 148 164, 176 148, 172 122 C 162 138, 144 158, 120 180 Z"
-            fill={fillSecondary}
-            opacity={isSilhouette ? 1 : 0.9}
-          />
-          {!isSilhouette && (
-            <path
-              d="M 124 174 C 152 160, 170 144, 166 126"
-              fill="none"
-              stroke={palette.accent}
-              strokeWidth="1.5"
             />
           )}
         </g>

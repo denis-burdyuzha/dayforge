@@ -1,33 +1,55 @@
+АРХИВ (до перехода на Claude). Актуальное — docs/ai-context/.
+
 # Dayforge — Active Context
 
-## Что реализовано на данный момент
+## 1. Ветка Git и Состояние Работы
 
-### Infrastructure & FSD
-
-- ✅ Vite + React 19 + TypeScript (strict)
-- ✅ FSD-структура: `app/`, `pages/`, `features/`, `entities/`, `shared/`, `widgets/`
-- ✅ Dev-only роут `/dev/avatar` — **Avatar Playground** с кнопками L1–L50, 7 слайдерами атрибутов и режимом SILHOUETTE ONLY
-
-### Entities & ModularAvatar 4.0 (Adult Dayforge Fauna + 7 Evolution Tiers + 7 Attributes + 4 Archetypes + Articulated Rig)
-
-- ✅ **Концепт «Взрослая Фауна Dayforge»**: Органический анатомический дизайн с контурами Безье, сочленениями лап, лопаточными выгрузками и миндалевидными глазами.
-- ✅ **7 Тиров эволюции**:
-  - Tier 1 (L1–2): Spark (0.45)
-  - Tier 2 (L3–4): Hatchling (0.62)
-  - Tier 3 (L5–9): Young (0.78)
-  - Tier 4 (L10–19): Awakened (0.90)
-  - Tier 5 (L20–34): Signature (1.00)
-  - Tier 6 (L35–49): Ascended (1.05)
-  - Tier 7 (L50+): Mythic (1.08)
+- **Активная ветка**: `feature/lowpoly-avatar-style`
+- **Завершено в текущей сессии**:
+  - **Параметризация палитры тела по классам (`CLASS_BODY_PALETTE`)**:
+    - В [creatureFxPalette.ts](file:///x:/DayForge/src/entities/character/ui/ModularAvatar/creatureFxPalette.ts) вынесен реестр `CLASS_BODY_PALETTE` для всех 5 классов (`explorer`, `warrior`, `creator`, `strategist`, `wanderer`).
+    - Базовая синяя палитра Лисы (`{ dark: "#0a1230", mid: "#1e2a4a", light: "#3a4a6e" }`) привязана к `explorer`.
+    - Добавлены хелперы `getClassBodyColor` и `remapFacetColorToClass(baseHex, classArchetype)`. В `foxZones.ts` функция `computeFoxZoneModifiers` принимает параметр `classArchetype` (по умолчанию `"explorer"`). Для Explorer визуальный рендер лисы 100% неизменен. Подготовлен фундамент для Волка (`CLASS_BODY_PALETTE.warrior`).
+- **Единый источник правды**: [task.md](file:///x:/DayForge/task.md) в корне проекта.
 
 ---
 
-### Redesigned Visual Style Benchmark Frame (Warrior Signature L20-34) (Stage 1–4 Finalized)
+## 2. Подтверждённое Готовое Состояние
 
-- ✅ **Stage 1 (Fix Crossing Legs)**: Exact mathematical diagnostic proved that negative leg angles rotated downward SVG vectors clockwise towards center $X=100$. Inverted signs in `MILESTONE_LIMB_ANGLES` (`legLU: +18°`, `legLBend: +22°`, `legRU: -18°`, `legRBend: -22°`) so left leg rotates outward to $X=49.6$ and right leg outward to $X=150.4$. Legs now stand in a wide, powerful, open athletic posture with zero overlap.
-- ✅ **Stage 2 (Head Dominant Feature Overhaul)**: Replaced tall vertical rabbit-ear spikes with short, broad, low-profile swept-back keratin side horns and a central dinosaur/dragon skull crest (`CreatureEarsHorns.tsx`). Silhouette in solid black now reads strictly as a formidable armored apex predator.
-- ✅ **Stage 3 (Particles Without Geometry)**: Removed the dashed orbital halo circle (`strokeDasharray="4 8"`) from `CreatureAura.tsx`. Retained only 6 ethereal floating ember sparks scattered deterministically without any connecting trajectory path.
-- ✅ **Stage 4 (Background Contrast)**: Elevated `primaryBody` to `#421828` and `secondaryBody` to `#240d16` in `CLASS_PALETTES`. Silhouette pops off dark canvas backgrounds with vibrant lightness contrast while retaining deep garnet velvet depth.
-- ✅ **Build & Typecheck Verification**:
-  - `npx tsc --noEmit` ✅ (0 ошибок).
-  - `npm run build` ✅ (успешная сборка Vite за 1.53s).
+### External FX Matrix & 5-Tier Fox Avatar
+
+1. **Матрица эффектов (`foxFxMatrix.ts`)**: `TierFxConfig` + `getFoxFxConfig(level)` — L1, L3, L5, L10, L20, L35, L50.
+2. **Discipline Formation System**: [DisciplineFormation.tsx](file:///x:/DayForge/src/entities/character/ui/ModularAvatar/creatures/fox/DisciplineFormation.tsx) & [creatureFxPalette.ts](file:///x:/DayForge/src/entities/character/ui/ModularAvatar/creatureFxPalette.ts).
+3. **Rim Light, Energy Aura, Ember Sparks, Color Grading** — zero mesh mutation.
+4. `npx tsc --noEmit` ✅ / `npm run build` ✅.
+
+### Система атрибутов (7 каналов Fox) — ПОЛНОСТЬЮ РЕАЛИЗОВАНА И НАСТРОЕНА
+
+1. **Strength (Сила)**: Плечевые шипы (0..4), контраст фасетов, пульсация груди.
+2. **Intelligence (Интеллект)**: Радиальная сетка головы (1..16 фасетов), нервные импульсы.
+3. **Focus (Фокус)**: Ореол свечения головы, прищур глаз, виньетка.
+4. **Endurance (Выносливость)**: 1..5 ломаных жил на ногах, тонкие надрезы шрамов (+28% L), кинцуги.
+5. **Discipline (Дисциплина)**: 5-гранные кристаллы на пропорциональной орбите (0.52 * diag), ±18% рябь torso.
+
+### Social Attribute Overhaul (Tail Connection Network, Static Ears Accent & Snout Scars) — РЕАЛИЗОВАНО
+
+1. **Social — Сеть связей на хвосте**:
+   - Точка роста: `attachPt` (ближайшая к центру `torso` точка в зоне `tail`).
+   - Разреженная выборка (пропуск промежуточных фасетов `idx % 2 === 0`) по мере роста расстояния от основания хвоста.
+   - Рост числа выбранных фасетов от 1 (Social=1) до max (Social=18).
+   - Подсветка ТОЛЬКО физически общего ребра меша (`getSharedMeshEdges`) между физически соседствующими выбранными фасетами. Без принудительных соединений несоседних узлов.
+   - Старые метки `bondMarksFx` у хвоста полностью удалены.
+2. **Social — Уши**:
+   - 100% статичный тёплый оттенок (`#f97316` warm shift в `resolveFill`) + статичная `InternalFacetSubdivision` (`enablePulse={false}`). Нулевое движение, отсутствие любых анимационных тегов.
+3. **Endurance — Шрамы на морде**:
+   - Включена зона `snout` в перечень кандидатов шрамов, гарантируя наличие аккуратного ломаного шрама-надреза с поперечными стежками на морде.
+4. **Валидация**:
+   - `npx tsc --noEmit` ✅ (0 ошибок).
+   - `npm run build` ✅.
+
+---
+
+## 3. Конкретный Следующий Шаг
+
+1. **Тиражирование на следующий класс (`creatures/wolf/`)**: раскатка паттерна атрибутов и 5-тировой SVG-архитектуры для Воина (Warrior).
+2. **Интеграция навыков**: привязка рунических отпечатков навыков к узлам аватара.

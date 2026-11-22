@@ -10,7 +10,7 @@ export function CreatureWingsCrest({
   const { palette, evolution } = params;
   const { classArchetype, tier } = evolution;
 
-  if (tier < 2) return null;
+  if (tier < 2 || classArchetype === "explorer") return null;
 
   const fillSecondary = isSilhouette ? "#020617" : palette.secondaryBody;
   const fillMembrane = isSilhouette ? "#020617" : "url(#creature-membrane-grad)";
@@ -18,31 +18,6 @@ export function CreatureWingsCrest({
 
   return (
     <g className="creature-wings-crest">
-      {classArchetype === "explorer" && (
-        <g opacity={tier >= 4 ? 0.95 : 0.75}>
-          {/* Left Wing Membrane */}
-          <path
-            d="M 74 124 C 36 96, 18 116, 28 142 C 48 136, 64 132, 74 136 Z"
-            fill={fillMembrane}
-            stroke={strokeAccent}
-            strokeWidth="0.8"
-          />
-          {/* Right Wing Membrane */}
-          <path
-            d="M 126 124 C 164 96, 182 116, 172 142 C 152 136, 136 132, 126 136 Z"
-            fill={fillMembrane}
-            stroke={strokeAccent}
-            strokeWidth="0.8"
-          />
-          {tier >= 4 && !isSilhouette && (
-            <>
-              <path d="M 74 124 L 28 142" stroke="#ffffff" strokeWidth="1.2" opacity="0.8" />
-              <path d="M 126 124 L 172 142" stroke="#ffffff" strokeWidth="1.2" opacity="0.8" />
-            </>
-          )}
-        </g>
-      )}
-
       {classArchetype === "warrior" && (
         <g>
           {/* Dorsal Carapace Plates & Spikes */}

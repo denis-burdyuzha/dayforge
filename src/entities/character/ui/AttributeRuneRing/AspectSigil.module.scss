@@ -1,0 +1,32 @@
+/* Centred in the positioned parent, under the avatar (the parent stacks the avatar above it) */
+.sigil {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+/* Rotates the glyph group inside the SVG (around the viewBox centre), not the SVG box itself */
+.spin {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: sigilSpin 60s linear infinite;
+}
+
+@keyframes sigilSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}

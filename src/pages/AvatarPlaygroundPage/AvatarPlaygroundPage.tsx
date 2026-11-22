@@ -1,10 +1,25 @@
 import { useState } from "react";
 
+import { ATTRIBUTE_LABELS_RU } from "@/entities/character/model/aspect";
+import { ATTRIBUTE_LABELS_RU as ATTR_RU, ATTRIBUTE_ORDER } from "@/entities/character/model/aspect";
 import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import type { CharacterSkillWithStats } from "@/entities/character/model/characterSkillTypes";
 import type { Character, CharacterAttribute } from "@/entities/character/model/characterTypes";
+import {
+  displaySkillName,
+  getSkillRank,
+  pickTitleSkill,
+  type SkillView,
+} from "@/entities/character/model/skillPresentation";
 import type { CharacterClassId } from "@/entities/character/model/types";
+import type { AttributeKey } from "@/entities/character/model/types";
+import {
+  ASPECT_SIGIL_FACTOR,
+  AspectSigil,
+  AttributeRuneRing,
+} from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
+import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
 
 import styles from "./AvatarPlaygroundPage.module.scss";
 
@@ -17,43 +32,96 @@ const PRESET_SKILLS = [
   { id: "mus", name: "Музыка", level: 2 },
 ];
 
+/** Test skills for the title plate / skill cards (0–3 used, set by the «Тестовые навыки» control) */
+interface TestSkill {
+  name: string;
+  level: number;
+  form: number;
+  attr: AttributeKey;
+}
+/** Attribute → short preset key used by applyPreset */
+const PRESET_KEY = {
+  strength: "str",
+  endurance: "end",
+  intelligence: "int",
+  focus: "foc",
+  discipline: "dis",
+  social: "soc",
+  creativity: "cre",
+} as const satisfies Record<AttributeKey, string>;
+
+const DEFAULT_TEST_SKILLS: TestSkill[] = [
+  { name: "Программирование", level: 12, form: 90, attr: "intelligence" },
+  { name: "Бег", level: 5, form: 60, attr: "endurance" },
+  { name: "Вязание", level: 3, form: 25, attr: "creativity" },
+];
+
 export function AvatarPlaygroundPage() {
   const searchParams =
     typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const initialLevel = Number(searchParams?.get("level")) || 1;
   const initialClass = (searchParams?.get("class") as CharacterClassId) || "warrior";
   const initialStr = Number(searchParams?.get("strength")) || 1;
+  const bigView = searchParams?.get("big") === "1";
   const initialSil = searchParams?.get("silhouette") === "true";
 
   const [level, setLevel] = useState<number>(initialLevel);
   const [selectedClass, setSelectedClass] = useState<CharacterClassId>(initialClass);
 
   const [strength, setStrength] = useState<number>(initialStr);
-  const [endurance, setEndurance] = useState<number>(1);
-  const [discipline, setDiscipline] = useState<number>(1);
-  const [intelligence, setIntelligence] = useState<number>(1);
-  const [focus, setFocus] = useState<number>(1);
-  const [social, setSocial] = useState<number>(1);
-  const [creativity, setCreativity] = useState<number>(1);
+  const initialAttr = (key: string, fallback = 1) => Number(searchParams?.get(key)) || fallback;
+  const [endurance, setEndurance] = useState<number>(initialAttr("endurance"));
+  const [discipline, setDiscipline] = useState<number>(initialAttr("discipline"));
+  const [intelligence, setIntelligence] = useState<number>(initialAttr("intelligence"));
+  const [focus, setFocus] = useState<number>(initialAttr("focus"));
+  const [social, setSocial] = useState<number>(initialAttr("social"));
+  const [creativity, setCreativity] = useState<number>(initialAttr("creativity"));
 
   const [activePresetSkillIds, setActivePresetSkillIds] = useState<string[]>(["prog"]);
   const [customSkillName, setCustomSkillName] = useState<string>("");
   const [silhouetteOnly, setSilhouetteOnly] = useState<boolean>(initialSil);
+  // Archived on-body attribute FX v2 (attributeFx/) — playground-only toggle, off by default
+  const [testSkillCount, setTestSkillCount] = useState<number>(
+    Math.min(3, Math.max(0, Number(searchParams?.get("skills")) || 0)),
+  );
+  const [testSkills, setTestSkills] = useState<TestSkill[]>(DEFAULT_TEST_SKILLS);
+  const updateTestSkill = (i: number, patch: Partial<TestSkill>) =>
+    setTestSkills((prev) => prev.map((t, k) => (k === i ? { ...t, ...patch } : t)));
+  const [legacyFx, setLegacyFx] = useState<boolean>(searchParams?.get("legacyFx") === "1");
+  // Character id = seed of the attribute FX (same id → same picture, different id → different picture)
+  const [charId, setCharId] = useState<string>(
+    searchParams?.get("charId") || "playground-dev-char-id",
+  );
 
-  // Quick preset helper handlers
-  const setAllAttributes = (val: number) => {
-    setStrength(val);
-    setEndurance(val);
-    setDiscipline(val);
-    setIntelligence(val);
-    setFocus(val);
-    setSocial(val);
-    setCreativity(val);
+  type AttrPreset = Partial<Record<"str" | "end" | "dis" | "int" | "foc" | "soc" | "cre", number>>;
+  const applyPreset = (base: number, p: AttrPreset) => {
+    setStrength(p.str ?? base);
+    setEndurance(p.end ?? base);
+    setDiscipline(p.dis ?? base);
+    setIntelligence(p.int ?? base);
+    setFocus(p.foc ?? base);
+    setSocial(p.soc ?? base);
+    setCreativity(p.cre ?? base);
   };
+  const ATTRIBUTE_PRESETS: Array<{ label: string; base: number; values: AttrPreset }> = [
+    { label: "Новичок", base: 1, values: {} },
+    { label: "Атлет", base: 2, values: { str: 14, end: 12, dis: 10 } },
+    { label: "Учёный", base: 2, values: { int: 15, foc: 12, cre: 8 } },
+    { label: "Душа компании", base: 2, values: { soc: 15, cre: 12 } },
+    { label: "Всё на 18", base: 18, values: {} },
+    { label: "Всё на 9", base: 9, values: {} },
+    // «Аспект: X» — X = 15, the next two attributes in ATTRIBUTE_ORDER (cyclic) = 6, the rest = 2
+    ...ATTRIBUTE_ORDER.map((attr, i) => {
+      const next = [1, 2].map((d) => ATTRIBUTE_ORDER[(i + d) % ATTRIBUTE_ORDER.length]!);
+      const values: AttrPreset = { [PRESET_KEY[attr]]: 15 };
+      for (const n of next) values[PRESET_KEY[n]] = 6;
+      return { label: `Аспект: ${ATTR_RU[attr]}`, base: 2, values };
+    }),
+  ];
 
   // Build synthetic character data
   const character: Character = {
-    id: "playground-dev-char-id",
+    id: charId,
     profileId: "playground-profile",
     name: "Dayforge Creature",
     class: selectedClass,
@@ -130,6 +198,19 @@ export function AvatarPlaygroundPage() {
   const avatarParams = computeAvatarParams(character, attributes, skills, null);
   avatarParams.silhouetteOnly = silhouetteOnly;
 
+  const testSkillViews: SkillView[] = testSkills.slice(0, testSkillCount).map((t, i) => ({
+    id: `test-skill-${i}`,
+    name: displaySkillName(t.name),
+    level: t.level,
+    rank: getSkillRank(t.level),
+    totalXp: t.level * 50,
+    lastPracticedAt: null,
+    form: t.form,
+    primaryAttribute: t.attr,
+    attributes: [t.attr],
+  }));
+  const titleSkill = pickTitleSkill(testSkillViews);
+
   const toggleSkill = (id: string) => {
     setActivePresetSkillIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
@@ -205,24 +286,15 @@ export function AvatarPlaygroundPage() {
 
             <h3>Быстрые пресеты атрибутов & Тест Силуэта</h3>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
-              <button
-                onClick={() => setAllAttributes(1)}
-                style={{ padding: "6px 10px", borderRadius: "4px" }}
-              >
-                Weak (all 1)
-              </button>
-              <button
-                onClick={() => setAllAttributes(8)}
-                style={{ padding: "6px 10px", borderRadius: "4px" }}
-              >
-                Balanced (all 8)
-              </button>
-              <button
-                onClick={() => setAllAttributes(18)}
-                style={{ padding: "6px 10px", borderRadius: "4px" }}
-              >
-                Strong (all 18)
-              </button>
+              {ATTRIBUTE_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset(p.base, p.values)}
+                  style={{ padding: "6px 10px", borderRadius: "4px" }}
+                >
+                  {p.label}
+                </button>
+              ))}
               <button
                 onClick={() => setSilhouetteOnly(!silhouetteOnly)}
                 style={{
@@ -234,6 +306,25 @@ export function AvatarPlaygroundPage() {
               >
                 {silhouetteOnly ? "✓ SILHOUETTE ONLY" : "👁 SILHOUETTE ONLY"}
               </button>
+            </div>
+
+            <label className={styles.checkboxLabel} style={{ marginBottom: "12px" }}>
+              <input
+                type="checkbox"
+                checked={legacyFx}
+                onChange={(e) => setLegacyFx(e.target.checked)}
+                data-testid="legacy-fx-toggle"
+              />
+              <span>Старые эффекты атрибутов (v2)</span>
+            </label>
+
+            <div className={styles.field}>
+              <label>Character ID (seed эффектов):</label>
+              <input
+                className={styles.textInput}
+                value={charId}
+                onChange={(e) => setCharId(e.target.value)}
+              />
             </div>
 
             <div className={styles.field}>
@@ -361,6 +452,74 @@ export function AvatarPlaygroundPage() {
           </section>
 
           <section className={styles.section}>
+            <h3>Тестовые навыки (титул и карточки)</h3>
+            <div className={styles.field}>
+              <label>
+                Количество: <strong>{testSkillCount}</strong>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="3"
+                value={testSkillCount}
+                onChange={(e) => setTestSkillCount(Number(e.target.value))}
+                data-testid="test-skill-count"
+              />
+            </div>
+            {testSkills.slice(0, testSkillCount).map((t, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1.4fr) 52px 52px minmax(0, 1fr)",
+                  gap: "6px",
+                  marginBottom: "6px",
+                }}
+              >
+                <input
+                  className={styles.textInput}
+                  value={t.name}
+                  aria-label="Название навыка"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { name: e.target.value })}
+                />
+                <input
+                  className={styles.textInput}
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={t.level}
+                  aria-label="Уровень"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { level: Number(e.target.value) || 1 })}
+                />
+                <input
+                  className={styles.textInput}
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={t.form}
+                  aria-label="Форма %"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { form: Number(e.target.value) || 0 })}
+                />
+                <select
+                  value={t.attr}
+                  aria-label="Основной атрибут"
+                  style={{ minWidth: 0, width: "100%" }}
+                  onChange={(e) => updateTestSkill(i, { attr: e.target.value as AttributeKey })}
+                >
+                  {ATTRIBUTE_ORDER.map((a) => (
+                    <option key={a} value={a}>
+                      {ATTR_RU[a]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </section>
+
+          <section className={styles.section}>
             <h3>Навыки (Нейронные отпечатки)</h3>
             <div className={styles.checkboxGroup}>
               {PRESET_SKILLS.map((sk) => (
@@ -392,9 +551,72 @@ export function AvatarPlaygroundPage() {
 
         {/* Right Side: Avatar Render & Params Inspector */}
         <div className={styles.renderPanel}>
-          <div className={styles.avatarWrapper}>
-            <ModularAvatar params={avatarParams} size={300} silhouetteOnly={silhouetteOnly} />
+          <div
+            className={styles.avatarWrapper}
+            style={
+              bigView
+                ? { position: "fixed", inset: 0, zIndex: 999, borderRadius: 0 }
+                : { padding: "8px 0" }
+            }
+          >
+            {bigView ? (
+              // big=1: the bare avatar at 820px for close inspection (no rune ring)
+              <div style={{ position: "relative" }}>
+                {!silhouetteOnly && (
+                  <AspectSigil
+                    attributes={avatarParams.attributeValues}
+                    diameter={820 * ASPECT_SIGIL_FACTOR}
+                  />
+                )}
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <ModularAvatar
+                    params={avatarParams}
+                    size={820}
+                    silhouetteOnly={silhouetteOnly}
+                    legacyAttributeFx={legacyFx}
+                  />
+                </div>
+              </div>
+            ) : (
+              // Same composition as the character page hero: 200×240 avatar inside a 340px rune ring
+              <AttributeRuneRing
+                attributes={avatarParams.attributeValues}
+                size={340}
+                showAspectSigil={!silhouetteOnly}
+              >
+                <ModularAvatar
+                  params={avatarParams}
+                  size="lg"
+                  silhouetteOnly={silhouetteOnly}
+                  legacyAttributeFx={legacyFx}
+                />
+              </AttributeRuneRing>
+            )}
+            {!bigView && <SkillTitlePlate skill={titleSkill} />}
           </div>
+
+          {testSkillViews.length > 0 && (
+            <div style={{ display: "grid", gap: "8px" }}>
+              {testSkillViews.map((sk) => (
+                <SkillCard key={sk.id} skill={sk} attributeValues={avatarParams.attributeValues} />
+              ))}
+            </div>
+          )}
+
+          <p data-testid="aspect-info" style={{ margin: "8px 0", fontSize: "14px" }}>
+            Аспект:{" "}
+            {avatarParams.aspect ? (
+              <>
+                <span style={{ color: avatarParams.aspect.color, fontWeight: 700 }}>
+                  ● {ATTRIBUTE_LABELS_RU[avatarParams.aspect.attribute]} (
+                  {avatarParams.aspect.attribute})
+                </span>
+                {" · "}интенсивность {avatarParams.aspect.intensity.toFixed(2)}
+              </>
+            ) : (
+              <span>нет (цвет класса)</span>
+            )}
+          </p>
 
           <div className={styles.debugInfo}>
             <h4>Computed Params Summary</h4>

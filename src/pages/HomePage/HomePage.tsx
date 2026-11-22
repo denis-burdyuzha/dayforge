@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useAppState } from "@/entities/auth/model/useAppState";
-import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import {
-  computeFormPercentage,
-  formatLastPracticed,
-} from "@/entities/character/model/characterSkillTypes";
+  ATTRIBUTE_COLORS,
+  ATTRIBUTE_LABELS_RU,
+  isAttributeKey,
+} from "@/entities/character/model/aspect";
+import { computeAvatarParams } from "@/entities/character/model/avatarEngine";
 import {
   xpRequiredForLevel,
   xpWithinCurrentLevel,
 } from "@/entities/character/model/characterTypes";
 import { characterClasses } from "@/entities/character/model/classes";
+import { pickTitleSkill, toSkillView } from "@/entities/character/model/skillPresentation";
 import { useCharacterData } from "@/entities/character/model/useCharacterData";
+import { AttributeRune, AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
+import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
 import { Badge } from "@/shared/ui/Badge/ui/Badge";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
@@ -36,6 +40,9 @@ const ATTRIBUTE_ICONS: Record<string, string> = {
   creativity: "🎨",
 };
 
+/** Rune ring diameter around the 200×240 hero avatar (fits a 390px-wide screen) */
+const HERO_RING_SIZE = 340;
+
 function getAttrIcon(code: string): string {
   return ATTRIBUTE_ICONS[code] ?? "✨";
 }
@@ -54,14 +61,6 @@ function daysSince(isoDate: string): number {
 function formatXpDate(isoDate: string): string {
   const d = new Date(isoDate);
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-}
-
-/** Form percentage → display color */
-function formColor(pct: number): string {
-  if (pct >= 90) return "var(--color-success)";
-  if (pct >= 70) return "var(--color-primary)";
-  if (pct >= 40) return "var(--color-warning)";
-  return "var(--color-danger)";
 }
 
 // ---------------------------------------------------------------------------
@@ -98,12 +97,14 @@ function useSectionReveal<T extends HTMLElement>() {
 // ---------------------------------------------------------------------------
 
 function AttributeCard({
+  code,
   label,
   icon,
   description,
   value,
   accentColor,
 }: {
+  code: string;
   label: string;
   icon: string;
   description: string;
@@ -128,7 +129,11 @@ function AttributeCard({
       }}
     >
       <div className={styles.attrCardHeader}>
-        <span className={styles.attrIcon}>{icon}</span>
+        {isAttributeKey(code) ? (
+          <AttributeRune attribute={code} value={value} size={24} />
+        ) : (
+          <span className={styles.attrIcon}>{icon}</span>
+        )}
         <span className={styles.attrName}>{label}</span>
         {/* Plain number — no progress bar */}
         <span className={styles.attrValue} style={{ color: accentColor }}>
@@ -228,6 +233,10 @@ const HomePage = () => {
   // Compute avatar params for modular vector avatar
   const avatarParams = computeAvatarParams(character, attributes, characterSkills, todayState);
 
+  // Skills: presentation (rank, icon, form) + the title skill shown under the avatar
+  const skillViews = characterSkills.map((skill) => toSkillView(skill, attributes));
+  const titleSkill = pickTitleSkill(skillViews);
+
   return (
     <div className={styles.page}>
       {/* ══════════════════════════════════════════════════════════
@@ -243,11 +252,21 @@ const HomePage = () => {
         <div className={styles.heroContent}>
           {/* Modular Vector Avatar */}
           <div className={styles.sigilWrapper}>
-            <div className={styles.sigilGlow} style={{ background: accentColor }} />
-            <div className={styles.sigilReveal}>
-              <ModularAvatar params={avatarParams} size="lg" />
-            </div>
+            <AttributeRuneRing
+              attributes={avatarParams.attributeValues}
+              size={HERO_RING_SIZE}
+              showAspectSigil
+            >
+              <div className={styles.sigilAvatar}>
+                <div className={styles.sigilGlow} style={{ background: accentColor }} />
+                <div className={styles.sigilReveal}>
+                  <ModularAvatar params={avatarParams} size="lg" />
+                </div>
+              </div>
+            </AttributeRuneRing>
           </div>
+
+          <SkillTitlePlate skill={titleSkill} className={styles.titlePlate} />
 
           <h1 className={styles.heroName}>{character.name}</h1>
 
@@ -289,11 +308,12 @@ const HomePage = () => {
             attributes.map((attr) => (
               <AttributeCard
                 key={attr.id}
-                label={attr.name}
+                code={attr.code}
+                label={isAttributeKey(attr.code) ? ATTRIBUTE_LABELS_RU[attr.code] : attr.name}
                 icon={getAttrIcon(attr.code)}
                 description={attr.description || "Прокачивается через реальные действия."}
                 value={attr.value}
-                accentColor={accentColor}
+                accentColor={isAttributeKey(attr.code) ? ATTRIBUTE_COLORS[attr.code] : accentColor}
               />
             ))
           ) : (
@@ -313,42 +333,14 @@ const HomePage = () => {
       <RevealSection>
         <h2 className={styles.sectionTitle}>Навыки</h2>
         {characterSkills.length > 0 ? (
-          <div className={styles.skillsScroll}>
-            {characterSkills.map((skill) => {
-              const form = computeFormPercentage(skill.lastPracticedAt);
-              const lastPracticed = formatLastPracticed(skill.lastPracticedAt);
-              const fColor = formColor(form);
-              return (
-                <Card key={skill.id} className={styles.skillCard}>
-                  <div className={styles.skillCardHeader}>
-                    <span className={styles.skillCardName}>{skill.name}</span>
-                    <Badge variant="default">Ур. {skill.level}</Badge>
-                  </div>
-
-                  {/* Form indicator */}
-                  <div className={styles.skillFormRow}>
-                    <span className={styles.skillFormLabel}>Форма</span>
-                    <div className={styles.skillFormTrack}>
-                      <div
-                        className={styles.skillFormFill}
-                        style={{ width: `${form}%`, background: fColor }}
-                      />
-                    </div>
-                    <span className={styles.skillFormPct} style={{ color: fColor }}>
-                      {form}%
-                    </span>
-                  </div>
-
-                  <span className={styles.skillLastPracticed}>
-                    {lastPracticed === "никогда" ? "🕐 Ещё не практиковали" : `🕐 ${lastPracticed}`}
-                  </span>
-
-                  <span className={styles.skillCardXp}>
-                    {skill.totalXp} XP · {skill.totalHours.toFixed(1)} ч
-                  </span>
-                </Card>
-              );
-            })}
+          <div className={styles.skillsList}>
+            {skillViews.map((skill) => (
+              <SkillCard
+                key={skill.id}
+                skill={skill}
+                attributeValues={avatarParams.attributeValues}
+              />
+            ))}
           </div>
         ) : (
           <Card className={styles.emptyCard}>

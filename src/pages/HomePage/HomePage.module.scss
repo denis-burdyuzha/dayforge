@@ -149,16 +149,21 @@
   width: 100%;
 }
 
-/* Sigil wrapper — fixed size prevents translateY from affecting flow */
+/* Sigil wrapper — holds the rune ring (fixed-size box: the avatar float never affects flow) */
 .sigilWrapper {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 180px;
-  height: 180px;
-  /* overflow: hidden clips any possible overflow from scale/translate */
-  overflow: hidden;
+  max-width: 100%;
+}
+
+/* Avatar box inside the ring: glow + floating avatar (runes do not float) */
+.sigilAvatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Glow halo behind the sigil — synced pulse with floatY (task 1) */
@@ -260,8 +265,14 @@
 ═══════════════════════════════════════════════════════ */
 .attrGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  /* minmax(0, 1fr): a long name ("Выносливость") + rune + value must not widen a column past the screen */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
+
+  /* Narrow phones: two columns leave < 95px for the longest name → one column, names never truncated */
+  @media (max-width: 419.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Attribute card — press micro-reaction (task 5) */
@@ -285,7 +296,8 @@
 .attrCardHeader {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  /* 6px (not 8): at 420px two columns leave exactly enough room for «Выносливость» */
+  gap: 6px;
 }
 
 .attrIcon {
@@ -299,9 +311,8 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* never truncated: the name keeps its full width (layout guarantees the room, see .attrGrid) */
+  min-width: max-content;
   white-space: nowrap;
 }
 
@@ -358,6 +369,18 @@
 /* ═══════════════════════════════════════════════════════
    SKILLS — horizontal scroll
 ═══════════════════════════════════════════════════════ */
+/* Skill rows (SkillCard) */
+.skillsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-3);
+}
+
+/* Title plate under the rune ring */
+.titlePlate {
+  margin-top: calc(-1 * var(--space-1));
+}
+
 .skillsScroll {
   display: flex;
   gap: var(--space-3);

@@ -5,6 +5,10 @@
   padding: 24px;
   box-sizing: border-box;
   font-family: inherit;
+
+  @media (max-width: 480px) {
+    padding: 8px;
+  }
 }
 
 .header {
@@ -27,7 +31,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 380px;
   gap: 24px;
   max-width: 1200px;
   margin: 0 auto;
@@ -145,6 +149,8 @@
   border-radius: 16px;
   padding: 24px;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   justify-content: center;
   align-items: center;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);

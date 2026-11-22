@@ -1,33 +1,14 @@
 import type { AvatarParams } from "../../model/avatarTypes";
 
-export function CreatureFace({ params }: { params: AvatarParams }) {
+export function CreatureFace({
+  params,
+  isSilhouette = false,
+}: {
+  params: AvatarParams;
+  isSilhouette?: boolean;
+}) {
   const { palette, face } = params;
   const { expression, eyebrowAngle, hasFocusRing, focusLevel, mouthVariant } = face;
-
-  // ── EXPRESSION → Eye Physiology & Dimensions ──
-  let baseEyeRx = 5.5;
-  let baseEyeRy = 3.8;
-
-  if (expression === "scared") {
-    baseEyeRx = 6.8; // Wide open frightened eyes
-    baseEyeRy = 5.8;
-  } else if (expression === "cautious") {
-    baseEyeRx = 6.0;
-    baseEyeRy = 4.2;
-  } else if (expression === "edgy") {
-    baseEyeRx = 5.2;
-    baseEyeRy = 3.2; // Sullen narrowed eyes
-  } else if (expression === "berserk") {
-    baseEyeRx = 5.8;
-    baseEyeRy = 3.5;
-  } else if (expression === "sovereign" || expression === "mythic") {
-    baseEyeRx = 6.2;
-    baseEyeRy = 3.6; // Serene wide almond eyes
-  }
-
-  // Focus → Eyelid squint
-  const eyeRx = baseEyeRx;
-  const eyeRy = baseEyeRy * (1 - focusLevel * 0.25);
 
   return (
     <g className="creature-face">
@@ -75,57 +56,58 @@ export function CreatureFace({ params }: { params: AvatarParams }) {
         transform={`rotate(${-eyebrowAngle} 115 88)`}
       />
 
-      {/* Left Eye */}
+      {/* ── LOW-POLY GEOMETRIC ALMOND EYES & SNOUT TIP (Literal Points) ── */}
+      {/* Left Geometric Eye */}
       <g>
-        {/* Eye Sclera Base */}
-        <ellipse cx="85" cy="95" rx={eyeRx} ry={eyeRy} fill="#090306" />
-        {/* Warm Muted Iris */}
-        <ellipse cx="85" cy="95" rx={eyeRx * 0.75} ry={eyeRy * 0.78} fill="#38121f" />
-        {/* Single Luminescent Ember Pupil Spark */}
-        <circle cx="85" cy="95.5" r={2.2} fill={palette.accent} filter="url(#avatar-glow-filter)" />
-        <circle cx="85" cy="95.5" r={1.0} fill="#fff7ed" />
-        {/* Upper Heavy Eyelid Cover (Calm, Dignified, Composed Gaze) */}
-        <path
-          d={`M ${85 - eyeRx - 1} 95 C 80 91, 90 91, ${85 + eyeRx + 1} 95 C 91 93, 79 93, ${85 - eyeRx - 1} 95 Z`}
-          fill={palette.primaryBody}
-        />
-        <path
-          d={`M ${85 - eyeRx} 95 C 80 91, 90 91, ${85 + eyeRx} 95`}
-          fill="none"
-          stroke={palette.secondaryBody}
+        {/* Diamond Outer Eye Polygon: (82,92) (88,88) (94,92) (88,96) */}
+        <polygon
+          points="82,92 88,88 94,92 88,96"
+          fill={isSilhouette ? "#020617" : "#090306"}
+          stroke={isSilhouette ? "none" : palette.accent}
           strokeWidth="1.2"
         />
-        <circle cx="83" cy="94" r="0.9" fill="#ffffff" opacity="0.85" />
-      </g>
-
-      {/* Right Eye */}
-      <g>
-        {/* Eye Sclera Base */}
-        <ellipse cx="115" cy="95" rx={eyeRx} ry={eyeRy} fill="#090306" />
-        {/* Warm Muted Iris */}
-        <ellipse cx="115" cy="95" rx={eyeRx * 0.75} ry={eyeRy * 0.78} fill="#38121f" />
-        {/* Single Luminescent Ember Pupil Spark */}
-        <circle
-          cx="115"
-          cy="95.5"
-          r={2.2}
-          fill={palette.accent}
+        {/* Inner Faceted Iris */}
+        <polygon
+          points="85,92 88,90 91,92 88,94"
+          fill={isSilhouette ? "#020617" : palette.eyeColor}
+        />
+        {/* Luminescent Core Pupil Spark */}
+        <polygon
+          points="87,92 88,91 89,92 88,93"
+          fill="#fff7ed"
           filter="url(#avatar-glow-filter)"
         />
-        <circle cx="115" cy="95.5" r={1.0} fill="#fff7ed" />
-        {/* Upper Heavy Eyelid Cover (Calm, Dignified, Composed Gaze) */}
-        <path
-          d={`M ${115 - eyeRx - 1} 95 C 110 91, 120 91, ${115 + eyeRx + 1} 95 C 121 93, 109 93, ${115 - eyeRx - 1} 95 Z`}
-          fill={palette.primaryBody}
-        />
-        <path
-          d={`M ${115 - eyeRx} 95 C 110 91, 120 91, ${115 + eyeRx} 95`}
-          fill="none"
-          stroke={palette.secondaryBody}
+      </g>
+
+      {/* Right Geometric Eye */}
+      <g>
+        {/* Diamond Outer Eye Polygon: (106,92) (112,88) (118,92) (112,96) */}
+        <polygon
+          points="106,92 112,88 118,92 112,96"
+          fill={isSilhouette ? "#020617" : "#090306"}
+          stroke={isSilhouette ? "none" : palette.accent}
           strokeWidth="1.2"
         />
-        <circle cx="113" cy="94" r="0.9" fill="#ffffff" opacity="0.85" />
+        {/* Inner Faceted Iris */}
+        <polygon
+          points="109,92 112,90 115,92 112,94"
+          fill={isSilhouette ? "#020617" : palette.eyeColor}
+        />
+        {/* Luminescent Core Pupil Spark */}
+        <polygon
+          points="111,92 112,91 113,92 112,93"
+          fill="#fff7ed"
+          filter="url(#avatar-glow-filter)"
+        />
       </g>
+
+      {/* Geometric Nose Facet Tip: (97,106) (103,106) (100,110) */}
+      <polygon
+        points="97,106 103,106 100,110"
+        fill={isSilhouette ? "#020617" : palette.accent}
+        stroke={isSilhouette ? "none" : palette.secondaryBody}
+        strokeWidth="1"
+      />
 
       {/* ── MOUTH & JAW EXPRESSIONS ── */}
       <g className="creature-mouth">

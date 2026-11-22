@@ -35,6 +35,9 @@ export interface CharacterSkill {
   /** null = never practiced */
   lastPracticedAt: string | null;
   createdAt: string;
+  /** attribute_definitions.id of the main / second attribute the skill is tied to (null = none) */
+  primaryAttributeId?: string | null;
+  secondaryAttributeId?: string | null;
 }
 
 /** CharacterSkill with computed display fields (level, form) */

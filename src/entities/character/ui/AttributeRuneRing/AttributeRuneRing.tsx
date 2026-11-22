@@ -43,6 +43,8 @@ const FLASH_MS = 400;
 const FLOAT_PHASE_S = 0.5;
 /** floating amplitude (see .float keyframes), px */
 const FLOAT_AMPLITUDE_PX = 3;
+/** the composition never takes more than the container width minus this, px */
+const FIT_GUTTER_PX = 16;
 
 /**
  * AttributeRuneRing — the 7 attributes as runes on a circle around the avatar.
@@ -90,6 +92,23 @@ export function AttributeRuneRing({
   const reach = Math.hypot(layout.radius + maxRune / 2, maxRune / 2) + FLOAT_AMPLITUDE_PX;
   const outer = Math.ceil(Math.max(size, 2 * reach));
 
+  // ── Narrow screens: the whole composition (sigil + avatar + runes) scales by ONE factor so that it fits
+  // min(outer, container − 16px). The fit box takes that width; the ring keeps its natural size inside and is
+  // scaled with transform. Nothing changes where `outer` fits. ──
+  const fitRef = useRef<HTMLDivElement>(null);
+  const [fitWidth, setFitWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = fitRef.current;
+    if (!el) return;
+    const measure = () => setFitWidth(el.clientWidth || null);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const scale = fitWidth ? Math.min(1, fitWidth / outer) : 1;
+
   // ── Flash (400 ms) when a rune moves up to a higher state ──
   const levelKey = ATTRIBUTE_ORDER.map((a) => getRuneLevel(values[a])).join("");
   const prevLevels = useRef<string>(levelKey);
@@ -125,81 +144,96 @@ export function AttributeRuneRing({
 
   return (
     <div
-      className={[styles.ring, active ? styles.paused : "", className ?? ""]
-        .filter(Boolean)
-        .join(" ")}
-      style={{ width: outer, height: outer }}
-      data-testid="attribute-rune-ring"
-      data-paused={active ? "true" : undefined}
+      ref={fitRef}
+      className={[styles.fit, className ?? ""].filter(Boolean).join(" ")}
+      style={{ width: `min(${outer}px, calc(100% - ${FIT_GUTTER_PX}px))` }}
+      data-testid="attribute-rune-fit"
     >
-      {showAspectSigil && <AspectSigil attributes={values} diameter={size * ASPECT_SIGIL_FACTOR} />}
+      <div
+        className={[styles.ring, active ? styles.paused : ""].filter(Boolean).join(" ")}
+        style={
+          {
+            width: outer,
+            height: outer,
+            transform: scale < 1 ? `scale(${scale})` : undefined,
+            "--ring-scale": scale,
+          } as CSSProperties
+        }
+        data-testid="attribute-rune-ring"
+        data-scale={scale.toFixed(3)}
+        data-paused={active ? "true" : undefined}
+      >
+        {showAspectSigil && (
+          <AspectSigil attributes={values} diameter={size * ASPECT_SIGIL_FACTOR} />
+        )}
 
-      <div ref={avatarRef} className={styles.avatar}>
-        {children}
-      </div>
+        <div ref={avatarRef} className={styles.avatar}>
+          {children}
+        </div>
 
-      {/* Orbit: every rune sits on its own «spoke» from the centre that turns (120 s, all in sync); the rune
+        {/* Orbit: every rune sits on its own «spoke» from the centre that turns (120 s, all in sync); the rune
           counter-rotates to stay upright and floats. Per-rune spokes (not one rotating box) keep the
           scrollable overflow inside the circle at any angle. */}
-      <div className={styles.orbit} data-testid="rune-orbit">
-        {layout.runes.map((p, i) => {
-          const v = values[p.attribute];
-          const visual = getRuneVisual(v);
-          const color = visual.active ? ATTRIBUTE_COLORS[p.attribute] : RUNE_INACTIVE_COLOR;
-          const label = `${ATTRIBUTE_LABELS_RU[p.attribute]} · ${v}`;
-          const isAspect = p.attribute === aspect;
-          const isActive = active?.attribute === p.attribute;
-          // rune position as it is on screen now (rotated by the paused orbit angle)
-          const ang = isActive ? active.angle : 0;
-          const x = p.x * Math.cos(ang) - p.y * Math.sin(ang);
-          const y = p.x * Math.sin(ang) + p.y * Math.cos(ang);
-          // Tooltip on the inner side: right of left-side runes, left of right-side, below/above top/bottom
-          const gap = p.size / 2 + 6;
-          const tooltipPos: CSSProperties =
-            Math.abs(x) < p.size
-              ? y < 0
-                ? { left: 0, top: gap, transform: "translate(-50%, 0)" }
-                : { left: 0, top: -gap, transform: "translate(-50%, -100%)" }
-              : x < 0
-                ? { left: gap, top: 0, transform: "translate(0, -50%)" }
-                : { left: -gap, top: 0, transform: "translate(-100%, -50%)" };
-          return (
-            <div key={p.attribute} className={styles.spoke} data-spoke={p.attribute}>
-              <div className={styles.slot} style={{ left: p.x, top: p.y }}>
-                <div className={styles.upright}>
-                  <div
-                    className={styles.float}
-                    style={{ animationDelay: `${-i * FLOAT_PHASE_S}s` }}
-                  >
-                    <button
-                      type="button"
-                      className={[styles.rune, flashing.has(p.attribute) ? styles.flash : ""]
-                        .filter(Boolean)
-                        .join(" ")}
-                      style={{ width: p.size, height: p.size, color }}
-                      aria-label={label}
-                      data-attribute={p.attribute}
-                      data-level={visual.level}
-                      data-aspect={isAspect ? "true" : undefined}
-                      onMouseEnter={(e) => activate(p.attribute, e.currentTarget)}
-                      onMouseLeave={() => deactivate(p.attribute)}
-                      onFocus={(e) => activate(p.attribute, e.currentTarget)}
-                      onBlur={() => deactivate(p.attribute)}
-                      onClick={(e) => activate(p.attribute, e.currentTarget)}
+        <div className={styles.orbit} data-testid="rune-orbit">
+          {layout.runes.map((p, i) => {
+            const v = values[p.attribute];
+            const visual = getRuneVisual(v);
+            const color = visual.active ? ATTRIBUTE_COLORS[p.attribute] : RUNE_INACTIVE_COLOR;
+            const label = `${ATTRIBUTE_LABELS_RU[p.attribute]} · ${v}`;
+            const isAspect = p.attribute === aspect;
+            const isActive = active?.attribute === p.attribute;
+            // rune position as it is on screen now (rotated by the paused orbit angle)
+            const ang = isActive ? active.angle : 0;
+            const x = p.x * Math.cos(ang) - p.y * Math.sin(ang);
+            const y = p.x * Math.sin(ang) + p.y * Math.cos(ang);
+            // Tooltip on the inner side: right of left-side runes, left of right-side, below/above top/bottom
+            const gap = p.size / 2 + 6;
+            const tooltipPos: CSSProperties =
+              Math.abs(x) < p.size
+                ? y < 0
+                  ? { left: 0, top: gap, transform: "translate(-50%, 0)" }
+                  : { left: 0, top: -gap, transform: "translate(-50%, -100%)" }
+                : x < 0
+                  ? { left: gap, top: 0, transform: "translate(0, -50%)" }
+                  : { left: -gap, top: 0, transform: "translate(-100%, -50%)" };
+            return (
+              <div key={p.attribute} className={styles.spoke} data-spoke={p.attribute}>
+                <div className={styles.slot} style={{ left: p.x, top: p.y }}>
+                  <div className={styles.upright}>
+                    <div
+                      className={styles.float}
+                      style={{ animationDelay: `${-i * FLOAT_PHASE_S}s` }}
                     >
-                      <AttributeRune attribute={p.attribute} value={v} size={p.size} breathe />
-                    </button>
+                      <button
+                        type="button"
+                        className={[styles.rune, flashing.has(p.attribute) ? styles.flash : ""]
+                          .filter(Boolean)
+                          .join(" ")}
+                        style={{ width: p.size, height: p.size, color }}
+                        aria-label={label}
+                        data-attribute={p.attribute}
+                        data-level={visual.level}
+                        data-aspect={isAspect ? "true" : undefined}
+                        onMouseEnter={(e) => activate(p.attribute, e.currentTarget)}
+                        onMouseLeave={() => deactivate(p.attribute)}
+                        onFocus={(e) => activate(p.attribute, e.currentTarget)}
+                        onBlur={() => deactivate(p.attribute)}
+                        onClick={(e) => activate(p.attribute, e.currentTarget)}
+                      >
+                        <AttributeRune attribute={p.attribute} value={v} size={p.size} breathe />
+                      </button>
+                    </div>
+                    {isActive && (
+                      <span role="tooltip" className={styles.tooltip} style={tooltipPos}>
+                        {label}
+                      </span>
+                    )}
                   </div>
-                  {isActive && (
-                    <span role="tooltip" className={styles.tooltip} style={tooltipPos}>
-                      {label}
-                    </span>
-                  )}
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

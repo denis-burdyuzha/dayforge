@@ -556,7 +556,7 @@ export function AvatarPlaygroundPage() {
             style={
               bigView
                 ? { position: "fixed", inset: 0, zIndex: 999, borderRadius: 0 }
-                : { padding: "8px" }
+                : { padding: "8px 0" }
             }
           >
             {bigView ? (

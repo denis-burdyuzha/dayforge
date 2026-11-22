@@ -1,5 +1,8 @@
+import type { CSSProperties } from "react";
+
 import { ATTRIBUTE_COLORS } from "../../model/aspect";
 import type { AttributeKey } from "../../model/types";
+import styles from "./AttributeRune.module.scss";
 import { type GlyphShape, RUNE_FRAME_POINTS, RUNE_GLYPHS, RUNE_TICKS } from "./runeGlyphs";
 import { getRuneVisual, RUNE_INACTIVE_COLOR, RUNE_SIZE } from "./runeLayout";
 
@@ -11,6 +14,8 @@ export interface AttributeRuneProps {
   size?: number;
   /** glyph only, full attribute colour, no frame / glow / ticks (skill icons) */
   plain?: boolean;
+  /** glow «breathes» ±25% (4 s, CSS) — rune ring only; static glow when reduced motion is requested */
+  breathe?: boolean;
   className?: string;
 }
 
@@ -43,6 +48,7 @@ export function AttributeRune({
   value,
   size = RUNE_SIZE,
   plain = false,
+  breathe = false,
   className,
 }: AttributeRuneProps) {
   const state = getRuneVisual(value);
@@ -59,10 +65,21 @@ export function AttributeRune({
       height={size}
       overflow="visible"
       aria-hidden="true"
-      className={className}
+      className={
+        [breathe && glow ? styles.breathe : "", className ?? ""].filter(Boolean).join(" ") ||
+        undefined
+      }
       data-rune={attribute}
       data-level={visual.level}
-      style={{ flexShrink: 0, ...(glow ? { filter: glow } : {}) }}
+      style={
+        {
+          flexShrink: 0,
+          ...(glow ? { filter: glow } : {}),
+          ...(breathe && glow
+            ? { "--rune-glow": `${glowPx.toFixed(1)}px`, "--rune-glow-color": color }
+            : {}),
+        } as CSSProperties
+      }
     >
       <g
         fill="none"

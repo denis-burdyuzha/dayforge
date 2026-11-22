@@ -15,12 +15,98 @@
   justify-content: center;
 }
 
+/* ── Motion (CSS only; React never re-renders per frame) ── */
+
+/* The whole ring turns clockwise, one turn per 120 s */
+/* Zero-size, static pivot at the ring centre */
+.orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* One spoke per rune, turning clockwise around the centre (one turn per 120 s, all spokes in sync). A rotating
+   box that holds ALL runes would stick its overflow rectangle out at 45° (horizontal scroll on phones);
+   a spoke's rectangle (centre → its rune) stays inside the circle at any angle. */
+.spoke {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  animation: ringTurn 120s linear infinite;
+}
+
 /* Zero-size anchor at the rune centre */
 .slot {
   position: absolute;
   width: 0;
   height: 0;
-  z-index: 2;
+}
+
+/* Counter-rotation (same period, opposite direction) keeps every glyph upright */
+.upright {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  animation: ringCounterTurn 120s linear infinite;
+}
+
+/* Each rune floats ±3px, 3.6 s, phase i × 0.5 s (negative delay set inline) */
+.float {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: auto;
+  animation: runeFloat 3.6s ease-in-out infinite;
+}
+
+/* Hover / tap on a rune (tooltip open): turning and floating pause */
+.paused .spoke,
+.paused .upright,
+.paused .float {
+  animation-play-state: paused;
+}
+
+@keyframes ringTurn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ringCounterTurn {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes runeFloat {
+  0%,
+  100% {
+    transform: translateY(-3px);
+  }
+
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spoke,
+  .upright,
+  .float {
+    animation: none;
+  }
 }
 
 .rune {

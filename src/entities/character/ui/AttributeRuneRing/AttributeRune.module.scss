@@ -1,0 +1,21 @@
+/* Glow «breathing»: radius ±25% of the rune's own glow (--rune-glow), 4 s. Inline filter = static fallback */
+.breathe {
+  animation: runeBreathe 4s ease-in-out infinite;
+}
+
+@keyframes runeBreathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 calc(var(--rune-glow) * 0.75) var(--rune-glow-color));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 calc(var(--rune-glow) * 1.25) var(--rune-glow-color));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe {
+    animation: none;
+  }
+}

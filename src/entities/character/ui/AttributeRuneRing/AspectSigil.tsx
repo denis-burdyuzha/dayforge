@@ -48,7 +48,7 @@ export function AspectSigil({ attributes, diameter, className }: AspectSigilProp
       aria-hidden="true"
     >
       <svg
-        className={styles.spin}
+        className={styles.svg}
         viewBox={`${VIEW.min} ${VIEW.min} ${VIEW.size} ${VIEW.size}`}
         width={diameter}
         height={diameter}
@@ -56,7 +56,14 @@ export function AspectSigil({ attributes, diameter, className }: AspectSigilProp
           glowPx > 0 ? { filter: `drop-shadow(0 0 ${glowPx.toFixed(1)}px ${color})` } : undefined
         }
       >
-        <g fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round">
+        {/* rotation lives on an inner <g>: a rotating <svg> box would widen the page at 45° */}
+        <g
+          className={styles.spin}
+          fill="none"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <g strokeWidth={unit(GLYPH_STROKE)}>
             {RUNE_GLYPHS[aspect].map((shape, i) => {
               switch (shape.kind) {

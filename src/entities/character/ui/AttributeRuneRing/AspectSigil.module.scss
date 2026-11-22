@@ -7,11 +7,15 @@
   pointer-events: none;
 }
 
-.spin {
+.svg {
   display: block;
   overflow: visible;
+}
+
+/* Rotates the glyph group inside the SVG (around the viewBox centre), not the SVG box itself */
+.spin {
+  transform-box: view-box;
   transform-origin: 50% 50%;
-  will-change: transform;
   animation: sigilSpin 60s linear infinite;
 }
 

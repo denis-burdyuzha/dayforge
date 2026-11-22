@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { ATTRIBUTE_ORDER } from "../../model/aspect";
-import { RUNE_FRAME_POINTS, RUNE_GLYPHS } from "./runeGlyphs";
-import { computeRingLayout, getRuneLevel, getRuneVisual, RUNE_SIZE } from "./runeLayout";
+import { getGlyphExtent, RUNE_FRAME_POINTS, RUNE_GLYPHS } from "./runeGlyphs";
+import {
+  computeRingLayout,
+  getRuneLevel,
+  getRuneVisual,
+  getSigilGlowPx,
+  getSigilOpacity,
+  getSigilStrokePx,
+  RUNE_SIZE,
+} from "./runeLayout";
 
 describe("rune states", () => {
   it("levels by value", () => {
@@ -65,5 +73,26 @@ describe("ring layout", () => {
     const l = computeRingLayout(340, null, "social");
     expect(l.runes.find((r) => r.attribute === "social")!.size).toBeCloseTo(RUNE_SIZE * 1.15);
     expect(l.runes.find((r) => r.attribute === "strength")!.size).toBe(RUNE_SIZE);
+  });
+});
+
+describe("aspect sigil", () => {
+  it("line width 3 → 5px, glow none / 6 / 10px, opacity 0.18 → 0.45", () => {
+    expect(getSigilStrokePx(3)).toBeCloseTo(3);
+    expect(getSigilStrokePx(18)).toBeCloseTo(5);
+    expect(getSigilStrokePx(10.5)).toBeCloseTo(4);
+    expect([3, 11, 12, 17, 18].map(getSigilGlowPx)).toEqual([0, 0, 6, 6, 10]);
+    expect(getSigilOpacity(3)).toBeCloseTo(0.18);
+    expect(getSigilOpacity(18)).toBeCloseTo(0.45);
+  });
+
+  it("glyph extent: centre of the bbox and outer radius", () => {
+    // focus: circle r 7 at 12,12 + crosshair ticks out to 1 / 23
+    expect(getGlyphExtent(RUNE_GLYPHS.focus)).toMatchObject({ cx: 12, cy: 12, radius: 11 });
+    // discipline: square 5..19 → corner at hypot(7, 7)
+    const d = getGlyphExtent(RUNE_GLYPHS.discipline);
+    expect(d.radius).toBeCloseTo(Math.hypot(7, 7));
+    for (const a of ATTRIBUTE_ORDER)
+      expect(getGlyphExtent(RUNE_GLYPHS[a]).radius).toBeGreaterThan(5);
   });
 });

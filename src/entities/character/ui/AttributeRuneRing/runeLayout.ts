@@ -146,3 +146,16 @@ export function getSigilOpacity(value: number): number {
   const t = Math.min(1, Math.max(0, (value - 3) / 15));
   return 0.18 + 0.27 * t;
 }
+
+/** Aspect sigil line width, px: 3 at value 3 → 5 at 18, linear */
+export function getSigilStrokePx(value: number): number {
+  const t = Math.min(1, Math.max(0, (value - 3) / 15));
+  return 3 + 2 * t;
+}
+
+/** Aspect sigil glow radius, px: none below 12, 6px from 12, 10px at 18 */
+export function getSigilGlowPx(value: number): number {
+  if (value >= 18) return 10;
+  if (value >= 12) return 6;
+  return 0;
+}

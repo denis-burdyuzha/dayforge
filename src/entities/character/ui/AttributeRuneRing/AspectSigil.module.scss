@@ -5,6 +5,8 @@
   top: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  /* «breathing»: ±20% of the base opacity (--sigil-opacity, inline), 5 s. No rotation. */
+  animation: sigilBreathe 5s ease-in-out infinite;
 }
 
 .svg {
@@ -12,21 +14,19 @@
   overflow: visible;
 }
 
-/* Rotates the glyph group inside the SVG (around the viewBox centre), not the SVG box itself */
-.spin {
-  transform-box: view-box;
-  transform-origin: 50% 50%;
-  animation: sigilSpin 60s linear infinite;
-}
+@keyframes sigilBreathe {
+  0%,
+  100% {
+    opacity: calc(var(--sigil-opacity) * 0.8);
+  }
 
-@keyframes sigilSpin {
-  to {
-    transform: rotate(360deg);
+  50% {
+    opacity: calc(var(--sigil-opacity) * 1.2);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spin {
+  .sigil {
     animation: none;
   }
 }

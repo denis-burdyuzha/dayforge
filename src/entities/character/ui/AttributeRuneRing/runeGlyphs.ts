@@ -62,3 +62,29 @@ export const RUNE_TICKS: Array<{ x1: number; y1: number; x2: number; y2: number 
   { x1: -2, y1: 12, x2: -5, y2: 12 },
   { x1: 26, y1: 12, x2: 29, y2: 12 },
 ];
+
+/**
+ * Centre and outer radius of a glyph (max distance of any point / circle edge from the centre of the glyph's
+ * bounding box), in glyph units. Used to fit the glyph into a circle (aspect sigil).
+ */
+export function getGlyphExtent(shapes: GlyphShape[]): { cx: number; cy: number; radius: number } {
+  const pts: Array<[number, number, number]> = []; // x, y, extra radius
+  for (const s of shapes) {
+    if (s.kind === "line") {
+      pts.push([s.x1, s.y1, 0], [s.x2, s.y2, 0]);
+    } else if (s.kind === "circle") {
+      pts.push([s.cx, s.cy, s.r]);
+    } else {
+      for (const pair of s.points.trim().split(/\s+/)) {
+        const [x, y] = pair.split(",").map(Number);
+        if (x !== undefined && y !== undefined) pts.push([x, y, 0]);
+      }
+    }
+  }
+  const xs = pts.flatMap(([x, , r]) => [x - r, x + r]);
+  const ys = pts.flatMap(([, y, r]) => [y - r, y + r]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const radius = Math.max(...pts.map(([x, y, r]) => Math.hypot(x - cx, y - cy) + r));
+  return { cx, cy, radius };
+}

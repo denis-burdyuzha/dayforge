@@ -1,109 +1,84 @@
+import type { CSSProperties } from "react";
+
 import { ATTRIBUTE_COLORS, type AttributeValues, getAspect } from "../../model/aspect";
 import styles from "./AspectSigil.module.scss";
-import { RUNE_FRAME_POINTS, RUNE_GLYPHS, RUNE_TICKS } from "./runeGlyphs";
-import { getRuneVisual, getSigilOpacity, RUNE_SIZE } from "./runeLayout";
+import { getGlyphExtent, RUNE_GLYPHS } from "./runeGlyphs";
+import { getSigilGlowPx, getSigilOpacity, getSigilStrokePx } from "./runeLayout";
 
 export interface AspectSigilProps {
   /** attribute values 1..18 — the sigil shows the aspect (strict maximum ≥ 3); none → nothing */
   attributes: AttributeValues;
-  /** full diameter of the sigil incl. the 18-ticks, px (0.78 × rune-ring area) */
+  /** diameter of the circle the glyph is fitted into, px (0.78 × rune-ring area) */
   diameter: number;
   className?: string;
 }
 
 /**
- * Sigil viewBox: glyph 0..24 + hexagon frame (r 15) + ticks (to r 19.5) → ±20 around the centre (12,12).
- * The diameter is the WHOLE sigil incl. the 18-ticks, so they never reach the rune ring (with the 32-unit
- * rune box the top tick overlapped the Strength rune).
- */
-const VIEW = { min: -8, size: 40 };
-/** Rune line widths in viewBox units (same as AttributeRune) — scaled with the sigil, never under 2px */
-const GLYPH_STROKE = 2;
-const FRAME_STROKE = 1.5;
-
-/**
- * AspectSigil — the aspect rune drawn large behind the avatar, centred on the avatar area. Same states as
- * AttributeRune (hexagon frame from 6, glow from 12, ticks at 18), scaled to the size; colour = aspect,
- * opacity 0.18 → 0.45. Rotates slowly (60 s per turn, clockwise; off with prefers-reduced-motion).
+ * AspectSigil — ONLY the aspect glyph, drawn large behind the avatar and centred on it. No hexagon frame and
+ * no ticks (identical for every aspect, they dominated the shape), no rotation (it hid the shape).
+ * The glyph is fitted into the circle of `diameter` by its own centre and outer radius, so its edges stick
+ * out past the fox silhouette but never reach the rune ring. Lines 3 → 5px, glow 6px from 12 / 10px at 18,
+ * opacity 0.18 → 0.45 «breathing» ±20% over 5 s (CSS; off with prefers-reduced-motion).
  */
 export function AspectSigil({ attributes, diameter, className }: AspectSigilProps) {
   const aspect = getAspect(attributes);
   if (!aspect || diameter <= 0) return null;
   const value = attributes[aspect] ?? 3;
-  const visual = getRuneVisual(value);
   const color = ATTRIBUTE_COLORS[aspect];
-  const pxPerUnit = diameter / VIEW.size;
-  // proportional thickness, but at least 2px on screen
-  const unit = (w: number) => Math.max(w, 2 / pxPerUnit);
-  // glow radius scales like the rune: rune glow is defined for a 28px rune whose viewBox is 32 units
-  const glowPx = (visual.glow * pxPerUnit * 32) / RUNE_SIZE;
+  const shapes = RUNE_GLYPHS[aspect];
+  const stroke = getSigilStrokePx(value);
+  const glow = getSigilGlowPx(value);
+  const opacity = getSigilOpacity(value);
+
+  // Fit: the glyph's outer radius (+ half the line width) = diameter / 2
+  const { cx, cy, radius } = getGlyphExtent(shapes);
+  const half = (radius * (diameter / 2)) / (diameter / 2 - stroke / 2);
+  const viewBox = `${cx - half} ${cy - half} ${half * 2} ${half * 2}`;
 
   return (
     <div
       className={[styles.sigil, className ?? ""].filter(Boolean).join(" ")}
-      style={{ width: diameter, height: diameter, opacity: getSigilOpacity(value) }}
+      style={
+        { width: diameter, height: diameter, opacity, "--sigil-opacity": opacity } as CSSProperties
+      }
       data-testid="aspect-sigil"
       data-aspect={aspect}
-      data-level={visual.level}
       aria-hidden="true"
     >
       <svg
         className={styles.svg}
-        viewBox={`${VIEW.min} ${VIEW.min} ${VIEW.size} ${VIEW.size}`}
+        viewBox={viewBox}
         width={diameter}
         height={diameter}
-        style={
-          glowPx > 0 ? { filter: `drop-shadow(0 0 ${glowPx.toFixed(1)}px ${color})` } : undefined
-        }
+        style={glow > 0 ? { filter: `drop-shadow(0 0 ${glow}px ${color})` } : undefined}
       >
-        {/* rotation lives on an inner <g>: a rotating <svg> box would widen the page at 45° */}
-        <g
-          className={styles.spin}
-          fill="none"
-          stroke={color}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <g strokeWidth={unit(GLYPH_STROKE)}>
-            {RUNE_GLYPHS[aspect].map((shape, i) => {
-              switch (shape.kind) {
-                case "polygon":
-                  return <polygon key={i} points={shape.points} />;
-                case "polyline":
-                  return <polyline key={i} points={shape.points} />;
-                case "line":
-                  return <line key={i} x1={shape.x1} y1={shape.y1} x2={shape.x2} y2={shape.y2} />;
-                case "circle":
-                  return (
-                    <circle
-                      key={i}
-                      cx={shape.cx}
-                      cy={shape.cy}
-                      r={shape.r}
-                      {...(shape.filled ? { fill: color, stroke: "none" } : {})}
-                    />
-                  );
-              }
-            })}
-          </g>
-          {visual.frame && (
-            <polygon
-              points={RUNE_FRAME_POINTS}
-              strokeWidth={unit(FRAME_STROKE)}
-              opacity={visual.frameOpacity}
-            />
-          )}
-          {visual.ticks &&
-            RUNE_TICKS.map((t, i) => (
-              <line
-                key={i}
-                x1={t.x1}
-                y1={t.y1}
-                x2={t.x2}
-                y2={t.y2}
-                strokeWidth={unit(FRAME_STROKE)}
-              />
-            ))}
+        <g fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round">
+          {shapes.map((shape, i) => {
+            const line = { vectorEffect: "non-scaling-stroke" as const, strokeWidth: stroke };
+            switch (shape.kind) {
+              case "polygon":
+                return <polygon key={i} points={shape.points} {...line} />;
+              case "polyline":
+                return <polyline key={i} points={shape.points} {...line} />;
+              case "line":
+                return (
+                  <line key={i} x1={shape.x1} y1={shape.y1} x2={shape.x2} y2={shape.y2} {...line} />
+                );
+              case "circle":
+                return shape.filled ? (
+                  <circle
+                    key={i}
+                    cx={shape.cx}
+                    cy={shape.cy}
+                    r={shape.r}
+                    fill={color}
+                    stroke="none"
+                  />
+                ) : (
+                  <circle key={i} cx={shape.cx} cy={shape.cy} r={shape.r} {...line} />
+                );
+            }
+          })}
         </g>
       </svg>
     </div>

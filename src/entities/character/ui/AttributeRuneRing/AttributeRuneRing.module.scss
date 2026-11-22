@@ -1,6 +1,15 @@
-.ring {
+/* Fit box: min(natural size, container − 16px), square; the ring inside is scaled to it as a whole */
+.fit {
   position: relative;
   flex-shrink: 0;
+  aspect-ratio: 1;
+}
+
+.ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
 }
 
 /* Avatar in the centre at its own size */
@@ -159,12 +168,13 @@
 .tooltip {
   position: absolute;
   z-index: 3;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
+  /* the ring may be scaled down (--ring-scale < 1 on narrow screens): the tooltip keeps its real size */
+  padding: calc(4px / var(--ring-scale, 1)) calc(8px / var(--ring-scale, 1));
+  border-radius: calc(var(--radius-sm) / var(--ring-scale, 1));
   background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
+  border: calc(1px / var(--ring-scale, 1)) solid var(--color-border);
   color: var(--color-text);
-  font-size: var(--font-size-xs);
+  font-size: calc(var(--font-size-xs) / var(--ring-scale, 1));
   line-height: 1.3;
   white-space: nowrap;
   pointer-events: none;

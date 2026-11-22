@@ -155,7 +155,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
+  /* definite width: the rune ring fits itself to min(natural size, this width − 16px) */
+  width: 100%;
 }
 
 /* Avatar box inside the ring: glow + floating avatar (runes do not float) */

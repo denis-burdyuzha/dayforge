@@ -150,6 +150,8 @@ export type Database = {
           last_practiced_at: string | null;
           primary_attribute_id: string | null;
           secondary_attribute_id: string | null;
+          aliases: string[];
+          icon: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -162,6 +164,8 @@ export type Database = {
           last_practiced_at?: string | null;
           primary_attribute_id?: string | null;
           secondary_attribute_id?: string | null;
+          aliases?: string[];
+          icon?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -174,6 +178,8 @@ export type Database = {
           last_practiced_at?: string | null;
           primary_attribute_id?: string | null;
           secondary_attribute_id?: string | null;
+          aliases?: string[];
+          icon?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -200,6 +206,83 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      day_report_applications: {
+        Row: {
+          parse_id: string;
+          user_id: string;
+          report_date: string;
+          result: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          parse_id: string;
+          user_id: string;
+          report_date: string;
+          result?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          parse_id?: string;
+          user_id?: string;
+          report_date?: string;
+          result?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "day_report_applications_parse_id_fkey";
+            columns: ["parse_id"];
+            isOneToOne: true;
+            referencedRelation: "day_report_parses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      day_report_parses: {
+        Row: {
+          id: string;
+          user_id: string;
+          report_date: string;
+          input_text: string;
+          model: string;
+          attempt: number;
+          raw_output: Json | null;
+          parsed_events: Json | null;
+          status: string;
+          error_message: string | null;
+          latency_ms: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          report_date: string;
+          input_text: string;
+          model: string;
+          attempt?: number;
+          raw_output?: Json | null;
+          parsed_events?: Json | null;
+          status: string;
+          error_message?: string | null;
+          latency_ms?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          report_date?: string;
+          input_text?: string;
+          model?: string;
+          attempt?: number;
+          raw_output?: Json | null;
+          parsed_events?: Json | null;
+          status?: string;
+          error_message?: string | null;
+          latency_ms?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       daily_plans: {
         Row: {
@@ -453,6 +536,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_day_report: {
+        Args: {
+          p_report_date: string;
+          p_events: Json;
+          p_parse_id: string;
+        };
+        Returns: Json;
+      };
       calculate_quest_effects: {
         Args: {
           p_skill_id: string | null;

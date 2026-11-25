@@ -14,6 +14,7 @@
     "format:check": "prettier . --check",
     "test": "vitest run",
     "test:watch": "vitest",
+    "eval:day-report": "vitest run --config vitest.eval.config.ts",
     "check": "npm run typecheck && npm run lint && npm run test",
     "verify": "npm run check && npm run build",
     "prepare": "husky",

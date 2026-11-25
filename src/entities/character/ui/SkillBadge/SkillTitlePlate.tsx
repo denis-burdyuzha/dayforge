@@ -21,6 +21,7 @@ export function SkillTitlePlate({ skill, className }: SkillTitlePlateProps) {
       <SkillIcon
         name={skill.name}
         primaryAttribute={skill.primaryAttribute}
+        iconKey={skill.iconKey}
         form={skill.form}
         size={28}
         iconSize={20}

@@ -38,6 +38,10 @@ export interface CharacterSkill {
   /** attribute_definitions.id of the main / second attribute the skill is tied to (null = none) */
   primaryAttributeId?: string | null;
   secondaryAttributeId?: string | null;
+  /** alternative names used to match the skill (AI day report) */
+  aliases?: string[];
+  /** icon key from shared/config/skillIcons (null → keyword-based icon) */
+  icon?: string | null;
 }
 
 /** CharacterSkill with computed display fields (level, form) */

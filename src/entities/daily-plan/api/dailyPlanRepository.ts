@@ -1,5 +1,6 @@
 import { xpRequiredForLevel } from "@/entities/character/model/characterTypes";
 import { supabase } from "@/shared/api/supabase/client";
+import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
 
 import type { DailyPlan, NewQuestInput, Quest } from "../model/dailyPlanTypes";
 
@@ -185,17 +186,7 @@ export const dailyPlanRepository = {
    *  - Attribute gain (+1 fixed)
    *  - Skill upsert + XP with form multiplier (if skill_name/hours set)
    */
-  async completeQuest(
-    questId: string,
-    _characterId?: string,
-  ): Promise<{
-    xpAwarded: number;
-    newLevel: number;
-    oldLevel: number;
-    attributeGained: number;
-    skillXpGained: number;
-    skillLevel: number;
-  }> {
+  async completeQuest(questId: string, _characterId?: string): Promise<QuestCompletionResult> {
     const { data, error } = await supabase.rpc("complete_quest", {
       p_quest_id: questId,
     });

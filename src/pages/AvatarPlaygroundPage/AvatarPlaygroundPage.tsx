@@ -208,6 +208,7 @@ export function AvatarPlaygroundPage() {
     form: t.form,
     primaryAttribute: t.attr,
     attributes: [t.attr],
+    iconKey: null,
   }));
   const titleSkill = pickTitleSkill(testSkillViews);
 

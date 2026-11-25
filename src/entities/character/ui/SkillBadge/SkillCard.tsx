@@ -17,6 +17,7 @@ export function SkillCard({ skill, attributeValues }: SkillCardProps) {
       <SkillIcon
         name={skill.name}
         primaryAttribute={skill.primaryAttribute}
+        iconKey={skill.iconKey}
         form={skill.form}
         size={32}
         iconSize={20}

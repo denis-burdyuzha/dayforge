@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval:day-report": "vitest run --config vitest.eval.config.ts scripts/evalDayReport.eval.ts",
+    "build:assets": "node scripts/buildCreatureAssets.mjs",
     "eval:day-plan": "vitest run --config vitest.eval.config.ts scripts/evalDayPlan.eval.ts",
     "check": "npm run typecheck && npm run lint && npm run test",
     "verify": "npm run check && npm run build",

@@ -1,4 +1,4 @@
-import type React from "react";
+﻿import type React from "react";
 
 import type { WolfBaseAssetProps } from "./assets/wolfAssetTypes";
 import { WOLF_L1_FIT, WOLF_L1_POLYGONS } from "./assets/WolfL1AssetData";
@@ -13,10 +13,10 @@ import { WOLF_L5_FIT, WOLF_L5_POLYGONS } from "./assets/WolfL5AssetData";
 import { WolfL5BaseAsset } from "./assets/WolfL5BaseAsset";
 
 export interface WolfTierConfigItem {
-  /** 1..5 — asset tier */
+  /** 1..5 вЂ” asset tier */
   tierIndex: 1 | 2 | 3 | 4 | 5;
   component: React.ComponentType<WolfBaseAssetProps>;
-  /** canvas fit (fox rule: contained in 168 × 208, centred on 100,120 — see scripts/buildWolfAssets.mjs) */
+  /** canvas fit (fox rule: contained in 168 Г— 208, centred on 100,120 вЂ” see scripts/buildCreatureAssets.mjs) */
   scale: number;
   tx: number;
   ty: number;
@@ -33,7 +33,7 @@ const tier = (
   name: string,
 ): WolfTierConfigItem => ({ tierIndex, component, ...fit, polygonCount, name });
 
-/** Same level thresholds as the fox (foxEvolutionConfig): 1–2, 3–9, 10–34, 35–49, 50+ */
+/** Same level thresholds as the fox (foxEvolutionConfig): 1вЂ“2, 3вЂ“9, 10вЂ“34, 35вЂ“49, 50+ */
 export const WOLF_TIER_CONFIG = {
   1: tier(1, WolfL1BaseAsset, WOLF_L1_FIT, WOLF_L1_POLYGONS.length, "Pup"),
   3: tier(2, WolfL2BaseAsset, WOLF_L2_FIT, WOLF_L2_POLYGONS.length, "Young"),

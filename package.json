@@ -14,6 +14,7 @@
     "format:check": "prettier . --check",
     "test": "vitest run",
     "test:watch": "vitest",
+    "eval:day-report": "vitest run --config vitest.eval.config.ts",
     "check": "npm run typecheck && npm run lint && npm run test",
     "verify": "npm run check && npm run build",
     "prepare": "husky",
@@ -34,8 +35,10 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
+    "@electric-sql/pglite": "^0.6.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.17",

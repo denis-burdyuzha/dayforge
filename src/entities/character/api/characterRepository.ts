@@ -130,7 +130,7 @@ export const characterRepository = {
     const { data, error } = await supabase
       .from("character_skills")
       .select(
-        "id, character_id, name, total_hours, total_xp, last_practiced_at, created_at, primary_attribute_id, secondary_attribute_id",
+        "id, character_id, name, total_hours, total_xp, last_practiced_at, created_at, primary_attribute_id, secondary_attribute_id, aliases, icon",
       )
       .eq("character_id", characterId)
       .order("total_xp", { ascending: false });
@@ -149,6 +149,8 @@ export const characterRepository = {
       createdAt: row.created_at,
       primaryAttributeId: row.primary_attribute_id,
       secondaryAttributeId: row.secondary_attribute_id,
+      aliases: row.aliases ?? [],
+      icon: row.icon,
     }));
   },
 };

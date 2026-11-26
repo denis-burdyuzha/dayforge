@@ -18,6 +18,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+import { getSkillIconByKey } from "@/shared/config/skillIcons";
+
 import { ATTRIBUTE_COLORS, isAttributeKey, NEUTRAL_GLOW_COLOR } from "./aspect";
 import type { CharacterSkillWithStats } from "./characterSkillTypes";
 import type { CharacterAttribute } from "./characterTypes";
@@ -99,17 +101,26 @@ export const SKILL_ICON_COMPONENTS: Record<SkillIconCategory, LucideIcon> = {
 };
 
 export type SkillIcon =
-  | { kind: "icon"; category: SkillIconCategory; Icon: LucideIcon; color: string }
+  | { kind: "icon"; category: SkillIconCategory | "stored"; Icon: LucideIcon; color: string }
   | { kind: "rune"; attribute: AttributeKey | null; category: null; color: string };
 
 export function getSkillColor(primaryAttribute: AttributeKey | null): string {
   return primaryAttribute ? ATTRIBUTE_COLORS[primaryAttribute] : NEUTRAL_GLOW_COLOR;
 }
 
-/** Keyword match → lucide icon; no match → rune glyph of the main attribute (neutral dot without one) */
-export function getSkillIcon(skillName: string, primaryAttribute: AttributeKey | null): SkillIcon {
-  const category = detectSkillIconCategory(skillName);
+/**
+ * Stored icon key (character_skills.icon) → that icon; otherwise keyword match → lucide icon; no match →
+ * rune glyph of the main attribute (neutral dot without one).
+ */
+export function getSkillIcon(
+  skillName: string,
+  primaryAttribute: AttributeKey | null,
+  iconKey?: string | null,
+): SkillIcon {
   const color = getSkillColor(primaryAttribute);
+  const stored = getSkillIconByKey(iconKey);
+  if (stored) return { kind: "icon", category: "stored", Icon: stored.Icon, color };
+  const category = detectSkillIconCategory(skillName);
   if (category) return { kind: "icon", category, Icon: SKILL_ICON_COMPONENTS[category], color };
   return { kind: "rune", attribute: primaryAttribute, category: null, color };
 }
@@ -129,6 +140,8 @@ export interface SkillView {
   primaryAttribute: AttributeKey | null;
   /** attributes the skill is tied to (primary first), for the small runes on the card */
   attributes: AttributeKey[];
+  /** stored icon key (character_skills.icon), null → keyword-based icon */
+  iconKey: string | null;
 }
 
 export function displaySkillName(name: string): string {
@@ -160,6 +173,7 @@ export function toSkillView(
     attributes: [primary, secondary].filter(
       (a, i, arr): a is AttributeKey => a !== null && arr.indexOf(a) === i,
     ),
+    iconKey: skill.icon ?? null,
   };
 }
 

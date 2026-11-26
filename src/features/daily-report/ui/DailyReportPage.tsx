@@ -3,14 +3,19 @@ import { useEffect, useState } from "react";
 
 import { useAppState } from "@/entities/auth/model/useAppState";
 import { characterRepository } from "@/entities/character/api/characterRepository";
+import { enrichSkillWithStats } from "@/entities/character/model/characterSkillTypes";
+import { type SkillView, toSkillView } from "@/entities/character/model/skillPresentation";
 import { characterQueryKey } from "@/entities/character/model/useCharacter";
+import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanRepository";
 import { dailyReportRepository } from "@/entities/daily-report/api/dailyReportRepository";
+import type { ApplyDayReportResult } from "@/entities/daily-report/model/aiDayReport";
 import type { DayCompletionResult } from "@/entities/daily-report/model/dailyReportTypes";
 import { supabase } from "@/shared/api/supabase/client";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
 import { LevelUp } from "@/shared/ui/LevelUp/ui/LevelUp";
 import { Loading } from "@/shared/ui/Loading/ui/Loading";
 
+import { AiDayReport } from "./AiDayReport";
 import styles from "./DailyReportPage.module.scss";
 import { DayCompletionView } from "./DayCompletionView";
 
@@ -27,9 +32,13 @@ export function DailyReportPage() {
   const [existingResult, setExistingResult] = useState<DayCompletionResult | null>(null);
   const [freshResult, setFreshResult] = useState<DayCompletionResult | null>(null);
 
-  // Form state
-  const [reportText, setReportText] = useState("");
+  // Data for the AI preview: the user's skills and today's pending quests (id → title)
+  const [skills, setSkills] = useState<SkillView[]>([]);
+  const [plannedQuestTitles, setPlannedQuestTitles] = useState<ReadonlyMap<string, string>>(
+    new Map(),
+  );
   const [submitting, setSubmitting] = useState(false);
+  const reportDate = new Date().toISOString().slice(0, 10);
 
   // LevelUp overlay
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -46,6 +55,21 @@ export function DailyReportPage() {
         if (!char || cancelled) return;
 
         setCharacterId(char.id);
+
+        const [charSkills, attributes, todayPlan] = await Promise.all([
+          characterRepository.getCharacterSkills(char.id),
+          characterRepository.getCharacterAttributes(char.id),
+          dailyPlanRepository.getTodayPlan(char.id),
+        ]);
+        if (cancelled) return;
+        setSkills(charSkills.map((s) => toSkillView(enrichSkillWithStats(s), attributes)));
+        setPlannedQuestTitles(
+          new Map(
+            (todayPlan?.quests ?? [])
+              .filter((q) => q.status === "pending")
+              .map((q) => [q.id, q.title]),
+          ),
+        );
 
         const todayReport = await dailyReportRepository.getTodayReport(char.id);
 
@@ -133,48 +157,42 @@ export function DailyReportPage() {
     };
   }, [userId]);
 
-  async function handleCompleteDay() {
-    if (!characterId || submitting) return;
+  /** Saves the report text and shows the day result (the existing flow after quests were credited) */
+  async function finishDay(text: string, levelBefore: number, levelAfter?: number) {
+    if (!characterId) return;
+    const result = await dailyReportRepository.completeDay(characterId, text);
+    const charAfter = await characterRepository.getCurrentCharacter(userId!);
+    const newLevel = levelAfter ?? charAfter?.level ?? levelBefore;
+    const didLevelUp = newLevel > levelBefore;
+    setFreshResult({ ...result, leveledUp: didLevelUp, newLevel });
 
+    // Invalidate queries so the Character Page updates (XP, attributes, skills)
+    if (userId) {
+      void queryClient.invalidateQueries({ queryKey: characterQueryKey(userId) });
+      void queryClient.invalidateQueries({ queryKey: ["character", characterId, "xp-events"] });
+      void queryClient.invalidateQueries({ queryKey: ["character", characterId, "attributes"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["character", characterId, "character-skills"],
+      });
+    }
+    if (didLevelUp) {
+      setLevelUpLevel(newLevel);
+      setShowLevelUp(true);
+    }
+  }
+
+  /** AI flow: apply_day_report already credited XP — save the text and show the result */
+  async function handleApplied(result: ApplyDayReportResult, text: string) {
+    await finishDay(text, result.oldLevel, result.newLevel);
+  }
+
+  /** Old flow: complete the day without parsing (quests were marked on the plan page) */
+  async function handleCompleteWithoutParsing(text: string) {
+    if (!characterId || submitting) return;
     setSubmitting(true);
     try {
-      // Read current level before completing
       const charBefore = await characterRepository.getCurrentCharacter(userId!);
-      const levelBefore = charBefore?.level ?? 1;
-
-      const result = await dailyReportRepository.completeDay(characterId, reportText.trim());
-
-      // Read level again after (it was updated per-quest already)
-      const charAfter = await characterRepository.getCurrentCharacter(userId!);
-      const levelAfter = charAfter?.level ?? 1;
-
-      const didLevelUp = levelAfter > levelBefore;
-      const finalResult: DayCompletionResult = {
-        ...result,
-        leveledUp: didLevelUp,
-        newLevel: levelAfter,
-      };
-
-      setFreshResult(finalResult);
-
-      // Invalidate queries so Character Page updates
-      if (userId) {
-        void queryClient.invalidateQueries({
-          queryKey: characterQueryKey(userId),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: ["character", characterId, "xp-events"],
-        });
-        void queryClient.invalidateQueries({
-          queryKey: ["character", characterId, "attributes"],
-        });
-      }
-
-      // Show LevelUp overlay if needed
-      if (didLevelUp) {
-        setLevelUpLevel(levelAfter);
-        setShowLevelUp(true);
-      }
+      await finishDay(text, charBefore?.level ?? 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка завершения дня");
     } finally {
@@ -213,37 +231,15 @@ export function DailyReportPage() {
     );
   }
 
-  // Form
+  // AI day report (text → parse → preview → apply)
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Как прошёл твой день?</h1>
-        <p className={styles.subtitle}>
-          Напиши свободным текстом — этот отчёт сохранится для будущего анализа.
-        </p>
-      </div>
-
-      <div className={styles.textareaWrap}>
-        <textarea
-          className={styles.textarea}
-          value={reportText}
-          onChange={(e) => setReportText(e.target.value)}
-          placeholder="Что сделал? Что было сложно? Чем доволен?"
-          aria-label="Текст вечернего отчёта"
-        />
-      </div>
-
-      <div className={styles.completeBtnWrap}>
-        <button
-          type="button"
-          className={styles.completeBtn}
-          onClick={handleCompleteDay}
-          disabled={submitting}
-          id="complete-day-btn"
-        >
-          {submitting ? "Завершаем день…" : "✦ Завершить день"}
-        </button>
-      </div>
-    </div>
+    <AiDayReport
+      reportDate={reportDate}
+      skills={skills}
+      plannedQuestTitles={plannedQuestTitles}
+      onApplied={handleApplied}
+      onCompleteWithoutParsing={(text) => void handleCompleteWithoutParsing(text)}
+      completingWithoutParsing={submitting}
+    />
   );
 }

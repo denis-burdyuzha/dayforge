@@ -6,6 +6,8 @@ import styles from "./SkillBadge.module.scss";
 export interface SkillIconProps {
   name: string;
   primaryAttribute: AttributeKey | null;
+  /** stored icon key (character_skills.icon); overrides the keyword-based icon */
+  iconKey?: string | null | undefined;
   /** skill form 0..100 — fills the ring */
   form: number;
   /** outer diameter of the form ring, px */
@@ -15,11 +17,18 @@ export interface SkillIconProps {
 }
 
 /**
- * Skill icon inside a form ring (progress = Form %, colour = main attribute). Without an icon library the
- * icon is the rune glyph of the main attribute; a skill without an attribute gets a neutral dot.
+ * Skill icon inside a form ring (progress = Form %, colour = main attribute): stored icon key → keyword icon →
+ * the rune glyph of the main attribute; a skill without an attribute gets a neutral dot.
  */
-export function SkillIcon({ name, primaryAttribute, form, size, iconSize }: SkillIconProps) {
-  const icon = getSkillIcon(name, primaryAttribute);
+export function SkillIcon({
+  name,
+  primaryAttribute,
+  iconKey,
+  form,
+  size,
+  iconSize,
+}: SkillIconProps) {
+  const icon = getSkillIcon(name, primaryAttribute, iconKey);
   const stroke = Math.max(2, size / 14);
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;

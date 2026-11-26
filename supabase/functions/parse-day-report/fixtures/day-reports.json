@@ -1,0 +1,369 @@
+{
+  "contexts": {
+    "base": {
+      "skills": [
+        {
+          "id": "s-en",
+          "name": "Английский",
+          "aliases": ["англ", "english"],
+          "attributes": ["intelligence"]
+        },
+        {
+          "id": "s-code",
+          "name": "Программирование",
+          "aliases": ["кодинг"],
+          "attributes": ["intelligence", "focus"]
+        },
+        { "id": "s-run", "name": "Бег", "aliases": [], "attributes": ["endurance"] },
+        { "id": "s-read", "name": "Чтение", "aliases": [], "attributes": ["intelligence"] },
+        { "id": "s-guitar", "name": "Гитара", "aliases": [], "attributes": ["creativity"] },
+        {
+          "id": "s-gym",
+          "name": "Силовые тренировки",
+          "aliases": ["зал"],
+          "attributes": ["strength"]
+        }
+      ],
+      "plannedQuests": []
+    }
+  },
+  "fixtures": [
+    {
+      "id": "01-one-line",
+      "covers": "короткий отчёт в одну строку",
+      "text": "Пробежал 5 км за полчаса.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "hours": 0.5,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "02-long-detailed",
+      "covers": "длинный подробный отчёт, два события из плана",
+      "plannedQuests": [
+        { "id": "q-code", "title": "Доделать фичу логина", "skill": "Программирование" },
+        { "id": "q-en", "title": "Урок английского", "skill": "Английский" }
+      ],
+      "text": "Встал в 7, сделал пробежку минут 40 по набережной. Потом сел за проект и часа три доделывал фичу логина — наконец заработала авторизация через Google. Днём был урок английского с репетитором, ровно час, разбирали Present Perfect. Вечером полчаса играл на гитаре, учил вступление к новой песне, и перед сном прочитал страниц 20 книги, где-то минут 30.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "hours": 0.7,
+            "plannedQuestId": null
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "hours": 3,
+            "plannedQuestId": "q-code"
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "hours": 1,
+            "plannedQuestId": "q-en"
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-guitar" },
+            "hours": 0.5,
+            "plannedQuestId": null
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "hours": 0.5,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "03-no-durations",
+      "covers": "без указания времени → оценка и confidence low",
+      "text": "Сегодня позанимался английским, почитал книгу и сходил в зал.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "hours": null,
+            "plannedQuestId": null,
+            "confidence": "low"
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "hours": null,
+            "plannedQuestId": null,
+            "confidence": "low"
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-gym" },
+            "hours": null,
+            "plannedQuestId": null,
+            "confidence": "low"
+          }
+        ]
+      }
+    },
+    {
+      "id": "04-synonyms-merge",
+      "covers": "синонимы существующего навыка («англ», english) + объединение повторов",
+      "text": "Час англа по скайпу с преподом, а потом ещё минут 20 слушал english podcast в метро.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "hours": 1.3,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "05-planned-quest",
+      "covers": "событие из плана",
+      "plannedQuests": [{ "id": "q-run", "title": "Утренняя пробежка", "skill": "Бег" }],
+      "text": "Утренняя пробежка сделана: 6 км, минут 35.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "hours": 0.6,
+            "plannedQuestId": "q-run"
+          }
+        ]
+      }
+    },
+    {
+      "id": "06-outside-plan",
+      "covers": "события вне плана, план не выполнен",
+      "plannedQuests": [
+        { "id": "q-code", "title": "Написать тесты для API", "skill": "Программирование" }
+      ],
+      "text": "До тестов так и не дошёл. Зато весь вечер собирал шкаф, часа три, и ещё полтора часа готовил еду на неделю.",
+      "expected": {
+        "events": [
+          { "skill": { "kind": "new" }, "hours": 3, "plannedQuestId": null },
+          {
+            "skill": { "kind": "new", "names": ["Готовка", "Кулинария", "Приготовление еды"] },
+            "hours": 1.5,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "07-nothing",
+      "covers": "«ничего не делал»",
+      "text": "Сегодня ничего не делал, весь день провалялся.",
+      "expected": { "events": [], "ignoreExtraNone": true }
+    },
+    {
+      "id": "08-rest-series",
+      "covers": "отдых и сериалы → kind none",
+      "text": "Вечером посмотрел три серии «Ведьмака» и просто отдыхал на диване.",
+      "expected": {
+        "events": [{ "skill": { "kind": "none" }, "hours": null, "plannedQuestId": null }],
+        "ignoreExtraNone": true
+      }
+    },
+    {
+      "id": "09-exaggeration",
+      "covers": "явное преувеличение («кодил 20 часов») → 8 ч, low",
+      "text": "Кодил 20 часов без перерыва, дописал весь бэкенд!!!",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "hours": 8,
+            "plannedQuestId": null,
+            "confidence": "low"
+          }
+        ]
+      }
+    },
+    {
+      "id": "10-colloquial-typos",
+      "covers": "опечатки и разговорный стиль",
+      "text": "седня жоска потренил в зале часик, патом читанул чутка перед сном",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-gym" },
+            "hours": 1,
+            "plannedQuestId": null
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "hours": null,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "11-new-skill-one-line",
+      "covers": "новый навык, одна строка",
+      "text": "Час играл в шахматы онлайн, решал задачи.",
+      "expected": {
+        "events": [
+          { "skill": { "kind": "new", "names": ["Шахматы"] }, "hours": 1, "plannedQuestId": null }
+        ]
+      }
+    },
+    {
+      "id": "12-mixed-english-work",
+      "covers": "смешанный с английскими словами, объединение одного занятия",
+      "text": "Утром сделал code review двух PR, потом deep work по API часа 4. Вечером 30 мин running в парке.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "hours": null,
+            "plannedQuestId": null
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "hours": 0.5,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "13-plan-partial",
+      "covers": "один квест из плана выполнен, второй нет, плюс отдых",
+      "plannedQuests": [
+        { "id": "q-guitar", "title": "Разучить аккорды", "skill": "Гитара" },
+        { "id": "q-read", "title": "Прочитать главу книги", "skill": "Чтение" }
+      ],
+      "text": "Разучил новые аккорды на гитаре, минут 40. Главу так и не открыл. Потом залип в ютуб на пару часов.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-guitar" },
+            "hours": 0.7,
+            "plannedQuestId": "q-guitar"
+          }
+        ],
+        "ignoreExtraNone": true
+      }
+    },
+    {
+      "id": "14-meditation-merge",
+      "covers": "новый навык, два раза одно занятие → одно событие",
+      "text": "Утром медитировал 15 минут, вечером ещё минут 10.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "new", "names": ["Медитация"] },
+            "hours": 0.4,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "15-work-and-run",
+      "covers": "рабочий день: код + звонки + пробежка",
+      "text": "С 10 до 13 писал код для рабочего проекта, потом час созвонов с командой. После работы пробежка 3 км минут 20.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "hours": 3,
+            "plannedQuestId": null
+          },
+          {
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "hours": 0.3,
+            "plannedQuestId": null
+          }
+        ],
+        "allowExtra": true
+      }
+    },
+    {
+      "id": "16-swimming",
+      "covers": "новый навык с атрибутом",
+      "text": "Плавал в бассейне час, проплыл полтора километра.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "new", "names": ["Плавание"], "attributesInclude": ["endurance"] },
+            "hours": 1,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "17-reading",
+      "covers": "существующий навык другими словами",
+      "text": "Прочёл 50 страниц «Мастера и Маргариты», где-то час ушёл.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "hours": 1,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "18-exam-prep",
+      "covers": "учёба → новый навык",
+      "text": "2 часа готовился к экзамену по матану, решал пределы.",
+      "expected": {
+        "events": [
+          {
+            "skill": {
+              "kind": "new",
+              "names": ["Математика", "Матанализ", "Математический анализ", "Высшая математика"]
+            },
+            "hours": 2,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "19-planned-by-synonym",
+      "covers": "квест из плана, описан синонимом, без времени",
+      "plannedQuests": [{ "id": "q-en", "title": "Английский: 1 урок", "skill": "Английский" }],
+      "text": "Отзанимался с репетитором по англу.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "hours": null,
+            "plannedQuestId": "q-en",
+            "confidence": "low"
+          }
+        ]
+      }
+    },
+    {
+      "id": "20-mixed-english-gym-spanish",
+      "covers": "смешанный с английскими фразами, новый язык",
+      "text": "Went to the gym for an hour, потом 2 часа учил испанский по Duolingo и с учебником.",
+      "expected": {
+        "events": [
+          {
+            "skill": { "kind": "existing", "skillId": "s-gym" },
+            "hours": 1,
+            "plannedQuestId": null
+          },
+          {
+            "skill": { "kind": "new", "names": ["Испанский", "Испанский язык"] },
+            "hours": 2,
+            "plannedQuestId": null
+          }
+        ]
+      }
+    }
+  ]
+}

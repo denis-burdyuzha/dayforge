@@ -1,0 +1,558 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1344 756">
+  <polygon id="segment_6_poly_1" points="909,619 913,589 942,604" fill="#311e17" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_1" points="914,324 914,313 941,402" fill="#724b2c" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_1" points="918,374 914,324 941,402" fill="#382517" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_1" points="921,573 941,559 942,604" fill="#1a1007" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_2" points="913,589 921,573 942,604" fill="#1d1008" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_11_poly_3" points="595,483 554,470 561,420" fill="#170e07" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_2" points="499,594 502,567 542,566" fill="#362315" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_11" points="485,640 493,633 509,641" fill="#070200" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_1" points="858,264 809,265 854,256" fill="#543926" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_2" points="914,313 858,264 854,256" fill="#8b5c32" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_2" points="849,341 914,324 918,374" fill="#392618" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_1" points="660,306 620,327 642,293" fill="#231606" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_5_poly_2" points="877,464 918,374 941,402" fill="#27160e" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_4" points="931,488 877,464 941,402" fill="#26150d" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_5" points="862,527 877,464 931,488" fill="#230f04" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_6" points="862,527 931,488 941,559" fill="#29170d" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_7" points="921,573 862,527 941,559" fill="#271910" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_3" points="459,327 454,334 438,293" fill="#1d0e07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_4" points="454,334 417,293 438,293" fill="#271509" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_5" points="660,306 626,334 620,327" fill="#27170a" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_6" points="416,257 426,248 454,264" fill="#241208" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_3" points="426,248 416,257 408,255" fill="#392214" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_4" points="650,248 601,239 647,206" fill="#402617" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_7" points="554,470 517,456 561,420" fill="#2a180e" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_8" points="554,496 554,470 595,483" fill="#140d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_9" points="554,496 584,537 542,566" fill="#140a00" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_10" points="518,620 539,605 560,626" fill="#26130d" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_11" points="539,605 499,594 542,566" fill="#23160d" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_12" points="518,620 517,633 496,617" fill="#281302" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_13" points="517,633 493,633 496,617" fill="#150c05" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_2" points="493,633 517,633 509,641" fill="#523925" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_14" points="517,633 560,626 509,641" fill="#221002" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_15" points="517,633 518,620 560,626" fill="#23120b" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_16" points="493,633 483,631 496,617" fill="#2b1402" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_17" points="483,631 478,616 496,617" fill="#130c04" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_3" points="483,631 475,631 478,616" fill="#3e2717" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_4" points="483,631 493,633 485,640" fill="#2d1807" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_5" points="475,631 483,631 485,640" fill="#392b20" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_5" points="914,324 905,310 914,313" fill="#45250e" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_6" points="849,341 905,310 914,324" fill="#3b281a" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_3" points="905,310 858,264 914,313" fill="#835533" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_8" points="662,292 660,306 642,293" fill="#27170a" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_3" points="693,261 715,264 688,273" fill="#54341d" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_11_poly_18" points="734,601 736,567 787,596" fill="#180f08" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_19" points="734,601 710,643 716,616" fill="#050000" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_7" points="834,414 849,341 918,374" fill="#402617" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_8" points="877,464 834,414 918,374" fill="#3e2415" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_19" points="870,573 921,573 913,589" fill="#20110a" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_20" points="870,573 862,527 921,573" fill="#130a05" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_21" points="862,527 845,476 877,464" fill="#27140d" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_22" points="834,414 845,476 788,450" fill="#100604" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_6" points="845,476 834,414 877,464" fill="#332012" shape-rendering="crispEdges"/>
+  <polygon id="segment_9_poly_14" points="454,334 462,343 444,368" fill="#0f0800" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_9" points="459,327 462,343 454,334" fill="#2c1a10" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_10" points="417,293 417,285 438,293" fill="#24130b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_9" points="438,293 417,285 454,264" fill="#382113" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_10" points="417,285 416,257 454,264" fill="#311e10" shape-rendering="crispEdges"/>
+  <polygon id="segment_9_poly_15" points="416,257 417,285 408,255" fill="#150300" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_1" points="417,285 417,293 408,255" fill="#9a6b3f" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_11" points="475,344 459,327 487,330" fill="#21130a" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_12" points="475,344 462,343 459,327" fill="#2a190f" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_13" points="538,376 560,371 561,420" fill="#160d06" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_14" points="560,371 592,369 561,420" fill="#150c05" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_15" points="560,371 564,362 592,369" fill="#130b08" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_16" points="564,362 581,354 592,369" fill="#170e07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_17" points="590,329 600,300 620,327" fill="#28170d" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_11" points="620,327 600,300 642,293" fill="#311e0f" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_12" points="600,300 575,290 591,277" fill="#3a210d" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_18" points="592,369 609,386 561,420" fill="#170e07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_19" points="605,344 590,329 620,327" fill="#1b0e06" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_20" points="626,334 605,344 620,327" fill="#1c1208" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_21" points="581,354 605,344 592,369" fill="#110803" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_22" points="605,344 581,354 590,329" fill="#1d1007" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_23" points="605,344 609,386 592,369" fill="#170c06" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_24" points="609,386 605,344 626,334" fill="#160b05" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_25" points="642,396 646,338 672,378" fill="#2c190b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_13" points="646,338 670,345 672,378" fill="#3b2110" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_26" points="609,386 646,338 642,396" fill="#27160c" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_27" points="646,338 609,386 626,334" fill="#170a04" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_14" points="646,338 660,306 670,345" fill="#351e10" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_28" points="646,338 626,334 660,306" fill="#1a0d05" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_2" points="487,157 479,153 511,143" fill="#c08a4c" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_4" points="418,133 419,152 403,158" fill="#714e38" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_15" points="487,157 466,176 479,153" fill="#522e0e" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_16" points="624,264 601,239 650,248" fill="#412716" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_29" points="624,264 650,248 642,293" fill="#2a180c" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_17" points="601,239 611,199 647,206" fill="#402514" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_4" points="612,176 611,199 556,188" fill="#604027" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_23" points="594,520 554,496 595,483" fill="#160d06" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_24" points="554,496 594,520 584,537" fill="#170e09" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_18" points="517,456 482,459 478,410" fill="#3e2719" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_5" points="482,459 490,472 480,479" fill="#7b5330" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_7" points="490,472 482,459 517,456" fill="#3b2416" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_25" points="521,500 517,456 554,470" fill="#1a0d05" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_26" points="554,496 521,500 554,470" fill="#150c05" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_8" points="521,500 490,472 517,456" fill="#2d1b11" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_5" points="490,472 521,500 480,479" fill="#5d412c" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_9" points="480,479 521,500 502,567" fill="#40291b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_10" points="502,567 521,500 542,566" fill="#332316" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_27" points="521,500 554,496 542,566" fill="#23140d" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_28" points="599,650 610,646 611,657" fill="#000103" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_6" points="610,646 599,650 600,640" fill="#5f4433" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_6" points="608,631 600,640 608,621" fill="#845c39" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_28" points="610,646 608,631 622,633" fill="#1f0c00" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_29" points="608,631 610,646 600,640" fill="#241407" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_30" points="565,601 539,605 542,566" fill="#190f06" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_31" points="539,605 565,601 560,626" fill="#160d06" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_32" points="584,537 565,601 542,566" fill="#140903" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_11" points="514,613 539,605 518,620" fill="#3f281a" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_33" points="514,613 518,620 496,617" fill="#150a04" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_12" points="501,604 514,613 496,617" fill="#422b1d" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_13" points="514,613 501,604 499,594" fill="#341d0b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_14" points="539,605 514,613 499,594" fill="#341f0e" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_32" points="468,637 475,631 485,640" fill="#030102" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_15" points="475,631 467,628 478,616" fill="#362110" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_36" points="467,628 468,637 457,632" fill="#070302" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_16" points="468,637 467,628 475,631" fill="#392210" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_17" points="471,602 483,604 478,616" fill="#2e1908" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_7" points="483,604 471,602 499,594" fill="#704d31" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_10_poly_7" points="693,261 701,253 715,264" fill="#603719" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_8" points="725,247 728,239 736,263" fill="#78501c" shape-rendering="crispEdges"/>
+  
+  
+  
+  <polygon id="segment_8_poly_9" points="809,265 787,238 854,256" fill="#77553c" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_10" points="787,238 809,265 736,263" fill="#745030" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_11" points="728,239 787,238 736,263" fill="#815d3d" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_8" points="733,283 725,264 736,263" fill="#583521" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_9" points="725,264 733,283 715,264" fill="#633f27" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_10" points="733,283 740,292 730,305" fill="#684529" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_11" points="809,265 740,292 736,263" fill="#5e3b25" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_19" points="740,292 733,283 736,263" fill="#4e2f1a" shape-rendering="crispEdges"/>
+  
+  
+  <polygon id="segment_2_poly_20" points="693,318 662,292 688,273" fill="#362110" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_21" points="662,292 693,318 660,306" fill="#3c2213" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_12" points="905,310 863,293 858,264" fill="#55392b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_22" points="863,293 905,310 849,341" fill="#3a281a" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_13" points="858,264 863,293 809,265" fill="#573b26" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_23" points="863,293 849,341 809,265" fill="#3e2417" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_24" points="662,292 668,262 688,273" fill="#3e2312" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_25" points="668,262 693,261 688,273" fill="#4d2e19" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_32" points="650,248 668,262 642,293" fill="#28170d" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_33" points="668,262 662,292 642,293" fill="#291709" shape-rendering="crispEdges"/>
+  
+  
+  
+  
+  
+  <polygon id="segment_8_poly_13" points="548,172 538,147 567,143" fill="#86603c" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_3" points="538,165 538,147 548,172" fill="#976d3d" shape-rendering="crispEdges"/>
+  <polygon id="segment_4_poly_7" points="567,143 538,147 511,143" fill="#d19e5d" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_41" points="723,605 734,601 716,616" fill="#010000" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_42" points="631,660 637,654 657,661" fill="#020001" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_45" points="839,616 847,611 850,620" fill="#0c0300" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_34" points="870,573 839,521 862,527" fill="#100b05" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_35" points="839,521 845,476 862,527" fill="#170e05" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_18" points="888,600 870,573 913,589" fill="#37251b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_19" points="741,536 644,506 677,477" fill="#362012" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_5_poly_36" points="519,397 538,376 561,420" fill="#20130b" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_37" points="517,456 519,397 561,420" fill="#2c1a0e" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_14" points="484,375 493,398 465,396" fill="#67482c" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_15" points="470,406 493,398 478,410" fill="#523523" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_14" points="493,398 470,406 465,396" fill="#704825" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_26" points="493,398 517,456 478,410" fill="#492f20" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_38" points="493,398 519,397 517,456" fill="#26150b" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_15" points="469,368 484,375 465,396" fill="#7f5326" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_39" points="462,343 469,368 444,368" fill="#2a1a03" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_40" points="475,344 469,368 462,343" fill="#220b00" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_16" points="561,309 590,329 561,318" fill="#704d31" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_41" points="561,309 600,300 590,329" fill="#341908" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_27" points="600,300 561,309 575,290" fill="#44240d" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_17" points="575,290 561,309 569,278" fill="#6f4b29" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_16" points="561,309 560,272 569,278" fill="#5c371c" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_17" points="524,321 514,322 523,312" fill="#493729" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_42" points="524,321 547,329 530,337" fill="#25170e" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_43" points="459,327 477,301 487,330" fill="#2a180e" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_28" points="477,301 459,327 438,293" fill="#331d10" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_29" points="477,301 438,293 454,264" fill="#412716" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_44" points="547,329 545,337 530,337" fill="#1c110b" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_8_poly_18" points="501,273 506,281 495,279" fill="#7c4b11" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_18" points="506,281 501,290 495,279" fill="#593618" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_30" points="501,290 477,301 495,279" fill="#381e0f" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_19" points="590,329 577,335 561,318" fill="#714e32" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_19" points="581,354 577,335 590,329" fill="#54311b" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_20" points="517,189 513,217 467,196" fill="#734a2a" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_20" points="466,176 517,189 467,196" fill="#63432a" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_21" points="517,189 466,176 487,157" fill="#68442a" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_2_poly_31" points="419,152 411,175 403,158" fill="#492e1b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_32" points="411,175 401,190 403,158" fill="#432c1c" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_4" points="460,144 452,148 448,131" fill="#97704f" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_21" points="466,176 460,144 479,153" fill="#735138" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_22" points="460,144 466,176 452,148" fill="#705135" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_5" points="452,148 442,146 448,131" fill="#926641" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_6" points="442,146 418,133 448,131" fill="#9b6f48" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_23" points="442,146 419,152 418,133" fill="#6b4b32" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_33" points="453,176 466,176 467,196" fill="#382111" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_34" points="466,176 453,176 452,148" fill="#3c2110" shape-rendering="crispEdges"/>
+  
+  
+  
+  <polygon id="segment_10_poly_22" points="477,301 483,276 495,279" fill="#5c3e22" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_23" points="483,276 477,301 454,264" fill="#543822" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_35" points="479,264 483,276 454,264" fill="#462a12" shape-rendering="crispEdges"/>
+  
+  
+  
+  
+  <polygon id="segment_8_poly_24" points="486,260 501,255 497,263" fill="#834e0c" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_24" points="624,264 605,266 601,239" fill="#4e341d" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_8_poly_25" points="611,199 563,217 556,188" fill="#704928" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_8_poly_26" points="575,290 576,274 591,277" fill="#7f5421" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_25" points="576,274 575,290 569,278" fill="#664323" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_36" points="560,272 576,274 569,278" fill="#381f09" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_36" points="779,498 756,478 788,450" fill="#130c06" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_37" points="756,478 746,425 788,450" fill="#140d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_45" points="810,383 834,414 788,450" fill="#27160e" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_20" points="746,425 810,383 788,450" fill="#311b0d" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_21" points="834,414 810,383 849,341" fill="#2f1c0e" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_46" points="619,466 609,386 642,396" fill="#190e08" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_38" points="619,466 595,483 561,420" fill="#140d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_47" points="609,386 619,466 561,420" fill="#2b1a10" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_39" points="619,466 631,491 595,483" fill="#160d08" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_40" points="644,506 631,491 677,477" fill="#180d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_26" points="469,420 470,406 478,410" fill="#6c4323" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_27" points="482,459 469,420 478,410" fill="#684120" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_6_poly_22" points="465,615 471,602 478,616" fill="#271910" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_42" points="467,628 465,615 478,616" fill="#200d00" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_23" points="465,615 467,628 457,632" fill="#3c2618" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_43" points="478,616 492,610 496,617" fill="#160c0a" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_24" points="483,604 492,610 478,616" fill="#352319" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_27" points="492,610 501,604 496,617" fill="#7a5a41" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_25" points="501,604 492,610 499,594" fill="#341d0b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_26" points="492,610 483,604 499,594" fill="#331e0b" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_8_poly_28" points="719,255 725,264 715,264" fill="#895627" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_29" points="701,253 719,255 715,264" fill="#965e23" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_37" points="611,199 634,188 647,206" fill="#3a2013" shape-rendering="crispEdges"/>
+  <polygon id="segment_9_poly_27" points="634,188 658,197 647,206" fill="#120902" shape-rendering="crispEdges"/>
+  <polygon id="segment_9_poly_28" points="658,197 634,188 637,179" fill="#120904" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_38" points="667,175 679,156 674,188" fill="#382113" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_39" points="658,197 667,175 674,188" fill="#331b0f" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_48" points="667,175 658,197 637,179" fill="#28160c" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_49" points="637,159 667,175 637,179" fill="#22140b" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_30" points="700,243 693,261 694,237" fill="#754924" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_7" points="700,243 701,253 693,261" fill="#a9702d" shape-rendering="crispEdges"/>
+  
+  
+  
+  
+  
+  <polygon id="segment_8_poly_31" points="711,309 733,283 730,305" fill="#77512c" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_28" points="711,309 693,318 688,273" fill="#613c1f" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_29" points="715,264 711,309 688,273" fill="#53371f" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_30" points="733,283 711,309 715,264" fill="#5d381b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_40" points="660,306 685,329 670,345" fill="#4c2d11" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_31" points="693,318 685,329 660,306" fill="#674019" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_8_poly_32" points="693,261 669,254 694,237" fill="#825939" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_41" points="668,262 669,254 693,261" fill="#442717" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_42" points="669,254 682,227 694,237" fill="#4d2b10" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_50" points="669,254 668,262 650,248" fill="#29150a" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_51" points="657,219 650,248 647,206" fill="#2f190c" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_43" points="657,219 669,254 650,248" fill="#382113" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_44" points="669,254 657,219 682,227" fill="#4c2e16" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_32" points="591,157 612,176 556,188" fill="#664429" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_45" points="591,157 600,155 612,176" fill="#482507" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_9" points="600,155 591,157 567,143" fill="#bb8346" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_33" points="548,172 591,157 556,188" fill="#724b2a" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_34" points="591,157 548,172 567,143" fill="#7e5b3d" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_27" points="701,578 643,577 644,567" fill="#362013" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_44" points="701,578 723,605 716,616" fill="#190f06" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_45" points="701,578 741,536 736,567" fill="#1c0f07" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_46" points="734,601 701,578 736,567" fill="#1f1108" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_47" points="723,605 701,578 734,601" fill="#1b0e06" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_28" points="644,506 701,578 644,567" fill="#372616" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_29" points="741,536 701,578 644,506" fill="#372519" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_30" points="620,649 610,646 622,633" fill="#2c1b0b" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_48" points="610,646 620,649 611,657" fill="#261304" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_55" points="620,649 631,660 611,657" fill="#020204" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_31" points="637,654 655,653 657,661" fill="#37231a" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_49" points="643,647 655,653 637,654" fill="#201209" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_50" points="666,639 655,653 643,647" fill="#180d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_51" points="736,567 792,571 787,596" fill="#180b03" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_32" points="741,536 792,571 736,567" fill="#251b12" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_52" points="839,521 819,491 845,476" fill="#160f07" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_53" points="845,476 819,491 788,450" fill="#110a04" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_33" points="887,624 895,617 909,619" fill="#432d1f" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_46" points="536,355 512,362 530,337" fill="#452818" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_52" points="545,337 536,355 530,337" fill="#1c130c" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_47" points="536,355 560,371 538,376" fill="#45291b" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_53" points="560,371 536,355 564,362" fill="#1a0d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_54" points="519,397 516,371 538,376" fill="#140d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_48" points="516,371 536,355 538,376" fill="#3c2517" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_55" points="536,355 516,371 512,362" fill="#1b0d04" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_56" points="493,398 516,371 519,397" fill="#1f0d00" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_57" points="516,371 493,398 484,375" fill="#221101" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_58" points="512,362 516,371 484,375" fill="#1e1109" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_35" points="514,322 499,334 487,330" fill="#745237" shape-rendering="crispEdges"/>
+  
+  
+  
+  
+  <polygon id="segment_1_poly_10" points="560,272 553,312 523,312" fill="#936c4d" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_36" points="561,309 553,312 560,272" fill="#7a5636" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_11" points="553,312 561,309 561,318" fill="#9b6b3b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_49" points="501,273 516,271 506,281" fill="#4d2c0d" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_50" points="516,271 511,250 538,259" fill="#503019" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_51" points="516,271 501,255 511,250" fill="#3c210c" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_37" points="506,281 516,271 523,312" fill="#785132" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_33" points="516,271 501,273 497,263" fill="#5d360b" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_34" points="501,255 516,271 497,263" fill="#64421f" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_38" points="560,272 516,271 538,259" fill="#805b3e" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_12" points="516,271 560,272 523,312" fill="#8a6548" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_52" points="514,310 506,281 523,312" fill="#502c12" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_39" points="514,310 501,290 506,281" fill="#744f34" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_13" points="514,322 514,310 523,312" fill="#9d7142" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_40" points="514,310 514,322 487,330" fill="#745131" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_53" points="477,301 514,310 487,330" fill="#422513" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_54" points="501,290 514,310 477,301" fill="#452816" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_55" points="536,355 558,338 564,362" fill="#3e281a" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_59" points="558,338 536,355 545,337" fill="#231208" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_35" points="558,338 581,354 564,362" fill="#5c3925" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_36" points="558,338 577,335 581,354" fill="#56361f" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_60" points="558,338 545,337 547,329" fill="#160d06" shape-rendering="crispEdges"/>
+  
+  
+  
+  <polygon id="segment_1_poly_14" points="538,147 529,172 511,143" fill="#89633f" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_15" points="529,172 538,147 538,165" fill="#996d40" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_41" points="529,172 487,157 511,143" fill="#825f3f" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_42" points="529,172 517,189 487,157" fill="#704c2c" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_56" points="441,159 442,146 452,148" fill="#482915" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_57" points="453,176 441,159 452,148" fill="#3c2211" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_61" points="441,159 453,176 441,179" fill="#1b0e06" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_58" points="442,146 441,159 419,152" fill="#462917" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_62" points="411,175 441,159 441,179" fill="#1e110b" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_63" points="441,159 411,175 419,152" fill="#23140d" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_59" points="431,206 443,192 467,196" fill="#3c2215" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_60" points="443,192 453,176 467,196" fill="#3f2514" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_61" points="453,176 443,192 441,179" fill="#412613" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_62" points="422,220 426,248 408,255" fill="#372116" shape-rendering="crispEdges"/>
+  <polygon id="segment_9_poly_29" points="401,190 422,220 408,255" fill="#000000" shape-rendering="crispEdges"/>
+  
+  
+  <polygon id="segment_8_poly_43" points="513,217 498,230 467,196" fill="#6e4d2c" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_37" points="601,275 600,300 591,277" fill="#5f3c1e" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_63" points="601,275 605,266 624,264" fill="#3d240e" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_64" points="600,300 601,275 642,293" fill="#3c2215" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_65" points="601,275 624,264 642,293" fill="#382214" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_38" points="578,229 611,199 601,239" fill="#654127" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_44" points="578,229 563,217 611,199" fill="#6d4a2e" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_66" points="565,250 560,272 538,259" fill="#4f2f16" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_67" points="565,250 576,254 560,272" fill="#3a1f0e" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_34" points="633,610 628,619 608,621" fill="#462a12" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_35" points="756,478 734,481 746,425" fill="#2e1d15" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_68" points="810,383 757,361 849,341" fill="#3b2416" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_69" points="849,341 757,361 809,265" fill="#3e2413" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_70" points="757,361 740,292 809,265" fill="#3e2312" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_45" points="740,292 757,361 730,305" fill="#734c25" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_36" points="757,361 810,383 746,425" fill="#332011" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_71" points="634,188 625,176 637,179" fill="#472b16" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_64" points="625,176 637,159 637,179" fill="#170d04" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_72" points="625,176 611,199 612,176" fill="#3a1e12" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_73" points="625,176 634,188 611,199" fill="#402315" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_46" points="600,155 613,147 612,176" fill="#78563a" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_16" points="613,147 625,176 612,176" fill="#966a3b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_74" points="667,175 658,152 679,156" fill="#432815" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_65" points="637,159 658,152 667,175" fill="#29180e" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_39" points="679,156 658,152 660,133" fill="#5e3e27" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_75" points="683,388 642,396 672,378" fill="#482c16" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_2_poly_76" points="706,393 683,388 707,382" fill="#4e2c13" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_37" points="666,447 706,393 746,425" fill="#2e1c0e" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_38" points="666,447 734,481 677,477" fill="#2c1a0e" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_39" points="734,481 666,447 746,425" fill="#2d1b0f" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_77" points="666,447 683,388 706,393" fill="#452a19" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_78" points="683,388 666,447 642,396" fill="#402617" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_40" points="666,447 619,466 642,396" fill="#311e10" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_41" points="631,491 666,447 677,477" fill="#332113" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_40" points="666,447 631,491 619,466" fill="#513c2b" shape-rendering="crispEdges"/>
+  
+  
+  
+  <polygon id="segment_8_poly_47" points="682,227 666,211 684,215" fill="#8a5f2c" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_48" points="657,219 666,211 682,227" fill="#745334" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_66" points="666,211 658,197 674,188" fill="#25140a" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_67" points="658,197 666,211 647,206" fill="#29150a" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_68" points="666,211 657,219 647,206" fill="#27160c" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_42" points="631,660 635,646 637,654" fill="#2a1911" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_58" points="620,649 635,646 631,660" fill="#110600" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_43" points="635,646 643,647 637,654" fill="#2e1a0f" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_54" points="635,646 620,649 622,633" fill="#1d0f06" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_44" points="701,578 680,617 643,577" fill="#372416" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_55" points="665,653 666,639 679,653" fill="#120902" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_45" points="665,653 655,653 666,639" fill="#2a1a0d" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_41" points="657,661 665,653 679,653" fill="#563c2b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_46" points="655,653 665,653 657,661" fill="#342113" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_56" points="807,495 792,571 779,498" fill="#1b100c" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_57" points="807,495 779,498 788,450" fill="#150c07" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_58" points="819,491 807,495 788,450" fill="#150c05" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_59" points="895,617 895,606 909,619" fill="#120806" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_47" points="895,606 895,617 888,600" fill="#2f2118" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_60" points="895,606 913,589 909,619" fill="#261710" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_48" points="895,606 888,600 913,589" fill="#2f1e14" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_61" points="866,624 873,617 887,624" fill="#120902" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_49" points="873,617 895,617 887,624" fill="#311f15" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_62" points="895,617 873,617 888,600" fill="#100805" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_63" points="847,611 863,616 850,620" fill="#211308" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_64" points="857,603 863,616 847,611" fill="#23150a" shape-rendering="crispEdges"/>
+  <polygon id="segment_0_poly_61" points="863,616 866,624 850,620" fill="#060100" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_65" points="863,616 873,617 866,624" fill="#271509" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_66" points="857,603 846,600 844,591" fill="#1c1208" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_67" points="846,600 857,603 847,611" fill="#1f1307" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_50" points="846,600 839,616 844,591" fill="#392315" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_51" points="846,600 847,611 839,616" fill="#342214" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_52" points="888,600 869,597 870,573" fill="#38261a" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_79" points="512,362 522,334 530,337" fill="#442a19" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_42" points="522,334 499,334 514,322" fill="#553923" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_69" points="522,334 524,321 530,337" fill="#1a0c01" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_70" points="524,321 522,334 514,322" fill="#281e15" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_71" points="496,353 512,362 484,375" fill="#180f06" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_72" points="496,353 475,344 487,330" fill="#1d1008" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_43" points="499,334 496,353 487,330" fill="#644125" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_44" points="496,353 522,334 512,362" fill="#583823" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_45" points="522,334 496,353 499,334" fill="#5a3a23" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_73" points="496,353 469,368 475,344" fill="#110801" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_74" points="469,368 496,353 484,375" fill="#2a160d" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_49" points="552,320 524,321 523,312" fill="#5f4c3d" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_50" points="553,312 552,320 523,312" fill="#624b3d" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_75" points="524,321 552,320 547,329" fill="#1e1007" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_80" points="552,320 553,312 561,318" fill="#402e20" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_46" points="577,335 559,328 561,318" fill="#54341b" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_47" points="558,338 559,328 577,335" fill="#593620" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_81" points="559,328 552,320 561,318" fill="#37291e" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_76" points="559,328 558,338 547,329" fill="#2e1d13" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_77" points="552,320 559,328 547,329" fill="#150c07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_78" points="421,198 443,192 431,206" fill="#180d07" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_82" points="411,175 421,198 401,190" fill="#311d12" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_79" points="421,198 411,175 441,179" fill="#27150b" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_80" points="443,192 421,198 441,179" fill="#190e08" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_81" points="421,198 422,220 401,190" fill="#200f07" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_82" points="422,220 421,198 431,206" fill="#20130b" shape-rendering="crispEdges"/>
+  
+  <polygon id="segment_10_poly_48" points="538,243 565,250 538,259" fill="#5d3919" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_49" points="511,250 538,243 538,259" fill="#5a3717" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_51" points="526,235 538,243 511,250" fill="#734a1e" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_83" points="501,255 495,239 511,250" fill="#422714" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_84" points="495,239 501,255 486,260" fill="#432711" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_52" points="510,235 526,235 511,250" fill="#734b27" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_53" points="495,239 510,235 511,250" fill="#7b5838" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_54" points="510,235 495,239 498,230" fill="#7c5933" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_55" points="526,235 510,235 513,217" fill="#8f612f" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_56" points="510,235 498,230 513,217" fill="#80552b" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_85" points="605,266 597,263 601,239" fill="#3a210d" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_50" points="597,263 590,259 601,239" fill="#5a3a21" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_51" points="601,275 597,263 605,266" fill="#63390f" shape-rendering="crispEdges"/>
+  
+  
+  <polygon id="segment_10_poly_52" points="590,259 580,262 576,254" fill="#683d12" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_86" points="576,254 580,262 560,272" fill="#4c2b0a" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_53" points="580,262 576,274 560,272" fill="#5c3b18" shape-rendering="crispEdges"/>
+  
+  
+  <polygon id="segment_10_poly_54" points="581,239 578,229 601,239" fill="#634128" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_87" points="590,259 581,239 601,239" fill="#362012" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_88" points="581,239 590,259 576,254" fill="#3a210d" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_89" points="565,250 581,239 576,254" fill="#3e240d" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_57" points="578,229 565,235 563,217" fill="#7c552a" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_55" points="538,243 565,235 565,250" fill="#6d411a" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_58" points="581,239 565,235 578,229" fill="#76522e" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_59" points="565,235 581,239 565,250" fill="#7b5531" shape-rendering="crispEdges"/>
+  
+  
+  <polygon id="segment_10_poly_56" points="617,625 628,619 622,633" fill="#553621" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_53" points="628,619 617,625 608,621" fill="#402919" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_68" points="608,631 617,625 622,633" fill="#2b1307" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_54" points="617,625 608,631 608,621" fill="#3d2719" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_69" points="639,625 628,619 633,610" fill="#29170b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_55" points="628,619 639,625 622,633" fill="#3c291b" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_70" points="745,523 759,497 779,498" fill="#0f0a04" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_71" points="792,571 745,523 779,498" fill="#160d08" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_72" points="745,523 792,571 741,536" fill="#1a110a" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_56" points="745,523 741,536 677,477" fill="#442d1d" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_57" points="734,481 745,523 677,477" fill="#372318" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_73" points="755,489 734,481 756,478" fill="#22140b" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_74" points="755,489 756,478 779,498" fill="#150e06" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_75" points="759,497 755,489 779,498" fill="#100b05" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_76" points="755,489 745,523 734,481" fill="#21140b" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_57" points="745,523 755,489 759,497" fill="#553924" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_90" points="706,393 719,376 746,425" fill="#462b1a" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_60" points="719,376 757,361 746,425" fill="#684a32" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_17" points="719,376 706,393 707,382" fill="#9c6127" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_18" points="629,147 613,147 630,131" fill="#9f7b57" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_91" points="629,147 658,152 637,159" fill="#402514" shape-rendering="crispEdges"/>
+  <polygon id="segment_5_poly_83" points="625,176 629,147 637,159" fill="#2c180d" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_19" points="613,147 629,147 625,176" fill="#ad8255" shape-rendering="crispEdges"/>
+  <polygon id="segment_1_poly_20" points="629,147 630,131 660,133" fill="#8f6646" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_58" points="658,152 629,147 660,133" fill="#60442e" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_61" points="757,361 733,347 730,305" fill="#7e5527" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_59" points="719,376 733,347 757,361" fill="#583410" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_77" points="646,621 633,610 643,577" fill="#27160e" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_58" points="680,617 646,621 643,577" fill="#2d1d10" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_78" points="646,621 639,625 633,610" fill="#26150b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_59" points="666,639 687,622 679,653" fill="#2e1d13" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_79" points="687,622 710,643 679,653" fill="#28160c" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_80" points="710,643 687,622 716,616" fill="#1d100a" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_81" points="687,622 701,578 716,616" fill="#21130a" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_60" points="687,622 680,617 701,578" fill="#311f13" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_61" points="870,573 861,585 844,591" fill="#473123" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_62" points="869,597 861,585 870,573" fill="#291a13" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_63" points="861,585 857,603 844,591" fill="#412e20" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_64" points="861,585 869,597 857,603" fill="#352317" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_82" points="873,617 874,604 888,600" fill="#171008" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_83" points="874,604 869,597 888,600" fill="#22140b" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_84" points="863,616 874,604 873,617" fill="#271507" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_85" points="874,604 863,616 857,603" fill="#1d140d" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_86" points="869,597 874,604 857,603" fill="#20160c" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_92" points="479,264 475,239 486,260" fill="#4d2b0f" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_93" points="475,239 495,239 486,260" fill="#392210" shape-rendering="crispEdges"/>
+  <polygon id="segment_10_poly_60" points="475,239 479,264 454,264" fill="#533722" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_94" points="475,239 431,206 467,196" fill="#512e18" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_62" points="498,230 475,239 467,196" fill="#68462d" shape-rendering="crispEdges"/>
+  <polygon id="segment_8_poly_63" points="495,239 475,239 498,230" fill="#6d4b2f" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_95" points="426,248 475,239 454,264" fill="#472a18" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_96" points="422,220 475,239 426,248" fill="#4b2c18" shape-rendering="crispEdges"/>
+  <polygon id="segment_2_poly_97" points="475,239 422,220 431,206" fill="#3a2011" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_87" points="641,636 635,646 622,633" fill="#231103" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_88" points="639,625 641,636 622,633" fill="#190c04" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_65" points="635,646 641,636 643,647" fill="#362110" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_66" points="646,621 641,636 639,625" fill="#402615" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_89" points="641,636 666,639 643,647" fill="#1a1007" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_67" points="641,636 646,621 666,639" fill="#2a1911" shape-rendering="crispEdges"/>
+  
+  
+  
+  
+  <polygon id="segment_11_poly_90" points="646,621 671,624 666,639" fill="#26150b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_68" points="671,624 646,621 680,617" fill="#2c190b" shape-rendering="crispEdges"/>
+  <polygon id="segment_6_poly_69" points="671,624 687,622 666,639" fill="#3e281b" shape-rendering="crispEdges"/>
+  <polygon id="segment_11_poly_91" points="687,622 671,624 680,617" fill="#2a1709" shape-rendering="crispEdges"/>
+  
+  
+  
+  
+  
+<g id="aspectAccent"><polygon id="segment_3_poly_2" points="539,183 548,172 556,188" fill="#f2d12c" shape-rendering="crispEdges"/><polygon id="segment_3_poly_3" points="538,165 548,172 539,183" fill="#f5d640" shape-rendering="crispEdges"/><polygon id="segment_7_poly_7" points="529,172 538,165 539,183" fill="#fffaa8" shape-rendering="crispEdges"/><polygon id="segment_7_poly_8" points="526,194 529,172 539,183" fill="#fffa9f" shape-rendering="crispEdges"/><polygon id="segment_3_poly_1" points="552,210 539,183 556,188" fill="#fff959" shape-rendering="crispEdges"/><polygon id="segment_7_poly_9" points="529,172 526,194 517,189" fill="#fdf7a9" shape-rendering="crispEdges"/><polygon id="segment_3_poly_10" points="517,189 526,194 524,211" fill="#f9df42" shape-rendering="crispEdges"/><polygon id="segment_3_poly_6" points="517,189 524,211 513,217" fill="#fbe037" shape-rendering="crispEdges"/><polygon id="segment_3_poly_9" points="524,211 526,194 552,210" fill="#f7e231" shape-rendering="crispEdges"/><polygon id="segment_3_poly_8" points="552,210 526,194 539,183" fill="#fce233" shape-rendering="crispEdges"/><polygon id="segment_3_poly_12" points="563,217 552,210 556,188" fill="#f6ce31" shape-rendering="crispEdges"/><polygon id="segment_3_poly_21" points="563,217 565,235 538,221" fill="#ffe543" shape-rendering="crispEdges"/><polygon id="segment_4_poly_9" points="563,217 538,221 552,210" fill="#df9e20" shape-rendering="crispEdges"/><polygon id="segment_3_poly_11" points="538,221 524,211 552,210" fill="#fef14a" shape-rendering="crispEdges"/><polygon id="segment_4_poly_17" points="538,221 526,235 524,211" fill="#e6ae25" shape-rendering="crispEdges"/><polygon id="segment_4_poly_16" points="524,211 526,235 513,217" fill="#edbd2b" shape-rendering="crispEdges"/><polygon id="segment_3_poly_22" points="565,235 538,243 538,221" fill="#ffe755" shape-rendering="crispEdges"/><polygon id="segment_4_poly_19" points="538,243 526,235 538,221" fill="#e9b32f" shape-rendering="crispEdges"/><polygon id="segment_3_poly_20" points="597,263 601,275 591,277" fill="#f9c847" shape-rendering="crispEdges"/><polygon id="segment_7_poly_12" points="580,262 590,259 591,277" fill="#fefc85" shape-rendering="crispEdges"/><polygon id="segment_3_poly_19" points="590,259 597,263 591,277" fill="#fbf654" shape-rendering="crispEdges"/><polygon id="segment_7_poly_11" points="576,274 580,262 591,277" fill="#fffc77" shape-rendering="crispEdges"/><polygon id="segment_3_poly_7" points="483,276 479,264 486,260" fill="#fcdc31" shape-rendering="crispEdges"/><polygon id="segment_7_poly_5" points="483,276 486,260 497,263" fill="#fefc69" shape-rendering="crispEdges"/><polygon id="segment_7_poly_4" points="483,276 497,263 495,279" fill="#fdfe62" shape-rendering="crispEdges"/><polygon id="segment_7_poly_3" points="497,263 501,273 495,279" fill="#fffc61" shape-rendering="crispEdges"/><polygon id="segment_7_poly_6" points="469,368 457,390 444,368" fill="#faed61" shape-rendering="crispEdges"/><polygon id="segment_3_poly_16" points="457,390 449,397 444,368" fill="#f1cf27" shape-rendering="crispEdges"/><polygon id="segment_4_poly_10" points="469,420 449,397 470,406" fill="#e6b115" shape-rendering="crispEdges"/><polygon id="segment_3_poly_15" points="457,390 469,368 465,396" fill="#f2d321" shape-rendering="crispEdges"/><polygon id="segment_4_poly_15" points="449,397 457,390 465,396" fill="#e59f1d" shape-rendering="crispEdges"/><polygon id="segment_4_poly_8" points="470,406 449,397 465,396" fill="#df9b1e" shape-rendering="crispEdges"/><polygon id="segment_1_poly_8" points="685,329 679,349 670,345" fill="#b47a31" shape-rendering="crispEdges"/><polygon id="segment_4_poly_24" points="679,349 709,349 707,382" fill="#efb923" shape-rendering="crispEdges"/><polygon id="segment_8_poly_12" points="670,345 679,349 672,378" fill="#855831" shape-rendering="crispEdges"/><polygon id="segment_4_poly_5" points="679,349 707,382 672,378" fill="#ebb121" shape-rendering="crispEdges"/><polygon id="segment_4_poly_18" points="707,382 683,388 672,378" fill="#ecb22d" shape-rendering="crispEdges"/><polygon id="segment_4_poly_21" points="717,346 733,347 719,376" fill="#e5ae1d" shape-rendering="crispEdges"/><polygon id="segment_4_poly_22" points="709,349 719,376 707,382" fill="#ebb41c" shape-rendering="crispEdges"/><polygon id="segment_4_poly_23" points="709,349 717,346 719,376" fill="#e8a425" shape-rendering="crispEdges"/><polygon id="segment_3_poly_23" points="717,346 711,309 730,305" fill="#fbe434" shape-rendering="crispEdges"/><polygon id="segment_4_poly_20" points="733,347 717,346 730,305" fill="#f0c32a" shape-rendering="crispEdges"/><polygon id="segment_7_poly_10" points="711,309 702,334 693,318" fill="#fdf48d" shape-rendering="crispEdges"/><polygon id="segment_3_poly_17" points="685,329 702,334 679,349" fill="#fcdf2c" shape-rendering="crispEdges"/><polygon id="segment_4_poly_25" points="702,334 709,349 679,349" fill="#e5a426" shape-rendering="crispEdges"/><polygon id="segment_3_poly_24" points="717,346 702,334 711,309" fill="#f8e338" shape-rendering="crispEdges"/><polygon id="segment_3_poly_25" points="717,346 709,349 702,334" fill="#f8e950" shape-rendering="crispEdges"/><polygon id="segment_3_poly_18" points="702,334 685,329 693,318" fill="#fbe43e" shape-rendering="crispEdges"/><polygon id="segment_4_poly_2" points="730,229 711,226 724,204" fill="#f0be29" shape-rendering="crispEdges"/><polygon id="segment_7_poly_2" points="711,226 699,210 724,204" fill="#fff999" shape-rendering="crispEdges"/><polygon id="segment_7_poly_1" points="699,210 711,226 700,225" fill="#fcf570" shape-rendering="crispEdges"/><polygon id="segment_3_poly_5" points="684,215 699,210 700,225" fill="#f7eb5b" shape-rendering="crispEdges"/><polygon id="segment_3_poly_4" points="682,227 684,215 700,225" fill="#fbed59" shape-rendering="crispEdges"/><polygon id="segment_4_poly_6" points="694,237 682,227 700,225" fill="#edb925" shape-rendering="crispEdges"/><polygon id="segment_3_poly_14" points="711,226 700,243 700,225" fill="#fbe23f" shape-rendering="crispEdges"/><polygon id="segment_4_poly_3" points="728,239 711,226 730,229" fill="#e4ab16" shape-rendering="crispEdges"/><polygon id="segment_4_poly_12" points="700,243 711,226 725,247" fill="#db9118" shape-rendering="crispEdges"/><polygon id="segment_4_poly_4" points="711,226 728,239 725,247" fill="#edb81c" shape-rendering="crispEdges"/><polygon id="segment_3_poly_13" points="700,243 694,237 700,225" fill="#f8de33" shape-rendering="crispEdges"/><polygon id="segment_4_poly_13" points="719,255 700,243 725,247" fill="#eaad21" shape-rendering="crispEdges"/><polygon id="segment_4_poly_11" points="725,264 719,255 725,247" fill="#d7951d" shape-rendering="crispEdges"/><polygon id="segment_4_poly_1" points="725,264 725,247 736,263" fill="#d19018" shape-rendering="crispEdges"/><polygon id="segment_4_poly_14" points="700,243 719,255 701,253" fill="#d78a18" shape-rendering="crispEdges"/></g></svg>

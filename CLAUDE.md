@@ -10,14 +10,14 @@ Dayforge — AI-RPG для саморазвития: реальные дейст
 Цикл: план дня → квесты → вечерний отчёт → XP → развитие персонажа (пользователь подтверждает начисления).
 Mobile-first PWA, solo-разработка (20–30 ч/нед), закрытая бета с друзьями до монетизации.
 Аватар-существо (тотемное low-poly животное на класс) — ключевая «игровая» часть продукта.
-AI-слой: разбор вечернего отчёта в события/навыки — есть (26.11.2026, `docs/ai-context/ai-day-report.md`);
-квесты из текста и план vs факт — отложены.
+AI-слой (26.11.2026): разбор вечернего отчёта (`ai-day-report.md`) и утренний план текстом → квесты со временем
+(`ai-day-plan.md`); план vs факт — отложен. Квест без навыка = 0 XP.
 
 ## Стек
 
 React 19 + TypeScript strict (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`) + Vite 8,
 FSD, React Router 7, TanStack Query 5, Zustand 5 (пока не используется), RHF + Zod 4, Framer Motion,
-SCSS Modules + CSS-токены (dark-first), Supabase (Postgres/Auth/RLS, Edge Function `parse-day-report` на Deno + Anthropic SDK).
+SCSS Modules + CSS-токены (dark-first), Supabase (Postgres/Auth/RLS, Edge Functions `parse-day-report`, `parse-day-plan` на Deno + Anthropic SDK).
 Алиас `@/` → `src/`. Коммиты — commitlint (conventional), husky: commit-msg + lint-staged.
 
 ## Карта ключевых папок
@@ -33,7 +33,8 @@ src/entities/character/ model: типы, формулы XP/уровня/форм
 src/entities/daily-plan/, daily-report/   репозитории (Supabase) + типы
 src/shared/             ui-kit (shared/ui/*), api/supabase (client + database.types.ts), config/env.ts, styles
 supabase/migrations/    схема, сиды, RLS, RPC (complete_onboarding, complete_quest, apply_day_report, …)
-supabase/functions/     Edge Function parse-day-report (Deno), _shared/skillIcons.json (общий с клиентом)
+supabase/functions/     parse-day-report, parse-day-plan (Deno); _shared/ai/ — общий AI-модуль (провайдер, кэш промпта,
+                        повтор, правила навыков); _shared/skillIcons.json (общий с клиентом)
 supabase/tests/         SQL-тесты на PGlite (vitest)
 src/assets/images/baseForm/<class>/   SVG-ассеты аватара по тирам (foxL1..L5.svg, wolfL1.svg)
 scripts/annotateFoxZones.mjs          запекает id групп из SVG в FoxL{N}AssetData.ts (поле zone)
@@ -60,7 +61,8 @@ npx tsc --noEmit -p tsconfig.app.json   # быстрая проверка тип
 npm run lint           # eslint . (src/ чистый; падает только на .ai-import/ — архив, ESLint его не игнорирует)
 npm run format         # prettier --write
 npm test               # vitest run — фронт + SQL (PGlite) + Edge Function (на Windows из X:\DayForge, не x:)
-npm run eval:day-report # eval разбора на реальной модели (ключ ANTHROPIC_API_KEY в .env.local; без ключа — пропуск)
+npm run eval:day-report # eval разбора отчёта на реальной модели (ключ ANTHROPIC_API_KEY в .env.local; без ключа — пропуск)
+npm run eval:day-plan   # то же для плана дня (+ usage / cache read / стоимость)
 npx supabase db push   # применить миграции к привязанному проекту
 npx supabase gen types typescript --linked > src/shared/api/supabase/database.types.ts  # (скрипта в package.json нет)
 ```
@@ -83,8 +85,8 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
 применить `npx supabase db push`. Открытые вопросы — `progress.md`.
 Волк (Warrior) готов (22.11.2026, `scripts/buildWolfAssets.mjs`). Дальше: Ворон, Сова, Олень по образцу волка →
 история прогресса.
-AI-разбор отчёта (26.11.2026, в `main`): миграцию 20261126120000 применить, секреты задать, функцию задеплоить —
-команды в `ai-day-report.md`.
+AI-разбор отчёта и AI-план дня (26.11.2026). Следующий шаг — экспорт плана во внешние календари через фид-подписку.
+Supabase CLI: Docker не запускать; удалённый проект — `npx supabase db push` (linked), типы — `gen types --linked`.
 
 ## ПРАВИЛА работы
 
@@ -116,6 +118,7 @@ AI-разбор отчёта (26.11.2026, в `main`): миграцию 202611261
 - [avatar-system.md](docs/ai-context/avatar-system.md) — архитектура аватара, ассеты и id зон, атрибут→визуал (решение vs код), баги.
 - [decisions.md](docs/ai-context/decisions.md) — журнал решений и отвергнутых подходов (с причинами).
 - [ai-day-report.md](docs/ai-context/ai-day-report.md) — AI-разбор отчёта: схема, лимиты, коды ошибок, eval, деплой.
+- [ai-day-plan.md](docs/ai-context/ai-day-plan.md) — AI-план дня: схема, лимиты, коды, таймлайн, eval.
 - [progress.md](docs/ai-context/progress.md) — что сделано, текущий статус, открытые задачи, расхождения, результат сборки.
 
 ## Инструкция себе

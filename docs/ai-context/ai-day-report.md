@@ -79,6 +79,10 @@ attributeGained, skillXpGained, skillLevel`) + список событий и н
 
 ## Итог (финальная схема, 26.11.2026)
 
+> Изменения миграцией `20261127120000_ai_day_plan.sql` (ветка ai-day-plan, см. `ai-day-plan.md`): событие без
+> навыка завершает квест с 0 XP; создание навыка вынесено в `_resolve_event_skill`; квесты, созданные отчётом, —
+> `source='ai_report'`; `day_report_parses.usage jsonb`.
+
 ### БД — миграция `supabase/migrations/20261126120000_ai_day_report.sql`
 
 - `character_skills`: `aliases TEXT[] NOT NULL DEFAULT '{}'`, `icon TEXT NULL` (ключ из `skillIcons.json`).
@@ -126,18 +130,32 @@ skillLevel, leveledUp, reportDate, totalHours, events[], newSkills[]}`; повт
 
 ### Edge Function — `supabase/functions/parse-day-report/`
 
-`index.ts` (Deno.serve, env) → `handler.ts` (CORS, JWT) → `parseDayReport.ts` (лимит, контекст, вызов, повтор,
-`sanitizeEvents`, лог) → `AiProvider` (`anthropicProvider.ts`: Messages API, forced tool `submit_day_events`,
-`strict: true`, без temperature, `maxRetries: 0`). Промпт — `prompt.ts`, схемы — `schema.ts`, иконки —
-`../_shared/skillIcons.json` (50 ключей, тот же файл читает клиент `shared/config/skillIcons.ts`).
-Env: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (выдаются платформой),
-`ANTHROPIC_API_KEY`, `AI_MODEL` (по умолчанию `claude-haiku-4-5`).
+`index.ts` (Deno.serve, env) → `handler.ts` → `parseDayReport.ts` (лимит, контекст, `sanitizeEvents`) → общий
+AI-модуль. Промпт — `prompt.ts`, схемы — `schema.ts`. Env: `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` (выдаются платформой), `ANTHROPIC_API_KEY`, `AI_MODEL` (по умолчанию `claude-haiku-5-5`
+с 26.11.2026, ветка ai-day-plan).
+
+### Общий AI-модуль `supabase/functions/_shared/ai/` (с 26.11.2026, используют parse-day-report и parse-day-plan)
+
+- `anthropicProvider.ts` — `AiProvider.callTool(request)`: forced strict tool, без temperature, `maxRetries: 0`,
+  возвращает `{input, usage}` (input/output/cache read/cache write токены).
+- `attempts.ts` — цикл ≤ 2 попыток (повтор после таймаута / невалидного ответа с текстом ошибки, API-ошибка — без
+  повтора), лог каждой попытки (с usage), коды `AI_TIMEOUT 504 / AI_INVALID_OUTPUT 502 / AI_ERROR 502`.
+- `prompts.ts` — общий блок правил навыков (`SKILL_RULES`: existing по синонимам/aliases, new, none для бытовых дел,
+  поручений, встреч без цели развития и «работы» без уточнения) и каталог атрибутов/иконок.
+- `skills.ts` (`resolveSkillRef`: чужой id → new на проверку, alias → existing, иконка), `schemas.ts`, `catalog.ts`,
+  `http.ts` (CORS, JWT, конверт ошибок), `supabaseContext.ts` (навыки + квесты даты, счётчик запросов).
+- **Кэширование промпта:** неизменная часть (tool schema + system: правила, блок навыков, атрибуты, иконки) идёт
+  первой и помечена `cache_control: ephemeral` на system-блоке (tools рендерятся до system и попадают в тот же
+  префикс); меняющаяся (навыки пользователя, квесты, текст, ошибка повтора) — в user-сообщении. Минимум кэша у
+  Haiku 5.5 — 512 токенов; префикс ~3.3k. Проверка — usage в eval (`cache read` в N/M вызовов).
+- Плановые квесты в контексте отчёта получают `startTime`.
 
 ### Клиент
 
 `features/daily-report`: `useAiDayReport` (фазы input → parsing → preview → applying), `AiDayReport`,
-`DayEventCard`. Черновик — `localStorage` `dayforge:day-report-draft:<date>`. Превью XP = Σ round(h·10)
-(только отображение). Иконка навыка из БД (`character_skills.icon`) приоритетнее ключевых слов
+`DayEventCard`. Черновик — `localStorage` `dayforge:day-report-draft:<date>` (`shared/lib/draftStore`). Превью
+XP = Σ round(h·10) по событиям с навыком (с 26.11.2026 событие без навыка = 0 XP; только отображение). Иконка навыка из БД (`character_skills.icon`) приоритетнее ключевых слов
 (`skillPresentation.getSkillIcon`).
 
 ### Тесты и eval
@@ -148,11 +166,11 @@ Env: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (выда�
   ключ `ANTHROPIC_API_KEY` (и опц. `AI_MODEL`) из окружения или `.env.local`. Без ключа — сообщение и exit 0.
   Оценка: совпадение набора событий, навыка, planned quest, часы ±30%.
 
-### Развёртывание (делает владелец)
+### Развёртывание
 
 ```
 npx supabase db push
-npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-... AI_MODEL=claude-haiku-4-5
+npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-... AI_MODEL=claude-haiku-5-5
 npx supabase functions deploy parse-day-report
 npx supabase gen types typescript --linked > src/shared/api/supabase/database.types.ts   # сверить с ручной правкой
 ```

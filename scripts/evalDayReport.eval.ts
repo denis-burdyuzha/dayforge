@@ -1,7 +1,7 @@
 /**
  * npm run eval:day-report — runs every parse-day-report fixture through the REAL model (the same path as the
  * Edge Function: retry, Zod validation, sanitizing) and prints per-fixture results and a summary.
- * Key: ANTHROPIC_API_KEY (from .env.local or the environment); model: AI_MODEL (default claude-haiku-4-5).
+ * Key: ANTHROPIC_API_KEY (from .env.local or the environment); model: AI_MODEL (default claude-haiku-5-5).
  * Without a key it says so and exits successfully. Costs real API money (~20 short requests).
  */
 /* eslint-disable no-console -- this file IS a console report */
@@ -9,7 +9,8 @@ import { existsSync } from "node:fs";
 
 import { it } from "vitest";
 
-import { AnthropicProvider } from "../supabase/functions/parse-day-report/anthropicProvider.ts";
+import { AnthropicProvider } from "../supabase/functions/_shared/ai/anthropicProvider.ts";
+import type { TokenUsage } from "../supabase/functions/_shared/ai/provider.ts";
 import {
   FIXTURE_REPORT_DATE,
   fixtureContext,
@@ -19,6 +20,7 @@ import {
 } from "../supabase/functions/parse-day-report/fixtures/scoring.ts";
 import { parseDayReport } from "../supabase/functions/parse-day-report/parseDayReport.ts";
 import type { AttemptLog, DayReportStore } from "../supabase/functions/parse-day-report/types.ts";
+import { summarizeUsage } from "./evalUsage.ts";
 
 it("eval: parse-day-report fixtures against the real model", async () => {
   if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -41,6 +43,7 @@ it("eval: parse-day-report fixtures against the real model", async () => {
   const failures: string[] = [];
   let attempts = 0;
   let retries = 0;
+  const usages: Array<TokenUsage | null> = [];
 
   for (const fixture of FIXTURES) {
     const logs: AttemptLog[] = [];
@@ -57,6 +60,7 @@ it("eval: parse-day-report fixtures against the real model", async () => {
       text: fixture.text,
     });
     attempts += logs.length;
+    usages.push(...logs.map((l) => l.usage));
     retries += Math.max(0, logs.length - 1);
 
     if (!result.ok) {
@@ -95,4 +99,5 @@ it("eval: parse-day-report fixtures against the real model", async () => {
       ` | попыток ${attempts}, повторов ${retries}` +
       (failures.length ? ` | ошибки: ${failures.join(", ")}` : ""),
   );
+  console.log(summarizeUsage(provider.model, usages));
 });

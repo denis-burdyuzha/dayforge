@@ -1,14 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import type { ToolRequest } from "../_shared/ai/provider.ts";
 import { handleRequest } from "./handler.ts";
 import { parseDayReport, type ParseDeps, sanitizeEvents } from "./parseDayReport.ts";
-import type {
-  AiProvider,
-  AttemptLog,
-  DayReportStore,
-  ParseContext,
-  ProviderInput,
-} from "./types.ts";
+import type { AiProvider, AttemptLog, DayReportStore, ParseContext } from "./types.ts";
 import { ProviderError } from "./types.ts";
 
 const USER = "11111111-1111-1111-1111-111111111111";
@@ -51,13 +46,13 @@ function memoryStore(used = 0): DayReportStore & { logs: AttemptLog[] } {
 
 type Step = unknown | ProviderError | "hang";
 
-function scriptedProvider(steps: Step[]): AiProvider & { calls: ProviderInput[] } {
-  const calls: ProviderInput[] = [];
+function scriptedProvider(steps: Step[]): AiProvider & { calls: ToolRequest[] } {
+  const calls: ToolRequest[] = [];
   return {
     model: "test-model",
     calls,
-    async parseDayReport(input, { signal }) {
-      calls.push(input);
+    async callTool(request, { signal }) {
+      calls.push(request);
       const step = steps[calls.length - 1];
       if (step === "hang") {
         return new Promise((_, reject) =>
@@ -65,7 +60,7 @@ function scriptedProvider(steps: Step[]): AiProvider & { calls: ProviderInput[] 
         );
       }
       if (step instanceof ProviderError) throw step;
-      return step;
+      return { input: step, usage: null };
     },
   };
 }
@@ -130,7 +125,11 @@ describe("parseDayReport — model calls", () => {
       model: "test-model",
       userId: USER,
     });
-    expect(p.calls[0]?.context).toEqual(CONTEXT);
+    // context in the user turn, static rules in the (cached) system prompt
+    expect(p.calls[0]?.user).toContain('"id": "skill-en"');
+    expect(p.calls[0]?.user).toContain('"id": "quest-run"');
+    expect(p.calls[0]?.user).toContain(BODY.text);
+    expect(p.calls[0]?.system).not.toContain("skill-en");
   });
 
   it("timeout (real abort after timeoutMs) → one retry → ok; both attempts logged", async () => {
@@ -142,7 +141,7 @@ describe("parseDayReport — model calls", () => {
       [1, "timeout"],
       [2, "ok"],
     ]);
-    expect(p.calls[1]?.validationError).toBeUndefined();
+    expect(p.calls[1]?.user).not.toContain("не прошёл проверку");
   });
 
   it("two timeouts → 504 AI_TIMEOUT", async () => {
@@ -165,8 +164,9 @@ describe("parseDayReport — model calls", () => {
     const d = deps(p);
     const r = await parseDayReport(d, USER, BODY);
     expect(r).toMatchObject({ ok: true, parseId: "parse-2" });
-    expect(p.calls[1]?.validationError).toMatch(/events\.0\.hours/);
-    expect(p.calls[1]?.previousOutput).toEqual(bad);
+    expect(p.calls[1]?.user).toMatch(/не прошёл проверку[\s\S]*events\.0\.hours/);
+    expect(p.calls[1]?.user).toContain(JSON.stringify(bad));
+    expect(p.calls[1]?.system).toBe(p.calls[0]?.system);
     expect(d.store.logs[0]).toMatchObject({ status: "invalid_output", rawOutput: bad });
   });
 

@@ -4,6 +4,7 @@
  */
 import type { AttributeKey } from "@/entities/character/model/types";
 import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
+import { createDraftStore } from "@/shared/lib/draftStore";
 
 // ── Events (camelCase, as the Edge Function returns them) ──
 
@@ -104,13 +105,15 @@ export const DAY_REPORT_LIMITS = {
 } as const;
 
 /**
- * Character XP preview — the same formula as calculate_quest_effects (round(hours · 10) per event).
- * Display only: the server computes the real numbers.
+ * Character XP preview — the same formula as calculate_quest_effects (round(hours · 10) per event);
+ * an event without a skill gives 0 XP. Display only: the server computes the real numbers.
  */
 export function estimateCharacterXp(
-  events: ReadonlyArray<Pick<EditableDayEvent, "enabled" | "hours">>,
+  events: ReadonlyArray<Pick<EditableDayEvent, "enabled" | "hours" | "skill">>,
 ) {
-  return events.filter((e) => e.enabled).reduce((sum, e) => sum + Math.round(e.hours * 10), 0);
+  return events
+    .filter((e) => e.enabled && e.skill.kind !== "none")
+    .reduce((sum, e) => sum + Math.round(e.hours * 10), 0);
 }
 
 export function toEditableEvents(events: DayEvent[]): EditableDayEvent[] {
@@ -155,25 +158,7 @@ export function toApplyPayload(events: ReadonlyArray<EditableDayEvent>) {
 
 // ── Draft (per date, localStorage; storage may be unavailable) ──
 
-const draftKey = (date: string) => `dayforge:day-report-draft:${date}`;
-
-export function loadDraft(date: string): string {
-  try {
-    return localStorage.getItem(draftKey(date)) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-export function saveDraft(date: string, text: string): void {
-  try {
-    if (text) localStorage.setItem(draftKey(date), text);
-    else localStorage.removeItem(draftKey(date));
-  } catch {
-    // storage unavailable (private mode, quota): the draft lives only in memory
-  }
-}
-
-export function clearDraft(date: string): void {
-  saveDraft(date, "");
-}
+const drafts = createDraftStore("dayforge:day-report-draft:");
+export const loadDraft = drafts.load;
+export const saveDraft = drafts.save;
+export const clearDraft = drafts.clear;

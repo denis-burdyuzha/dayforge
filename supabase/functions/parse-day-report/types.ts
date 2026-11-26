@@ -1,17 +1,21 @@
-/** Contracts of parse-day-report: AI provider, data access, context handed to the model, error codes. */
-import type { AttributeCode, DayEvent } from "./schema.ts";
+/** Contracts of parse-day-report: data access, context handed to the model, results. */
+import type { AttemptStatus, RetryHint } from "../_shared/ai/attempts.ts";
+import type { ErrorCode, Failure } from "../_shared/ai/http.ts";
+import type { TokenUsage } from "../_shared/ai/provider.ts";
+import type { SkillContext } from "../_shared/ai/skills.ts";
+import type { DayEvent } from "./schema.ts";
 
-export interface SkillContext {
-  id: string;
-  name: string;
-  aliases: string[];
-  attributes: AttributeCode[];
-}
+export type { AttemptStatus } from "../_shared/ai/attempts.ts";
+export type { ErrorCode } from "../_shared/ai/http.ts";
+export { type AiProvider, ProviderError } from "../_shared/ai/provider.ts";
+export type { SkillContext } from "../_shared/ai/skills.ts";
 
 export interface PlannedQuestContext {
   id: string;
   title: string;
   skill: string | null;
+  /** "HH:MM" when the quest came from a timed plan */
+  startTime?: string | null;
 }
 
 export interface ParseContext {
@@ -19,37 +23,14 @@ export interface ParseContext {
   plannedQuests: PlannedQuestContext[];
 }
 
+/** Everything the prompt is built from */
 export interface ProviderInput {
   reportDate: string;
   text: string;
   context: ParseContext;
-  /** set on the retry after an invalid answer: what was wrong (sent back to the model) */
-  validationError?: string | undefined;
-  previousOutput?: unknown;
+  /** set on the retry after an invalid answer */
+  retry?: RetryHint | undefined;
 }
-
-/** The model behind the parser. Returns the raw tool input (validated by the caller). */
-export interface AiProvider {
-  readonly model: string;
-  parseDayReport(input: ProviderInput, options: { signal: AbortSignal }): Promise<unknown>;
-}
-
-/** Thrown by a provider: `timeout` → retried once, `refusal`/`error` → AI_ERROR at once */
-export class ProviderError extends Error {
-  readonly kind: "timeout" | "error" | "invalid";
-
-  constructor(
-    kind: "timeout" | "error" | "invalid",
-    message: string,
-    options?: { cause?: unknown },
-  ) {
-    super(message, options);
-    this.name = "ProviderError";
-    this.kind = kind;
-  }
-}
-
-export type AttemptStatus = "ok" | "invalid_output" | "timeout" | "error";
 
 export interface AttemptLog {
   userId: string;
@@ -62,6 +43,7 @@ export interface AttemptLog {
   status: AttemptStatus;
   errorMessage: string | null;
   latencyMs: number;
+  usage: TokenUsage | null;
 }
 
 /** Data access used by the parser (Supabase in production, in-memory in tests) */
@@ -73,16 +55,5 @@ export interface DayReportStore {
   logAttempt(log: AttemptLog): Promise<string>;
 }
 
-export type ErrorCode =
-  | "INVALID_INPUT"
-  | "UNAUTHORIZED"
-  | "RATE_LIMIT"
-  | "AI_TIMEOUT"
-  | "AI_INVALID_OUTPUT"
-  | "AI_ERROR"
-  | "METHOD_NOT_ALLOWED"
-  | "INTERNAL";
-
 export type ParseResult =
-  | { ok: true; parseId: string; events: DayEvent[] }
-  | { ok: false; status: number; code: ErrorCode; message: string };
+  { ok: true; parseId: string; events: DayEvent[] } | (Failure & { code: ErrorCode });

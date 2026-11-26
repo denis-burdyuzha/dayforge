@@ -1,29 +1,23 @@
 /**
  * Core of parse-day-report, independent of Deno and Supabase (dependencies are injected → unit-testable):
- * request validation → daily limit → context → model call (timeout 20 s, one retry on timeout / invalid
- * output) → Zod validation → sanitizing → every attempt logged.
+ * request validation → daily limit → context → model call (shared attempt loop: timeout 20 s, one retry on
+ * timeout / invalid output) → Zod validation → sanitizing → every attempt logged.
  */
-import type { z } from "zod";
-
+import { formatZodIssues, runAttempts, utcDayStart } from "../_shared/ai/attempts.ts";
+import { fail } from "../_shared/ai/http.ts";
+import type { AiProvider } from "../_shared/ai/provider.ts";
+import { resolveSkillRef } from "../_shared/ai/skills.ts";
+import { buildDayReportRequest } from "./prompt.ts";
 import {
-  type AttributeCode,
   type DayEvent,
-  FALLBACK_ICON,
   LIMITS,
   type ModelOutput,
   ModelOutputSchema,
   ParseRequestSchema,
-  SKILL_ICON_KEYS,
 } from "./schema.ts";
-import {
-  type AiProvider,
-  type AttemptStatus,
-  type DayReportStore,
-  type ErrorCode,
-  type ParseContext,
-  type ParseResult,
-  ProviderError,
-} from "./types.ts";
+import type { DayReportStore, ParseContext, ParseResult } from "./types.ts";
+
+export { normalizeSkillName } from "../_shared/ai/skills.ts";
 
 export interface ParseDeps {
   store: DayReportStore;
@@ -32,38 +26,15 @@ export interface ParseDeps {
   timeoutMs?: number;
 }
 
-const fail = (status: number, code: ErrorCode, message: string): ParseResult => ({
-  ok: false,
-  status,
-  code,
-  message,
-});
-
-export const normalizeSkillName = (name: string): string =>
-  name.trim().replace(/\s+/g, " ").toLowerCase();
-
-const capitalize = (s: string): string => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
-
-const formatZodIssues = (error: z.ZodError): string =>
-  error.issues
-    .slice(0, 10)
-    .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
-    .join("; ");
-
 /**
  * Make validated model output safe to show and apply: hours into 0.1–8 (step 0.1), unknown / repeated
- * planned quest ids → null, skill ids that are not the user's → a new skill to review, names that match an
- * existing skill (name or alias) → that skill, icons outside the list → "misc", ≤ 2 attributes,
+ * planned quest ids → null, skills checked by the shared rules (foreign id → a new skill to review, a name
+ * matching an existing skill / alias → that skill, icon outside the list → "misc", ≤ 2 attributes),
  * a note on every low-confidence event.
  */
 export function sanitizeEvents(output: ModelOutput, context: ParseContext): DayEvent[] {
   const questIds = new Set(context.plannedQuests.map((q) => q.id));
   const usedQuests = new Set<string>();
-  const skillIds = new Set(context.skills.map((s) => s.id));
-  const skillByName = new Map<string, string>();
-  for (const s of context.skills) {
-    for (const n of [s.name, ...s.aliases]) skillByName.set(normalizeSkillName(n), s.id);
-  }
 
   return output.events.map((e) => {
     const notes: string[] = e.note ? [e.note] : [];
@@ -86,33 +57,10 @@ export function sanitizeEvents(output: ModelOutput, context: ParseContext): DayE
       usedQuests.add(plannedQuestId);
     }
 
-    let skill: DayEvent["skill"];
-    if (e.skill.kind === "existing") {
-      if (skillIds.has(e.skill.skillId)) {
-        skill = { kind: "existing", skillId: e.skill.skillId };
-      } else {
-        // the model referenced a skill the user does not have: offer it as a new one to review
-        skill = {
-          kind: "new",
-          name: capitalize(e.description.slice(0, 40)),
-          attributes: [],
-          icon: FALLBACK_ICON,
-        };
-        confidence = "low";
-        notes.push("навык не найден — проверь название и атрибуты");
-      }
-    } else if (e.skill.kind === "new") {
-      const name = capitalize(e.skill.name.trim().replace(/\s+/g, " "));
-      const existingId = skillByName.get(normalizeSkillName(name));
-      if (existingId) {
-        skill = { kind: "existing", skillId: existingId };
-      } else {
-        const attributes = [...new Set(e.skill.attributes)].slice(0, 2) as AttributeCode[];
-        const icon = SKILL_ICON_KEYS.includes(e.skill.icon) ? e.skill.icon : FALLBACK_ICON;
-        skill = { kind: "new", name, attributes, icon };
-      }
-    } else {
-      skill = { kind: "none" };
+    const resolved = resolveSkillRef(e.skill, context.skills, e.description);
+    if (resolved.reviewNote) {
+      confidence = "low";
+      notes.push(resolved.reviewNote);
     }
 
     if (confidence === "low" && notes.length === 0) notes.push("модель не уверена в этом событии");
@@ -121,7 +69,7 @@ export function sanitizeEvents(output: ModelOutput, context: ParseContext): DayE
       description: e.description.trim().slice(0, 200),
       hours,
       plannedQuestId,
-      skill,
+      skill: resolved.skill,
       confidence,
       note: notes.length > 0 ? notes.join("; ") : null,
     };
@@ -134,7 +82,6 @@ export async function parseDayReport(
   body: unknown,
 ): Promise<ParseResult> {
   const now = deps.now ?? (() => new Date());
-  const timeoutMs = deps.timeoutMs ?? LIMITS.timeoutMs;
 
   // 1. Request
   const request = ParseRequestSchema.safeParse(body);
@@ -153,9 +100,7 @@ export async function parseDayReport(
   }
 
   // 2. Daily limit (requests since 00:00 UTC; a retry is not a new request)
-  const dayStart = new Date(now());
-  dayStart.setUTCHours(0, 0, 0, 0);
-  const used = await deps.store.countParseRequestsSince(userId, dayStart.toISOString());
+  const used = await deps.store.countParseRequestsSince(userId, utcDayStart(now()));
   if (used >= LIMITS.parsesPerDay) {
     return fail(429, "RATE_LIMIT", `Лимит ${LIMITS.parsesPerDay} разборов в сутки исчерпан`);
   }
@@ -164,78 +109,37 @@ export async function parseDayReport(
   const context = await deps.store.loadContext(userId, reportDate);
 
   // 4. Model: up to 2 attempts
-  let validationError: string | undefined;
-  let previousOutput: unknown;
-  let lastStatus: AttemptStatus = "error";
-
-  for (const attempt of [1, 2] as const) {
-    const started = Date.now();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    let raw: unknown = null;
-    let status: AttemptStatus;
-    let errorMessage: string | null = null;
-    let events: DayEvent[] | null = null;
-
-    try {
-      raw = await deps.provider.parseDayReport(
-        { reportDate, text, context, validationError, previousOutput },
-        { signal: controller.signal },
-      );
+  const result = await runAttempts<DayEvent[]>({
+    provider: deps.provider,
+    timeoutMs: deps.timeoutMs ?? LIMITS.timeoutMs,
+    buildRequest: (retry) => buildDayReportRequest({ reportDate, text, context, retry }),
+    validate(raw) {
       const parsed = ModelOutputSchema.safeParse(raw);
-      if (parsed.success) {
-        events = sanitizeEvents(parsed.data, context);
-        status = "ok";
-      } else {
-        status = "invalid_output";
-        errorMessage = formatZodIssues(parsed.error);
-      }
-    } catch (error) {
-      if (error instanceof ProviderError) {
-        status =
-          error.kind === "timeout"
-            ? "timeout"
-            : error.kind === "invalid"
-              ? "invalid_output"
-              : "error";
-        errorMessage = error.message;
-      } else {
-        status = controller.signal.aborted ? "timeout" : "error";
-        errorMessage = error instanceof Error ? error.message : String(error);
-      }
-    } finally {
-      clearTimeout(timer);
-    }
+      return parsed.success
+        ? { ok: true, value: sanitizeEvents(parsed.data, context) }
+        : { ok: false, error: formatZodIssues(parsed.error) };
+    },
+    log: (record) =>
+      deps.store.logAttempt({
+        userId,
+        reportDate,
+        inputText: text,
+        model: deps.provider.model,
+        attempt: record.attempt,
+        rawOutput: record.rawOutput,
+        parsedEvents: record.value,
+        status: record.status,
+        errorMessage: record.errorMessage,
+        latencyMs: record.latencyMs,
+        usage: record.usage,
+      }),
+  });
 
-    const parseId = await deps.store.logAttempt({
-      userId,
-      reportDate,
-      inputText: text,
-      model: deps.provider.model,
-      attempt,
-      rawOutput: raw ?? null,
-      parsedEvents: events,
-      status,
-      errorMessage,
-      latencyMs: Date.now() - started,
-    });
-
-    if (status === "ok" && events) return { ok: true, parseId, events };
-
-    lastStatus = status;
-    if (status === "error") break; // provider / API failure: no retry
-    if (status === "invalid_output") {
-      validationError = errorMessage ?? "ответ не соответствует схеме";
-      previousOutput = raw;
-    } else {
-      validationError = undefined;
-      previousOutput = undefined;
-    }
-  }
-
-  if (lastStatus === "timeout") return fail(504, "AI_TIMEOUT", "Модель не ответила вовремя");
-  if (lastStatus === "invalid_output")
-    return fail(502, "AI_INVALID_OUTPUT", "Модель вернула некорректный ответ");
-  return fail(502, "AI_ERROR", "Не удалось разобрать отчёт");
+  if (result.ok) return { ok: true, parseId: result.parseId, events: result.value };
+  const messages = {
+    AI_TIMEOUT: "Модель не ответила вовремя",
+    AI_INVALID_OUTPUT: "Модель вернула некорректный ответ",
+    AI_ERROR: "Не удалось разобрать отчёт",
+  } as const;
+  return fail(result.status, result.code, messages[result.code]);
 }

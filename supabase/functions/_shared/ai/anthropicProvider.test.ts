@@ -1,14 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import { AnthropicProvider, DEFAULT_MODEL } from "./anthropicProvider.ts";
-import { SUBMIT_TOOL_NAME } from "./schema.ts";
-import type { ProviderError } from "./types.ts";
-import { type ProviderInput } from "./types.ts";
+import type { ProviderError, ToolRequest } from "./provider.ts";
 
-const INPUT: ProviderInput = {
-  reportDate: "2026-11-20",
-  text: "Пробежал 5 км",
-  context: { skills: [], plannedQuests: [] },
+const TOOL = "submit_test";
+
+const REQUEST: ToolRequest = {
+  system: "Статические правила",
+  tool: {
+    name: TOOL,
+    description: "Тестовый инструмент",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["items"],
+      properties: { items: { type: "array", items: { type: "string" } } },
+    },
+  },
+  user: "Текст пользователя",
 };
 
 const message = (over: Record<string, unknown>) => ({
@@ -19,8 +28,13 @@ const message = (over: Record<string, unknown>) => ({
   stop_reason: "tool_use",
   stop_details: null,
   stop_sequence: null,
-  usage: { input_tokens: 10, output_tokens: 10 },
-  content: [{ type: "tool_use", id: "toolu_1", name: SUBMIT_TOOL_NAME, input: { events: [] } }],
+  usage: {
+    input_tokens: 120,
+    output_tokens: 40,
+    cache_read_input_tokens: 2000,
+    cache_creation_input_tokens: 0,
+  },
+  content: [{ type: "tool_use", id: "toolu_1", name: TOOL, input: { items: [] } }],
   ...over,
 });
 
@@ -46,22 +60,35 @@ const ok = (body: unknown) =>
 const signal = () => new AbortController().signal;
 
 describe("AnthropicProvider", () => {
-  it("forces one strict tool call, default model, no temperature; returns the tool input", async () => {
+  it("forces one strict tool call, default model, no temperature; cached static system; returns input + usage", async () => {
     const { f, requests } = fakeFetch(() => ok(message({})));
     const provider = new AnthropicProvider({ apiKey: "test", timeoutMs: 20_000, fetch: f });
-    expect(provider.model).toBe("claude-haiku-4-5");
+    expect(provider.model).toBe("claude-haiku-5-5");
 
-    const out = await provider.parseDayReport(INPUT, { signal: signal() });
-    expect(out).toEqual({ events: [] });
+    const out = await provider.callTool(REQUEST, { signal: signal() });
+    expect(out).toEqual({
+      input: { items: [] },
+      usage: {
+        inputTokens: 120,
+        outputTokens: 40,
+        cacheReadInputTokens: 2000,
+        cacheCreationInputTokens: 0,
+      },
+    });
 
     const body = requests[0]?.body ?? {};
-    expect(body.model).toBe("claude-haiku-4-5");
+    expect(body.model).toBe("claude-haiku-5-5");
     expect(body).not.toHaveProperty("temperature");
-    expect(body.tool_choice).toEqual({ type: "tool", name: SUBMIT_TOOL_NAME });
+    expect(body.tool_choice).toEqual({ type: "tool", name: TOOL });
     expect((body.tools as Array<Record<string, unknown>>)[0]).toMatchObject({
-      name: SUBMIT_TOOL_NAME,
+      name: TOOL,
       strict: true,
     });
+    // static part first and cached; the per-user part only in the user turn
+    expect(body.system).toEqual([
+      { type: "text", text: "Статические правила", cache_control: { type: "ephemeral" } },
+    ]);
+    expect(body.messages).toEqual([{ role: "user", content: "Текст пользователя" }]);
     expect(requests[0]?.headers.get("anthropic-version")).toBe("2026-10-21");
   });
 
@@ -69,11 +96,11 @@ describe("AnthropicProvider", () => {
     const { f, requests } = fakeFetch(() => ok(message({})));
     await new AnthropicProvider({
       apiKey: "t",
-      model: "claude-haiku-5-5",
+      model: "claude-sonnet-5-5",
       timeoutMs: 1000,
       fetch: f,
-    }).parseDayReport(INPUT, { signal: signal() });
-    expect(requests[0]?.body.model).toBe("claude-haiku-5-5");
+    }).callTool(REQUEST, { signal: signal() });
+    expect(requests[0]?.body.model).toBe("claude-sonnet-5-5");
   });
 
   it("refusal → error; max_tokens / no tool call → invalid; API 500 → error", async () => {
@@ -88,10 +115,7 @@ describe("AnthropicProvider", () => {
         () =>
           new Response(
             JSON.stringify({ type: "error", error: { type: "api_error", message: "boom" } }),
-            {
-              status: 500,
-              headers: { "content-type": "application/json" },
-            },
+            { status: 500, headers: { "content-type": "application/json" } },
           ),
         "error",
       ],
@@ -99,7 +123,7 @@ describe("AnthropicProvider", () => {
     for (const [respond, kind] of cases) {
       const { f } = fakeFetch(respond);
       const provider = new AnthropicProvider({ apiKey: "t", timeoutMs: 1000, fetch: f });
-      await expect(provider.parseDayReport(INPUT, { signal: signal() })).rejects.toMatchObject({
+      await expect(provider.callTool(REQUEST, { signal: signal() })).rejects.toMatchObject({
         kind,
       });
     }
@@ -114,7 +138,7 @@ describe("AnthropicProvider", () => {
       })) as typeof fetch;
     const controller = new AbortController();
     const provider = new AnthropicProvider({ apiKey: "t", timeoutMs: 20_000, fetch: f });
-    const pending = provider.parseDayReport(INPUT, { signal: controller.signal });
+    const pending = provider.callTool(REQUEST, { signal: controller.signal });
     controller.abort();
     await expect(pending).rejects.toMatchObject({ kind: "timeout" });
   });

@@ -3,16 +3,21 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { useAppState } from "@/entities/auth/model/useAppState";
 import { characterRepository } from "@/entities/character/api/characterRepository";
+import { enrichSkillWithStats } from "@/entities/character/model/characterSkillTypes";
 import type { CharacterAttribute } from "@/entities/character/model/characterTypes";
+import { type SkillView, toSkillView } from "@/entities/character/model/skillPresentation";
 import { characterQueryKey } from "@/entities/character/model/useCharacter";
 import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanRepository";
+import type { ApplyDayPlanResult, TimedEntry } from "@/entities/daily-plan/model/aiDayPlan";
 import type { DailyPlan, NewQuestInput, Quest } from "@/entities/daily-plan/model/dailyPlanTypes";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
 import { LevelUp } from "@/shared/ui/LevelUp/ui/LevelUp";
 import { Loading } from "@/shared/ui/Loading/ui/Loading";
 
+import { AiDayPlan } from "./AiDayPlan";
 import styles from "./DailyPlanPage.module.scss";
+import { DayTimeline } from "./DayTimeline";
 
 // ---------------------------------------------------------------------------
 // Micro-toast
@@ -354,6 +359,11 @@ function QuestItem({
 
       <div className={styles.questBody}>
         <div className={styles.questTitle}>{quest.title}</div>
+        {quest.durationMinutes != null && !quest.skillName && (
+          <div className={styles.questMeta}>
+            <span className={styles.questSkill}>{quest.durationMinutes} мин · без навыка</span>
+          </div>
+        )}
         {quest.skillName && (
           <div className={styles.questMeta}>
             <span className={styles.questSkill}>
@@ -385,6 +395,8 @@ export function DailyPlanPage() {
   const [levelUpLevel, setLevelUpLevel] = useState(1);
   const [existingSkillNames, setExistingSkillNames] = useState<string[]>([]);
   const [attributes, setAttributes] = useState<CharacterAttribute[]>([]);
+  const [skills, setSkills] = useState<SkillView[]>([]);
+  const addSectionRef = useRef<HTMLDivElement>(null);
 
   const { toasts, push: pushToast } = useMicroToasts();
 
@@ -410,6 +422,7 @@ export function DailyPlanPage() {
         if (cancelled) return;
 
         setExistingSkillNames(existingSkills.map((s) => s.name));
+        setSkills(existingSkills.map((s) => toSkillView(enrichSkillWithStats(s), charAttributes)));
         setAttributes(charAttributes);
         setPlan(todayPlan);
         setLoading(false);
@@ -435,7 +448,8 @@ export function DailyPlanPage() {
     try {
       const result = await dailyPlanRepository.completeQuest(quest.id, characterId);
 
-      let toastMsg = `+${result.xpAwarded} XP`;
+      // a quest without a skill is completed for 0 XP
+      let toastMsg = result.xpAwarded > 0 ? `+${result.xpAwarded} XP` : "Выполнено ✓";
       if (result.attributeGained > 0) toastMsg += ` · +${result.attributeGained} к хар.`;
       if (result.skillXpGained > 0) toastMsg += ` · +${result.skillXpGained} к навыку`;
       pushToast(toastMsg);
@@ -490,6 +504,30 @@ export function DailyPlanPage() {
     setShowAddForm(false);
   }
 
+  /** quests created by the AI plan: reload the plan and the skills (new ones may have been created) */
+  async function handleAiPlanApplied(result: ApplyDayPlanResult) {
+    if (!plan) return;
+    const characterId = plan.characterId;
+    const [fresh, charSkills] = await Promise.all([
+      dailyPlanRepository.getTodayPlan(characterId),
+      characterRepository.getCharacterSkills(characterId),
+    ]);
+    if (fresh) setPlan(fresh);
+    setSkills(charSkills.map((s) => toSkillView(enrichSkillWithStats(s), attributes)));
+    setExistingSkillNames(charSkills.map((s) => s.name));
+    pushToast(`В план добавлено: ${result.quests.length}`);
+    void queryClient.invalidateQueries({
+      queryKey: ["character", characterId, "character-skills"],
+    });
+  }
+
+  function openManualForm() {
+    setShowAddForm(true);
+    requestAnimationFrame(() =>
+      addSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }
+
   if (loading) {
     return (
       <div className={styles.center}>
@@ -509,6 +547,15 @@ export function DailyPlanPage() {
   const today = new Date().toISOString().slice(0, 10);
   const pendingCount = plan?.quests.filter((q) => q.status === "pending").length ?? 0;
   const completedCount = plan?.quests.filter((q) => q.status === "completed").length ?? 0;
+  const quests = plan?.quests ?? [];
+  const timedQuests = quests.filter((q) => q.startTime);
+  const untimedQuests = quests.filter((q) => !q.startTime);
+  const existingTimed: TimedEntry[] = timedQuests.map((q) => ({
+    key: `quest:${q.id}`,
+    title: q.title,
+    startTime: q.startTime,
+    durationMinutes: q.durationMinutes ?? (q.hours != null ? Math.round(q.hours * 60) : 30),
+  }));
 
   return (
     <div className={styles.page}>
@@ -525,20 +572,54 @@ export function DailyPlanPage() {
         )}
       </div>
 
-      {/* Quest list */}
-      {plan && plan.quests.length > 0 ? (
+      {/* AI plan: text → preview → quests with time */}
+      {plan && (
+        <AiDayPlan
+          planDate={plan.date}
+          skills={skills}
+          existingQuests={existingTimed}
+          onApplied={handleAiPlanApplied}
+          onManual={openManualForm}
+        />
+      )}
+
+      {/* Day timeline (timed quests) + the rest */}
+      {quests.length > 0 ? (
         <>
-          <p className={styles.sectionTitle}>{pendingCount > 0 ? "Квесты" : "Все выполнено!"}</p>
-          <div className={styles.questList}>
-            {plan.quests.map((quest) => (
-              <QuestItem
-                key={quest.id}
-                quest={quest}
+          {timedQuests.length > 0 && (
+            <>
+              <p className={styles.sectionTitle}>
+                {pendingCount > 0 ? "План дня" : "Все выполнено!"}
+              </p>
+              <DayTimeline
+                quests={timedQuests}
+                skills={skills}
                 onComplete={handleCompleteQuest}
-                completing={completing === quest.id}
+                completingId={completing}
               />
-            ))}
-          </div>
+            </>
+          )}
+          {untimedQuests.length > 0 && (
+            <>
+              <p className={styles.sectionTitle}>
+                {timedQuests.length > 0
+                  ? "Без времени"
+                  : pendingCount > 0
+                    ? "Квесты"
+                    : "Все выполнено!"}
+              </p>
+              <div className={styles.questList}>
+                {untimedQuests.map((quest) => (
+                  <QuestItem
+                    key={quest.id}
+                    quest={quest}
+                    onComplete={handleCompleteQuest}
+                    completing={completing === quest.id}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
       ) : (
         <div className={styles.emptyQuestsWrap}>
@@ -550,7 +631,7 @@ export function DailyPlanPage() {
       )}
 
       {/* Add quest */}
-      <div className={styles.addSection}>
+      <div className={styles.addSection} ref={addSectionRef}>
         {showAddForm ? (
           <AddQuestForm
             onAdd={handleAddQuest}

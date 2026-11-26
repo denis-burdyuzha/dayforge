@@ -286,7 +286,8 @@
 
 .summary {
   position: sticky;
-  bottom: 0;
+  /* above the fixed bottom navigation */
+  bottom: var(--bottom-nav-height, 0px);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);

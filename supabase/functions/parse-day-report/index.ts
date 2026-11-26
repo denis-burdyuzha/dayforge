@@ -1,11 +1,11 @@
 /**
  * Edge Function parse-day-report (Deno). Wiring only — the logic is in handler.ts / parseDayReport.ts.
- * Secrets: ANTHROPIC_API_KEY (required), AI_MODEL (default claude-haiku-4-5). SUPABASE_URL,
+ * Secrets: ANTHROPIC_API_KEY (required), AI_MODEL (default claude-haiku-5-5). SUPABASE_URL,
  * SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY are provided by the Supabase runtime.
  */
 import { createClient } from "@supabase/supabase-js";
 
-import { AnthropicProvider } from "./anthropicProvider.ts";
+import { AnthropicProvider } from "../_shared/ai/anthropicProvider.ts";
 import { handleRequest } from "./handler.ts";
 import { LIMITS } from "./schema.ts";
 import { createSupabaseStore } from "./supabaseStore.ts";

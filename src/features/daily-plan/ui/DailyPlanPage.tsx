@@ -435,7 +435,8 @@ export function DailyPlanPage() {
     try {
       const result = await dailyPlanRepository.completeQuest(quest.id, characterId);
 
-      let toastMsg = `+${result.xpAwarded} XP`;
+      // a quest without a skill is completed for 0 XP
+      let toastMsg = result.xpAwarded > 0 ? `+${result.xpAwarded} XP` : "Выполнено ✓";
       if (result.attributeGained > 0) toastMsg += ` · +${result.attributeGained} к хар.`;
       if (result.skillXpGained > 0) toastMsg += ` · +${result.skillXpGained} к навыку`;
       pushToast(toastMsg);

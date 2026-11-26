@@ -43,8 +43,8 @@ reset role;
 do $$
 declare r jsonb := (select r from t_result where name = 'first');
 begin
-  -- XP: 1.5h→15, 2h→20, 1h→10, 0.5h→5
-  if (r->>'xpAwarded')::int <> 50 then raise exception 'first: xpAwarded %', r->>'xpAwarded'; end if;
+  -- XP: 1.5h→15, 2h→20, 1h→10, no skill → 0 (since 20261127120000)
+  if (r->>'xpAwarded')::int <> 45 then raise exception 'first: xpAwarded %', r->>'xpAwarded'; end if;
   if (r->>'success')::boolean is not true then raise exception 'first: success'; end if;
   if jsonb_array_length(r->'events') <> 4 then raise exception 'first: events %', r->'events'; end if;
   if jsonb_array_length(r->'newSkills') <> 1 or r->'newSkills'->0->>'name' <> 'Рисование'
@@ -53,7 +53,7 @@ begin
   end if;
   -- 2h completed before + 5h now
   if (r->>'totalHours')::numeric <> 7 then raise exception 'first: totalHours %', r->>'totalHours'; end if;
-  if (select total_xp from public.characters where id = 'aaaaaaaa-0000-0000-0000-00000000000a') <> 50 then
+  if (select total_xp from public.characters where id = 'aaaaaaaa-0000-0000-0000-00000000000a') <> 45 then
     raise exception 'first: character total_xp';
   end if;
   if (select status from public.quests where id = '90000000-0000-0000-0000-000000000001') <> 'completed'
@@ -74,6 +74,18 @@ begin
       where character_id = 'aaaaaaaa-0000-0000-0000-00000000000a') <> 7 + 4 then
     raise exception 'first: attribute total';
   end if;
+  -- quests created by the report are marked ai_report; the planned one keeps its source
+  if (select count(*) from public.quests where daily_plan_id = 'd0000000-0000-0000-0000-00000000000a'
+        and source = 'ai_report') <> 3
+     or (select source from public.quests where id = '90000000-0000-0000-0000-000000000001') <> 'manual' then
+    raise exception 'first: quest source';
+  end if;
+  -- the event without a skill: completed, 0 XP, no xp_transactions row for it
+  if (r->'events'->3->>'xpAwarded')::int <> 0
+     or (select status from public.quests where id = (r->'events'->3->>'questId')::uuid) <> 'completed'
+     or (select count(*) from public.xp_transactions where reason = 'Квест выполнен: Уборка') <> 0 then
+    raise exception 'first: event without a skill must complete with 0 XP, got %', r->'events'->3;
+  end if;
 end $$;
 
 -- ── 2. Idempotency: the same parse_id again → previous result, nothing credited twice ──
@@ -87,10 +99,10 @@ reset role;
 do $$
 declare r jsonb := (select r from t_result where name = 'replay');
 begin
-  if (r->>'replayed')::boolean is not true or (r->>'xpAwarded')::int <> 50 then
+  if (r->>'replayed')::boolean is not true or (r->>'xpAwarded')::int <> 45 then
     raise exception 'replay: expected the stored result, got %', r;
   end if;
-  if (select total_xp from public.characters where id = 'aaaaaaaa-0000-0000-0000-00000000000a') <> 50 then
+  if (select total_xp from public.characters where id = 'aaaaaaaa-0000-0000-0000-00000000000a') <> 45 then
     raise exception 'replay: XP credited twice';
   end if;
   if (select count(*) from public.quests where daily_plan_id = 'd0000000-0000-0000-0000-00000000000a') <> 5 then
@@ -120,7 +132,7 @@ reset role;
 
 do $$
 begin
-  if (select total_xp from public.characters where id = 'aaaaaaaa-0000-0000-0000-00000000000a') <> 50 then
+  if (select total_xp from public.characters where id = 'aaaaaaaa-0000-0000-0000-00000000000a') <> 45 then
     raise exception 'limit: XP was written';
   end if;
   if exists (select 1 from public.character_skills where name = 'Программирование') then

@@ -104,13 +104,15 @@ export const DAY_REPORT_LIMITS = {
 } as const;
 
 /**
- * Character XP preview — the same formula as calculate_quest_effects (round(hours · 10) per event).
- * Display only: the server computes the real numbers.
+ * Character XP preview — the same formula as calculate_quest_effects (round(hours · 10) per event);
+ * an event without a skill gives 0 XP. Display only: the server computes the real numbers.
  */
 export function estimateCharacterXp(
-  events: ReadonlyArray<Pick<EditableDayEvent, "enabled" | "hours">>,
+  events: ReadonlyArray<Pick<EditableDayEvent, "enabled" | "hours" | "skill">>,
 ) {
-  return events.filter((e) => e.enabled).reduce((sum, e) => sum + Math.round(e.hours * 10), 0);
+  return events
+    .filter((e) => e.enabled && e.skill.kind !== "none")
+    .reduce((sum, e) => sum + Math.round(e.hours * 10), 0);
 }
 
 export function toEditableEvents(events: DayEvent[]): EditableDayEvent[] {

@@ -318,6 +318,86 @@ export type Database = {
           },
         ];
       };
+      day_plan_applications: {
+        Row: {
+          created_at: string;
+          parse_id: string;
+          plan_date: string;
+          result: Json | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          parse_id: string;
+          plan_date: string;
+          result?: Json | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          parse_id?: string;
+          plan_date?: string;
+          result?: Json | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "day_plan_applications_parse_id_fkey";
+            columns: ["parse_id"];
+            isOneToOne: true;
+            referencedRelation: "day_plan_parses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      day_plan_parses: {
+        Row: {
+          attempt: number;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          input_text: string;
+          latency_ms: number | null;
+          model: string;
+          parsed_items: Json | null;
+          raw_output: Json | null;
+          plan_date: string;
+          status: string;
+          usage: Json | null;
+          user_id: string;
+        };
+        Insert: {
+          attempt?: number;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          input_text: string;
+          latency_ms?: number | null;
+          model: string;
+          parsed_items?: Json | null;
+          raw_output?: Json | null;
+          plan_date: string;
+          status: string;
+          usage?: Json | null;
+          user_id: string;
+        };
+        Update: {
+          attempt?: number;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          input_text?: string;
+          latency_ms?: number | null;
+          model?: string;
+          parsed_items?: Json | null;
+          raw_output?: Json | null;
+          plan_date?: string;
+          status?: string;
+          usage?: Json | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       day_report_applications: {
         Row: {
           created_at: string;
@@ -363,6 +443,7 @@ export type Database = {
           raw_output: Json | null;
           report_date: string;
           status: string;
+          usage: Json | null;
           user_id: string;
         };
         Insert: {
@@ -377,6 +458,7 @@ export type Database = {
           raw_output?: Json | null;
           report_date: string;
           status: string;
+          usage?: Json | null;
           user_id: string;
         };
         Update: {
@@ -391,6 +473,7 @@ export type Database = {
           raw_output?: Json | null;
           report_date?: string;
           status?: string;
+          usage?: Json | null;
           user_id?: string;
         };
         Relationships: [];
@@ -480,11 +563,14 @@ export type Database = {
           created_at: string;
           daily_plan_id: string;
           description: string | null;
+          duration_minutes: number | null;
           hours: number | null;
           id: string;
           position: number;
           skill_id: string | null;
           skill_name: string | null;
+          source: string;
+          start_time: string | null;
           status: string;
           title: string;
           updated_at: string;
@@ -495,11 +581,14 @@ export type Database = {
           created_at?: string;
           daily_plan_id: string;
           description?: string | null;
+          duration_minutes?: number | null;
           hours?: number | null;
           id?: string;
           position?: number;
           skill_id?: string | null;
           skill_name?: string | null;
+          source?: string;
+          start_time?: string | null;
           status?: string;
           title: string;
           updated_at?: string;
@@ -510,11 +599,14 @@ export type Database = {
           created_at?: string;
           daily_plan_id?: string;
           description?: string | null;
+          duration_minutes?: number | null;
           hours?: number | null;
           id?: string;
           position?: number;
           skill_id?: string | null;
           skill_name?: string | null;
+          source?: string;
+          start_time?: string | null;
           status?: string;
           title?: string;
           updated_at?: string;
@@ -662,6 +754,20 @@ export type Database = {
         Returns: Json;
       };
       _normalize_skill_name: { Args: { p_name: string }; Returns: string };
+      _resolve_event_skill: {
+        Args: { p_character_id: string; p_invalid_code: string; p_skill: Json };
+        Returns: {
+          codes: string[];
+          created: boolean;
+          icon: string;
+          skill_id: string;
+          skill_name: string;
+        }[];
+      };
+      apply_day_plan: {
+        Args: { p_items: Json; p_parse_id: string; p_plan_date: string };
+        Returns: Json;
+      };
       apply_day_report: {
         Args: { p_events: Json; p_parse_id: string; p_report_date: string };
         Returns: Json;

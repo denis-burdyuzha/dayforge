@@ -31,6 +31,8 @@ describe("AI day report model", () => {
     ]);
     expect(events.map((e) => e.enabled)).toEqual([true, true, false]);
     expect(estimateCharacterXp(events)).toBe(15 + 3);
+    // switched on, an event without a skill still gives 0 XP
+    expect(estimateCharacterXp(events.map((e) => ({ ...e, enabled: true })))).toBe(15 + 3);
   });
 
   it("validation: hours 0.1–8, a new skill needs a name and 1–2 attributes; switched-off events pass", () => {

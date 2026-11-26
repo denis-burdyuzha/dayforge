@@ -17,6 +17,7 @@ import { useCharacterData } from "@/entities/character/model/useCharacterData";
 import { AttributeRune, AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
+import { getLocalDateString } from "@/shared/lib/localDate";
 import { Badge } from "@/shared/ui/Badge/ui/Badge";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
@@ -218,8 +219,10 @@ const HomePage = () => {
   const requiredXp = xpRequiredForLevel(character.level);
   const xpToNext = requiredXp - currentLevelXp;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayXpEvents = xpEvents.filter((e) => e.createdAt.slice(0, 10) === todayStr);
+  const todayStr = getLocalDateString();
+  const todayXpEvents = xpEvents.filter(
+    (e) => getLocalDateString(new Date(e.createdAt)) === todayStr,
+  );
 
   const dayCount = character.createdAt ? daysSince(character.createdAt) : 0;
 

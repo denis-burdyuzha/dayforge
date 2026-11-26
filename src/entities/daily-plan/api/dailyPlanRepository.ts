@@ -1,6 +1,7 @@
 import { xpRequiredForLevel } from "@/entities/character/model/characterTypes";
 import { supabase } from "@/shared/api/supabase/client";
 import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
+import { getLocalDateString } from "@/shared/lib/localDate";
 
 import type { DailyPlan, NewQuestInput, Quest } from "../model/dailyPlanTypes";
 
@@ -51,7 +52,7 @@ export const dailyPlanRepository = {
    * Returns today's plan for the character (with quests), or null if none.
    */
   async getTodayPlan(characterId: string): Promise<DailyPlan | null> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
 
     const { data: plan, error: planError } = await supabase
       .from("daily_plans")
@@ -87,7 +88,7 @@ export const dailyPlanRepository = {
    * Creates today's plan for the character and returns it (empty quests).
    */
   async createTodayPlan(characterId: string): Promise<DailyPlan> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
 
     const { data, error } = await supabase
       .from("daily_plans")

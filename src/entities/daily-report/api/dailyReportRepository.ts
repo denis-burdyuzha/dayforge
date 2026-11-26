@@ -1,4 +1,5 @@
 ﻿import { supabase } from "@/shared/api/supabase/client";
+import { getLocalDateString, getLocalDayRangeIso } from "@/shared/lib/localDate";
 
 import type { DailyReport, DayCompletionResult } from "../model/dailyReportTypes";
 
@@ -7,7 +8,7 @@ export const dailyReportRepository = {
    * Returns today'"'"'s report for the character, or null if none completed yet.
    */
   async getTodayReport(characterId: string): Promise<DailyReport | null> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
 
     const { data, error } = await supabase
       .from("daily_reports")
@@ -39,7 +40,7 @@ export const dailyReportRepository = {
    * 4. Return DayCompletionResult (no extra XP awarded here — already done per quest)
    */
   async completeDay(characterId: string, text: string): Promise<DayCompletionResult> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
 
     // 1. Upsert report
     const { data: reportData, error: reportError } = await supabase
@@ -54,8 +55,8 @@ export const dailyReportRepository = {
     if (reportError) throw new Error(reportError.message);
 
     // 2. Aggregate XP gained today
-    const todayStart = `${today}T00:00:00.000Z`;
-    const todayEnd = `${today}T23:59:59.999Z`;
+    // local day bounds (not the UTC day)
+    const { start: todayStart, end: todayEnd } = getLocalDayRangeIso(today);
 
     const { data: txRows, error: txError } = await supabase
       .from("xp_transactions")

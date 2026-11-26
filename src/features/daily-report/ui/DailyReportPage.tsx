@@ -11,6 +11,7 @@ import { dailyReportRepository } from "@/entities/daily-report/api/dailyReportRe
 import type { ApplyDayReportResult } from "@/entities/daily-report/model/aiDayReport";
 import type { DayCompletionResult } from "@/entities/daily-report/model/dailyReportTypes";
 import { supabase } from "@/shared/api/supabase/client";
+import { getLocalDateString, getLocalDayRangeIso } from "@/shared/lib/localDate";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
 import { LevelUp } from "@/shared/ui/LevelUp/ui/LevelUp";
 import { Loading } from "@/shared/ui/Loading/ui/Loading";
@@ -38,7 +39,7 @@ export function DailyReportPage() {
     new Map(),
   );
   const [submitting, setSubmitting] = useState(false);
-  const reportDate = new Date().toISOString().slice(0, 10);
+  const reportDate = getLocalDateString();
 
   // LevelUp overlay
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -75,9 +76,8 @@ export function DailyReportPage() {
 
         if (todayReport && !cancelled) {
           // Day already completed — compute aggregated result for display
-          const today = new Date().toISOString().slice(0, 10);
-          const todayStart = `${today}T00:00:00.000Z`;
-          const todayEnd = `${today}T23:59:59.999Z`;
+          const today = getLocalDateString();
+          const { start: todayStart, end: todayEnd } = getLocalDayRangeIso(today);
 
           // Aggregate XP for today
           const { data: txRows } = await supabase

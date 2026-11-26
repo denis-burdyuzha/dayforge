@@ -16,6 +16,9 @@ function mapQuestRow(row: {
   skill_name: string | null;
   hours: number | null;
   skill_id?: string | null;
+  start_time?: string | null;
+  duration_minutes?: number | null;
+  source?: string | null;
 }): Quest {
   return {
     id: row.id,
@@ -29,6 +32,10 @@ function mapQuestRow(row: {
     skillName: row.skill_name,
     hours: row.hours,
     skillId: row.skill_id ?? null,
+    // Postgres time → "HH:MM"
+    startTime: row.start_time ? row.start_time.slice(0, 5) : null,
+    durationMinutes: row.duration_minutes ?? null,
+    source: (row.source as Quest["source"] | null | undefined) ?? "manual",
   };
 }
 
@@ -37,7 +44,7 @@ function mapQuestRow(row: {
 // ---------------------------------------------------------------------------
 
 const QUEST_SELECT =
-  "id, daily_plan_id, title, description, status, position, xp_reward, attribute_id, skill_name, hours, skill_id";
+  "id, daily_plan_id, title, description, status, position, xp_reward, attribute_id, skill_name, hours, skill_id, start_time, duration_minutes, source";
 
 export const dailyPlanRepository = {
   /**

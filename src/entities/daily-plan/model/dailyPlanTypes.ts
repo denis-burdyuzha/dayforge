@@ -1,5 +1,8 @@
 export type QuestStatus = "pending" | "completed";
 
+/** where the quest came from: the manual form, the AI plan, or an event of the AI evening report */
+export type QuestSource = "manual" | "ai_plan" | "ai_report";
+
 export interface Quest {
   id: string;
   dailyPlanId: string;
@@ -16,6 +19,11 @@ export interface Quest {
   hours: number | null;
   /** Linked skill ID */
   skillId: string | null;
+  /** local start time "HH:MM" (null = no time) */
+  startTime: string | null;
+  /** planned duration, minutes (null for quests created without one) */
+  durationMinutes: number | null;
+  source: QuestSource;
 }
 
 export interface DailyPlan {

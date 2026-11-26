@@ -4,6 +4,7 @@
  */
 import type { AttributeKey } from "@/entities/character/model/types";
 import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
+import { createDraftStore } from "@/shared/lib/draftStore";
 
 // ── Events (camelCase, as the Edge Function returns them) ──
 
@@ -157,25 +158,7 @@ export function toApplyPayload(events: ReadonlyArray<EditableDayEvent>) {
 
 // ── Draft (per date, localStorage; storage may be unavailable) ──
 
-const draftKey = (date: string) => `dayforge:day-report-draft:${date}`;
-
-export function loadDraft(date: string): string {
-  try {
-    return localStorage.getItem(draftKey(date)) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-export function saveDraft(date: string, text: string): void {
-  try {
-    if (text) localStorage.setItem(draftKey(date), text);
-    else localStorage.removeItem(draftKey(date));
-  } catch {
-    // storage unavailable (private mode, quota): the draft lives only in memory
-  }
-}
-
-export function clearDraft(date: string): void {
-  saveDraft(date, "");
-}
+const drafts = createDraftStore("dayforge:day-report-draft:");
+export const loadDraft = drafts.load;
+export const saveDraft = drafts.save;
+export const clearDraft = drafts.clear;

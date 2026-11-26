@@ -156,16 +156,6 @@ function hexToHsl(hex: string): [number, number, number] | null {
   return [h, s, l];
 }
 
-function hslToHex(h: number, s: number, l: number): string {
-  const f = (n: number) => {
-    const k = (n + h * 12) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
-    return Math.round(Math.max(0, Math.min(1, c)) * 255);
-  };
-  return `#${((1 << 24) | (f(0) << 16) | (f(8) << 8) | f(4)).toString(16).slice(1)}`;
-}
-
 /**
  * Warm accent colour (orange/amber/yellow/rust, e.g. glowing fox tail tips and their shaded facets):
  * hue 300°–70°, saturation > minSaturation, lightness > minLightness.
@@ -175,12 +165,4 @@ export function isWarmAccent(hex: string, minSaturation = 0.35, minLightness = 0
   if (!hsl) return false;
   const deg = hsl[0] * 360;
   return (deg < 70 || deg > 300) && hsl[1] > minSaturation && hsl[2] > minLightness;
-}
-
-/** Recolour `hex` into the hue/saturation of `target`, keeping the original lightness (facet shading) */
-export function tintToColor(hex: string, target: string): string {
-  const src = hexToHsl(hex);
-  const dst = hexToHsl(target);
-  if (!src || !dst) return hex;
-  return hslToHex(dst[0], Math.max(dst[1], 0.6), src[2]);
 }

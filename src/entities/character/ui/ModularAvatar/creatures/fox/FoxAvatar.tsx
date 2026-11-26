@@ -1,7 +1,7 @@
 import type React from "react";
 import { useId } from "react";
 
-import { applyAspectGlow, isWarmAccent, tintToColor } from "../../../../model/aspect";
+import { applyAspectGlow } from "../../../../model/aspect";
 import type { AvatarParams } from "../../../../model/avatarTypes";
 import { AttributeFxLayer } from "../../attributeFx/AttributeFxLayer";
 import { createBodyToneResolver } from "../../attributeFx/bodyTone";
@@ -13,10 +13,6 @@ import { tierSparkPositions } from "../../tierSparks";
 import { getFoxAnatomy } from "./foxAnatomy";
 import { getFoxTierConfig } from "./foxEvolutionConfig";
 import { getFoxFxConfig } from "./foxFxMatrix";
-
-/** Tail tips include their shaded rust/brown facets, so the warm test is looser than the default */
-const TAIL_TIP_MIN_SAT = 0.12;
-const TAIL_TIP_MIN_LIGHT = 0.12;
 
 type FillPoly = { id: string; zone: string; defaultFill: string };
 
@@ -65,26 +61,15 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
   const values = params.attributeValues;
   const seedKey = params.identity.seedKey;
   const ctx = createFxContext({ anatomy, classId, values, seedKey, transform: { tx, ty, scale } });
-  // Tail tips: the warm glowing tips of the tail zones take the aspect colour (lightness kept).
-  // Without an aspect they stay as in the asset.
-  const tailZones = new Set(anatomy.zones.tail ?? []);
+  // Eyes + tail tips take the aspect colour via the shared aspect accent (tierConfig.aspectAccentIds,
+  // recoloured by the asset renderer with the light and shade kept). Without an aspect — asset colours.
   const aspectColor = params.aspect?.color ?? null;
-  const tailTipFill = aspectColor
-    ? (poly: FillPoly) =>
-        tailZones.has(poly.zone) &&
-        isWarmAccent(poly.defaultFill, TAIL_TIP_MIN_SAT, TAIL_TIP_MIN_LIGHT)
-          ? tintToColor(poly.defaultFill, aspectColor)
-          : undefined
-    : null;
   // On-body attribute FX v2 are archived: only the playground toggle turns them (and the Strength
   // torso tone) on. The body carries no attribute effects in the app.
   const bodyTone = legacyAttributeFx
     ? createBodyToneResolver({ torsoZones: anatomy.zones.torso, strength: values.strength })
     : null;
-  const resolveFill =
-    tailTipFill || bodyTone
-      ? (poly: FillPoly) => tailTipFill?.(poly) ?? bodyTone?.(poly)
-      : undefined;
+  const resolveFill = bodyTone ? (poly: FillPoly) => bodyTone(poly) : undefined;
 
   // 3. Tier particles: count, radius and centre depend ONLY on the tier
   const bodyCenter = ctx.toCanvas(ctx.geo.torsoCenter);
@@ -179,7 +164,11 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
             {isSilhouette ? (
               <AssetComponent isSilhouette={true} />
             ) : (
-              <AssetComponent {...(resolveFill ? { resolveFill } : {})} />
+              <AssetComponent
+                {...(resolveFill ? { resolveFill } : {})}
+                aspectAccentIds={tierConfig.aspectAccentIds}
+                aspectColor={aspectColor}
+              />
             )}
           </g>
 

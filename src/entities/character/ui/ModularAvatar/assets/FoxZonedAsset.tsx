@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 
+import { createAspectAccentResolver } from "../shared/aspectAccent";
 import type { FoxBaseAssetProps, FoxZonePoly } from "./foxAssetTypes";
 
 interface FoxZonedAssetProps extends FoxBaseAssetProps {
@@ -8,8 +9,9 @@ interface FoxZonedAssetProps extends FoxBaseAssetProps {
 }
 
 /**
- * Shared polygon renderer for all 5 fox tiers.
- * Renders polygons in original data order (z-order preserved) in original coordinates.
+ * Shared polygon renderer of the creature assets (fox tiers and the SVG-pipeline creatures).
+ * Renders polygons in original data order (z-order preserved) in original coordinates. Fill priority:
+ * silhouette / override (rim pass) → aspect accent recolour → resolveFill → asset colour.
  */
 export const FoxZonedAsset: React.FC<FoxZonedAssetProps> = ({
   polygons,
@@ -20,11 +22,17 @@ export const FoxZonedAsset: React.FC<FoxZonedAssetProps> = ({
   overrideStrokeWidth,
   zoneTransforms,
   resolveFill,
+  aspectAccentIds,
+  aspectColor,
 }) => {
+  const accentFill = useMemo(
+    () => createAspectAccentResolver(polygons, aspectAccentIds, aspectColor),
+    [polygons, aspectAccentIds, aspectColor],
+  );
   return (
     <g id={rootId} shapeRendering="geometricPrecision">
       {polygons.map((poly) => {
-        const baseFill = resolveFill?.(poly) ?? poly.defaultFill;
+        const baseFill = accentFill?.(poly) ?? resolveFill?.(poly) ?? poly.defaultFill;
         const fill = overrideFill ?? (isSilhouette ? "#020617" : baseFill);
         const stroke = overrideStroke ?? (isSilhouette ? "none" : fill);
         const strokeWidth =

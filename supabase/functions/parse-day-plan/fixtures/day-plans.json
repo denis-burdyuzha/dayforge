@@ -1,0 +1,435 @@
+{
+  "skills": [
+    {
+      "id": "s-en",
+      "name": "Английский",
+      "aliases": ["англ", "english"],
+      "attributes": ["intelligence"]
+    },
+    {
+      "id": "s-code",
+      "name": "Программирование",
+      "aliases": ["кодинг"],
+      "attributes": ["intelligence", "focus"]
+    },
+    { "id": "s-run", "name": "Бег", "aliases": [], "attributes": ["endurance"] },
+    { "id": "s-read", "name": "Чтение", "aliases": [], "attributes": ["intelligence"] },
+    { "id": "s-guitar", "name": "Гитара", "aliases": [], "attributes": ["creativity"] },
+    { "id": "s-gym", "name": "Силовые тренировки", "aliases": ["зал"], "attributes": ["strength"] }
+  ],
+  "fixtures": [
+    {
+      "id": "01-all-times",
+      "covers": "все времена и длительности указаны",
+      "today": true,
+      "nowLocal": "06:30",
+      "text": "В 7:00 пробежка 30 минут, в 9:30 урок английского час, в 19:00 зал полтора часа.",
+      "expected": {
+        "items": [
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "07:00",
+            "minutes": 30
+          },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "09:30",
+            "minutes": 60
+          },
+          {
+            "match": ["зал", "трениров", "силов"],
+            "skill": { "kind": "existing", "skillId": "s-gym" },
+            "time": "19:00",
+            "minutes": 90
+          }
+        ]
+      }
+    },
+    {
+      "id": "02-no-times",
+      "covers": "ни одного времени и длительности",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "Хочу почитать, позаниматься на гитаре и сходить в магазин.",
+      "expected": {
+        "items": [
+          { "match": ["чит", "чтен"], "skill": { "kind": "existing", "skillId": "s-read" } },
+          { "match": ["гитар"], "skill": { "kind": "existing", "skillId": "s-guitar" } },
+          { "match": ["магазин", "покуп", "продукт"], "skill": { "kind": "none" } }
+        ]
+      }
+    },
+    {
+      "id": "03-partial",
+      "covers": "часть времён указана, часть — словами",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "Утром пробежка, в 13:00 созвон с командой на час, вечером английский 45 минут.",
+      "expected": {
+        "items": [
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "morning"
+          },
+          {
+            "match": ["созвон", "звонок", "команд"],
+            "skill": { "kind": "none" },
+            "time": "13:00",
+            "minutes": 60
+          },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "evening",
+            "minutes": 45
+          }
+        ]
+      }
+    },
+    {
+      "id": "04-only-plan-date",
+      "covers": "упоминание завтрашнего дня не превращается в пункт",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "План на сегодня: в 10 код по проекту 2 часа, потом обед. Завтра — бассейн, но это потом.",
+      "expected": {
+        "items": [
+          {
+            "match": ["код", "проект", "программ"],
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "time": "10:00",
+            "minutes": 120
+          },
+          { "match": ["обед"], "skill": { "kind": "none" }, "time": ">=12:00" }
+        ]
+      }
+    },
+    {
+      "id": "05-today-after-1530",
+      "covers": "план на сегодня в 15:30 — утренние пункты не уходят в прошлое",
+      "today": true,
+      "nowLocal": "15:30",
+      "text": "Пробежка утром, потом час чтения, вечером гитара.",
+      "expected": {
+        "items": [
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": ">=15:30"
+          },
+          {
+            "match": ["чит", "чтен"],
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "time": ">=15:30",
+            "minutes": 60
+          },
+          {
+            "match": ["гитар"],
+            "skill": { "kind": "existing", "skillId": "s-guitar" },
+            "time": "evening"
+          }
+        ]
+      }
+    },
+    {
+      "id": "06-errands",
+      "covers": "поручения без навыков",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "Оплатить коммуналку, забрать посылку на почте, позвонить маме, купить продукты.",
+      "expected": {
+        "items": [
+          { "match": ["коммунал", "оплат"], "skill": { "kind": "none" } },
+          { "match": ["посылк", "почт"], "skill": { "kind": "none" } },
+          { "match": ["мам", "позвон"], "skill": { "kind": "none" } },
+          { "match": ["продукт", "купить"], "skill": { "kind": "none" } }
+        ]
+      }
+    },
+    {
+      "id": "07-work-till-6",
+      "covers": "«работа до 6» — один блок без навыка, остальное после работы",
+      "today": false,
+      "nowLocal": "08:00",
+      "text": "Работа до 6, после работы зал час, перед сном почитать 30 минут.",
+      "expected": {
+        "items": [
+          { "match": ["работ"], "skill": { "kind": "none" }, "time": "morning" },
+          {
+            "match": ["зал", "трениров", "силов"],
+            "skill": { "kind": "existing", "skillId": "s-gym" },
+            "time": ">=18:00",
+            "minutes": 60
+          },
+          {
+            "match": ["чит", "чтен"],
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "time": "evening",
+            "minutes": 30
+          }
+        ]
+      }
+    },
+    {
+      "id": "08-synonyms",
+      "covers": "синонимы и сокращения существующих навыков",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "Утром кодинг 2 часа, днём англ с репетитором, вечером качалка.",
+      "expected": {
+        "items": [
+          {
+            "match": ["код", "программ"],
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "time": "morning",
+            "minutes": 120
+          },
+          {
+            "match": ["англ", "репетит"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "afternoon"
+          },
+          {
+            "match": ["качал", "зал", "трениров", "силов"],
+            "skill": { "kind": "existing", "skillId": "s-gym" },
+            "time": "evening"
+          }
+        ]
+      }
+    },
+    {
+      "id": "09-duplicates",
+      "covers": "дубли уже существующих квестов на дату",
+      "today": false,
+      "nowLocal": "07:00",
+      "existingQuests": [
+        {
+          "id": "q-run",
+          "title": "Пробежка",
+          "startTime": "07:00",
+          "durationMinutes": 30,
+          "status": "pending"
+        },
+        {
+          "id": "q-en",
+          "title": "Урок английского",
+          "startTime": "18:00",
+          "durationMinutes": 60,
+          "status": "pending"
+        }
+      ],
+      "text": "Пробежка в 7 утра, в обед почитать 30 минут, в 18:00 урок английского.",
+      "expected": {
+        "items": [
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "07:00",
+            "duplicate": true
+          },
+          {
+            "match": ["чит", "чтен"],
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "time": "afternoon",
+            "minutes": 30
+          },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "18:00",
+            "duplicate": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "10-long-plan",
+      "covers": "длинный план на 11 пунктов",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "В 7:00 зарядка 15 минут, в 7:30 завтрак, в 8:00 код 3 часа, в 11:15 созвон 30 минут, в 12:00 обед, в 13:00 английский час, в 14:30 сходить в банк, в 16:00 код ещё 2 часа, в 18:30 пробежка 40 минут, в 20:00 гитара 30 минут, в 21:00 чтение час.",
+      "expected": {
+        "items": [
+          {
+            "match": ["зарядк"],
+            "skill": [
+              { "kind": "new" },
+              { "kind": "existing", "skillId": "s-gym" },
+              { "kind": "existing", "skillId": "s-run" }
+            ],
+            "time": "07:00",
+            "minutes": 15
+          },
+          { "match": ["завтрак"], "skill": { "kind": "none" }, "time": "07:30" },
+          {
+            "match": ["код", "программ"],
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "time": "08:00",
+            "minutes": 180
+          },
+          {
+            "match": ["созвон", "звонок"],
+            "skill": { "kind": "none" },
+            "time": "11:15",
+            "minutes": 30
+          },
+          { "match": ["обед"], "skill": { "kind": "none" }, "time": "12:00" },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "13:00",
+            "minutes": 60
+          },
+          { "match": ["банк"], "skill": { "kind": "none" }, "time": "14:30" },
+          {
+            "match": ["код", "программ"],
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "time": "16:00",
+            "minutes": 120
+          },
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "18:30",
+            "minutes": 40
+          },
+          {
+            "match": ["гитар"],
+            "skill": { "kind": "existing", "skillId": "s-guitar" },
+            "time": "20:00",
+            "minutes": 30
+          },
+          {
+            "match": ["чит", "чтен"],
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "time": "21:00",
+            "minutes": 60
+          }
+        ]
+      }
+    },
+    {
+      "id": "11-impossible-20h",
+      "covers": "невыполнимый план на 20 часов — разбор как есть (лимит проверит сервер)",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "Код 8 часов, английский 4 часа, зал 3 часа, гитара 3 часа, чтение 2 часа.",
+      "expected": {
+        "items": [
+          {
+            "match": ["код", "программ"],
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "minutes": 480
+          },
+          { "match": ["англ"], "skill": { "kind": "existing", "skillId": "s-en" }, "minutes": 240 },
+          {
+            "match": ["зал", "трениров", "силов"],
+            "skill": { "kind": "existing", "skillId": "s-gym" },
+            "minutes": 180
+          },
+          {
+            "match": ["гитар"],
+            "skill": { "kind": "existing", "skillId": "s-guitar" },
+            "minutes": 180
+          },
+          {
+            "match": ["чит", "чтен"],
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "minutes": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "12-typos-colloquial",
+      "covers": "разговорный стиль с опечатками",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "ну короч с утреца пробежечка минут на 20, потом поработать над праетом в коде часика 2, а вечерком англ полчасика и спать",
+      "expected": {
+        "ignoreExtraNone": true,
+        "items": [
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "morning",
+            "minutes": 20
+          },
+          {
+            "match": ["код", "проект", "праект", "программ"],
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "minutes": 120
+          },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "evening",
+            "minutes": 30
+          }
+        ]
+      }
+    },
+    {
+      "id": "13-meeting-vs-meetup",
+      "covers": "встреча без цели развития — без навыка; митап по теме — навык",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "В 12 встреча с другом в кафе, в 15:00 митап по Go на 2 часа.",
+      "expected": {
+        "items": [
+          { "match": ["встреч", "друг", "кафе"], "skill": { "kind": "none" }, "time": "12:00" },
+          {
+            "match": ["митап", "go"],
+            "skill": [{ "kind": "existing", "skillId": "s-code" }, { "kind": "new" }],
+            "time": "15:00",
+            "minutes": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "14-new-skills",
+      "covers": "новые навыки с атрибутами",
+      "today": false,
+      "nowLocal": "07:00",
+      "text": "Днём медитация 15 минут, вечером первый урок рисования на полтора часа.",
+      "expected": {
+        "items": [
+          {
+            "match": ["медитац"],
+            "skill": { "kind": "new", "names": ["Медитация"], "attributesInclude": ["focus"] },
+            "time": "afternoon",
+            "minutes": 15
+          },
+          {
+            "match": ["рисова"],
+            "skill": { "kind": "new", "names": ["Рисование"], "attributesInclude": ["creativity"] },
+            "time": "evening",
+            "minutes": 90
+          }
+        ]
+      }
+    },
+    {
+      "id": "15-today-late",
+      "covers": "поздний вечер сегодня — только время после nowLocal",
+      "today": true,
+      "nowLocal": "21:40",
+      "text": "Ещё успею почитать полчаса и разобрать почту.",
+      "expected": {
+        "items": [
+          {
+            "match": ["чит", "чтен"],
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "time": ">=21:40",
+            "minutes": 30
+          },
+          { "match": ["почт"], "skill": { "kind": "none" }, "time": ">=21:40" }
+        ]
+      }
+    }
+  ]
+}

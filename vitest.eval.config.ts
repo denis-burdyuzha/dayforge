@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-/** Config of `npm run eval:day-report` (real model calls) — kept out of the regular `npm test` run */
+/** Config of `npm run eval:day-report` / `eval:day-plan` (real model calls) — kept out of the regular `npm test` run */
 export default defineConfig({
   test: {
     include: ["scripts/**/*.eval.ts"],

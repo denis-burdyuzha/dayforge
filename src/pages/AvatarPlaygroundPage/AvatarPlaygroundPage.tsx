@@ -19,6 +19,7 @@ import {
   AttributeRuneRing,
 } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
+import { getAvatarAssetInfo } from "@/entities/character/ui/ModularAvatar/avatarAssetInfo";
 import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
 
 import styles from "./AvatarPlaygroundPage.module.scss";
@@ -196,6 +197,7 @@ export function AvatarPlaygroundPage() {
   ];
 
   const avatarParams = computeAvatarParams(character, attributes, skills, null);
+  const assetInfo = getAvatarAssetInfo(selectedClass, level);
   avatarParams.silhouetteOnly = silhouetteOnly;
 
   const testSkillViews: SkillView[] = testSkills.slice(0, testSkillCount).map((t, i) => ({
@@ -617,6 +619,13 @@ export function AvatarPlaygroundPage() {
             ) : (
               <span>нет (цвет класса)</span>
             )}
+          </p>
+
+          <p data-testid="aspect-accent-info" style={{ margin: "0 0 8px", fontSize: "13px" }}>
+            aspectAccent: {assetInfo.aspectAccentCount} полигонов · ассет {assetInfo.source}
+            {assetInfo.fallbackFrom !== null
+              ? ` (тир L${assetInfo.tier} без своего SVG — взят L${assetInfo.fallbackFrom})`
+              : ` (L${assetInfo.tier})`}
           </p>
 
           <div className={styles.debugInfo}>

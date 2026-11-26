@@ -9,7 +9,6 @@ import {
   NEUTRAL_GLOW_COLOR,
   NEUTRAL_GLOW_INTENSITY,
   resolveAvatarAspect,
-  tintToColor,
 } from "./aspect";
 
 const base = {
@@ -69,14 +68,8 @@ describe("aspect", () => {
     expect(weak.rimOpacity).toBeCloseTo(g.rimOpacity * 0.35);
   });
 
-  it("tail tip tint: warm accents detected; tint keeps lightness and takes the aspect hue", () => {
+  it("warm accents (fox tail tips) are detected", () => {
     expect(isWarmAccent("#fc762d")).toBe(true);
     expect(isWarmAccent("#3a4a6e")).toBe(false);
-    const red = tintToColor("#fc762d", ATTRIBUTE_COLORS.strength);
-    expect(isWarmAccent(red)).toBe(true);
-    const pink = tintToColor("#fc762d", ATTRIBUTE_COLORS.social);
-    expect(pink).not.toBe("#fc762d");
-    const green = tintToColor("#fc762d", ATTRIBUTE_COLORS.endurance);
-    expect(isWarmAccent(green)).toBe(false);
   });
 });

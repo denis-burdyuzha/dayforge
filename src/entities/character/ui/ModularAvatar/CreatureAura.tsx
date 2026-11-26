@@ -1,36 +1,17 @@
-import type { AvatarParams } from "../../model/avatarTypes";
-
 export interface CreatureAuraProps {
-  params: AvatarParams;
-  overrideOpacity?: number;
-  overrideRadius?: number;
-  /** id of the radialGradient to fill with (default: creature-aura-radial) */
-  gradientId?: string;
+  /** peak opacity (tier FX × aspect intensity); ≤ 0 → nothing rendered */
+  opacity: number;
+  /** radius in canvas px; ≤ 0 → nothing rendered */
+  radius: number;
+  /** id of the radialGradient to fill with */
+  gradientId: string;
 }
 
 /**
- * CreatureAura — Ambient Energy Aura rendered underneath the avatar canvas center (100, 120).
- * Uses radialGradient (#38bdf8 -> transparent) with smooth breathing opacity pulse animation.
+ * CreatureAura — ambient energy aura under the creature, centred on the canvas point (100, 120), with a
+ * slow breathing opacity pulse. Colour comes from the radial gradient (aspect colour or neutral).
  */
-export function CreatureAura({
-  params,
-  overrideOpacity,
-  overrideRadius,
-  gradientId = "creature-aura-radial",
-}: CreatureAuraProps) {
-  const { effects, evolution } = params;
-  const auraEffect = effects.find((e) => e.type === "aura");
-
-  const opacity = overrideOpacity !== undefined ? overrideOpacity : (auraEffect?.intensity ?? 0);
-  const radius =
-    overrideRadius !== undefined
-      ? overrideRadius
-      : evolution.tier === 5
-        ? 80
-        : evolution.tier === 4
-          ? 70
-          : 60;
-
+export function CreatureAura({ opacity, radius, gradientId }: CreatureAuraProps) {
   if (opacity <= 0 || radius <= 0) return null;
 
   const minOpacity = (opacity * 0.9).toFixed(3);
@@ -38,7 +19,6 @@ export function CreatureAura({
 
   return (
     <g className="creature-aura">
-      {/* Outer ambient glow circle centered at (100, 120) */}
       <circle cx="100" cy="120" r={radius} fill={`url(#${gradientId})`} opacity={opacity}>
         <animate
           attributeName="opacity"

@@ -18,4 +18,8 @@ export interface FoxBaseAssetProps {
   zoneTransforms?: Readonly<Record<string, string>> | undefined;
   /** Per-polygon fill override (colour grading by zone). Return undefined to keep default. */
   resolveFill?: ((poly: FoxZonePoly) => string | undefined) | undefined;
+  /** Polygons recoloured into the aspect colour (shared aspect accent); empty / undefined → none */
+  aspectAccentIds?: ReadonlyArray<string> | undefined;
+  /** Aspect colour; null / undefined → accent polygons keep their own colours */
+  aspectColor?: string | null | undefined;
 }

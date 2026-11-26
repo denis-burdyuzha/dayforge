@@ -10,6 +10,7 @@ import { characterQueryKey } from "@/entities/character/model/useCharacter";
 import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanRepository";
 import type { ApplyDayPlanResult, TimedEntry } from "@/entities/daily-plan/model/aiDayPlan";
 import type { DailyPlan, NewQuestInput, Quest } from "@/entities/daily-plan/model/dailyPlanTypes";
+import { getLocalDateString, parseLocalDate } from "@/shared/lib/localDate";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
 import { LevelUp } from "@/shared/ui/LevelUp/ui/LevelUp";
@@ -49,7 +50,7 @@ function useMicroToasts() {
 // ---------------------------------------------------------------------------
 
 function formatDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString("ru-RU", {
+  return parseLocalDate(isoDate).toLocaleDateString("ru-RU", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -544,7 +545,7 @@ export function DailyPlanPage() {
     );
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateString();
   const pendingCount = plan?.quests.filter((q) => q.status === "pending").length ?? 0;
   const completedCount = plan?.quests.filter((q) => q.status === "completed").length ?? 0;
   const quests = plan?.quests ?? [];

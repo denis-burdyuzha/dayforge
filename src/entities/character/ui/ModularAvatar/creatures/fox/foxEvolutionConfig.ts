@@ -6,6 +6,7 @@ import { FoxL2BaseAsset } from "../../assets/FoxL2BaseAsset";
 import { FoxL3BaseAsset } from "../../assets/FoxL3BaseAsset";
 import { FoxL4BaseAsset } from "../../assets/FoxL4BaseAsset";
 import { FoxL5BaseAsset } from "../../assets/FoxL5BaseAsset";
+import { getFoxAspectAccentIds } from "./foxAspectAccent";
 import type { FoxTierIndex } from "./foxZones";
 
 export interface FoxTierConfigItem {
@@ -18,11 +19,14 @@ export interface FoxTierConfigItem {
   viewBox: string;
   polygonCount: number;
   name: string;
+  /** polygons recoloured into the aspect colour: eyes + tail tips (shared aspect accent) */
+  aspectAccentIds: readonly string[];
 }
 
 export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = {
   1: {
     tierIndex: 1,
+    aspectAccentIds: getFoxAspectAccentIds(1),
     component: FoxL1BaseAsset,
     scale: 0.4541,
     tx: -3.98,
@@ -33,6 +37,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   3: {
     tierIndex: 2,
+    aspectAccentIds: getFoxAspectAccentIds(2),
     component: FoxL2BaseAsset,
     scale: 0.228,
     tx: 5.74,
@@ -43,6 +48,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   10: {
     tierIndex: 3,
+    aspectAccentIds: getFoxAspectAccentIds(3),
     component: FoxL3BaseAsset,
     scale: 0.4038,
     tx: 12.77,
@@ -53,6 +59,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   35: {
     tierIndex: 4,
+    aspectAccentIds: getFoxAspectAccentIds(4),
     component: FoxL4BaseAsset,
     scale: 0.3531,
     tx: 21.96,
@@ -63,6 +70,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   50: {
     tierIndex: 5,
+    aspectAccentIds: getFoxAspectAccentIds(5),
     component: FoxL5BaseAsset,
     scale: 0.1755,
     tx: 19.96,

@@ -360,8 +360,8 @@ export type Database = {
           latency_ms: number | null;
           model: string;
           parsed_items: Json | null;
-          raw_output: Json | null;
           plan_date: string;
+          raw_output: Json | null;
           status: string;
           usage: Json | null;
           user_id: string;
@@ -375,8 +375,8 @@ export type Database = {
           latency_ms?: number | null;
           model: string;
           parsed_items?: Json | null;
-          raw_output?: Json | null;
           plan_date: string;
+          raw_output?: Json | null;
           status: string;
           usage?: Json | null;
           user_id: string;
@@ -390,8 +390,8 @@ export type Database = {
           latency_ms?: number | null;
           model?: string;
           parsed_items?: Json | null;
-          raw_output?: Json | null;
           plan_date?: string;
+          raw_output?: Json | null;
           status?: string;
           usage?: Json | null;
           user_id?: string;

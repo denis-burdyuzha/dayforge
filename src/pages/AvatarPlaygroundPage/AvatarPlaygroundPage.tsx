@@ -631,52 +631,8 @@ export function AvatarPlaygroundPage() {
                 {avatarParams.evolution.classArchetype})
               </li>
               <li>
-                <strong>Body Scale & Bulk:</strong> scale {avatarParams.body.scale.toFixed(2)}, bulk{" "}
-                {avatarParams.body.bulk.toFixed(2)}
-              </li>
-              <li>
-                <strong>Archetype ({avatarParams.body.archetypeId}):</strong> headScale:{" "}
-                {avatarParams.body.headScale.toFixed(2)}, torso:{" "}
-                {computeAvatarParams(character, attributes, skills, null).body.archetypeId}
-              </li>
-              <li>
-                <strong>Limb Joint Angles:</strong> armL (
-                {avatarParams.posture.limbAngles.armLeftUpper.toFixed(0)}° /{" "}
-                {avatarParams.posture.limbAngles.armLeftBend.toFixed(0)}°), legL (
-                {avatarParams.posture.limbAngles.legLeftUpper.toFixed(0)}° /{" "}
-                {avatarParams.posture.limbAngles.legLeftBend.toFixed(0)}°)
-              </li>
-              <li>
-                <strong>Posture:</strong> {avatarParams.posture.variant} (confidence:{" "}
-                {avatarParams.posture.confidence.toFixed(2)}, tilt:{" "}
-                {avatarParams.posture.tiltAngle.toFixed(1)}°, ears:{" "}
-                {avatarParams.posture.earAlertness.toFixed(2)})
-              </li>
-              <li>
-                <strong>Face:</strong> {avatarParams.face.expression} (focus:{" "}
-                {avatarParams.face.focusLevel.toFixed(2)}, eyebrow: {avatarParams.face.eyebrowAngle}
-                °, ring: {avatarParams.face.hasFocusRing ? "Yes" : "No"})
-              </li>
-              <li>
-                <strong>Endurance:</strong> chest {avatarParams.endurance.chestDepth.toFixed(2)},
-                hide {avatarParams.endurance.hideThickness.toFixed(2)}
-              </li>
-              <li>
-                <strong>Social Crest:</strong> {avatarParams.social.crestSize.toFixed(2)}
-              </li>
-              <li>
-                <strong>Creativity:</strong> asymmetry{" "}
-                {avatarParams.creativity.asymmetryIntensity.toFixed(2)}, seed{" "}
-                {avatarParams.creativity.asymmetrySeed.toFixed(3)}
-              </li>
-              <li>
-                <strong>Markings:</strong> {avatarParams.markings.patternType} (complexity:{" "}
-                {avatarParams.markings.complexity.toFixed(2)})
-              </li>
-              <li>
-                <strong>Skill Imprints ({avatarParams.skillImprints.length}):</strong>{" "}
-                {avatarParams.skillImprints.map((e) => `${e.skillName} [${e.type}]`).join(", ") ||
-                  "None"}
+                <strong>Level:</strong> {avatarParams.evolution.level ?? 1} · seed key{" "}
+                {avatarParams.identity.seedKey}
               </li>
             </ul>
           </div>

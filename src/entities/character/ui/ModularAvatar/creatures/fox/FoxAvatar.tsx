@@ -105,14 +105,11 @@ export const FoxAvatar: React.FC<FoxAvatarProps> = ({
           <>
             <CreatureShadow params={params} />
 
-            {glow.auraOpacity > 0 && glow.auraRadius > 0 && (
-              <CreatureAura
-                params={params}
-                overrideOpacity={glow.auraOpacity}
-                overrideRadius={glow.auraRadius}
-                gradientId={auraGradientId}
-              />
-            )}
+            <CreatureAura
+              opacity={glow.auraOpacity}
+              radius={glow.auraRadius}
+              gradientId={auraGradientId}
+            />
 
             {glow.rimStrokeWidth > 0 && glow.rimOpacity > 0 && (
               <g

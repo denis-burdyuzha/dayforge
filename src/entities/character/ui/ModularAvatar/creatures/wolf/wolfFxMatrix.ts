@@ -1,30 +1,23 @@
 /**
  * WOLF_FX_MATRIX — tier FX of the wolf (Warrior). Same values per tier as FOX_FX_MATRIX (rim glow, particles,
- * aura, colour grading); aspect / neutral colours are the shared ones (model/aspect.ts).
+ * aura, colour grading); aspect / neutral colours are the shared ones (model/aspect.ts). The bear, lion and
+ * deer use the same values (their matrices spread this one).
  */
-import type { ParticleConfig, TierFxConfig } from "../../tierFx";
+import type { TierFxMatrix } from "../../tierFx";
 
-const DEFAULT_PARTICLES: ParticleConfig = {
-  count: 0,
-  radius: 80,
-  jitter: 0.85,
-  targetShape: "none",
-  decayRate: 0.0,
-};
-
-export const WOLF_FX_MATRIX: Record<number, TierFxConfig> = {
-  // L1: свернувшийся волчонок
+export const WOLF_FX_MATRIX: TierFxMatrix = {
+  // L1: свернувшийся детёныш
   1: {
     rimGlowOpacity: 0.0,
     rimStrokeWidth: 0,
     particleCount: 0,
-    particles: { ...DEFAULT_PARTICLES, count: 0 },
+    particles: { count: 0, radius: 80, jitter: 0.85, targetShape: "none", decayRate: 0.0 },
     auraOpacity: 0.0,
     auraRadius: 0,
     filterStyle: "none",
   },
 
-  // Силуэт 2: молодой волк (L3 — базовый, L5 — пробуждённый)
+  // Силуэт 2: молодой зверь (L3 — базовый, L5 — пробуждённый)
   3: {
     rimGlowOpacity: 0.2,
     rimStrokeWidth: 1.2,
@@ -44,7 +37,7 @@ export const WOLF_FX_MATRIX: Record<number, TierFxConfig> = {
     filterStyle: "contrast(1.08) brightness(1.05)",
   },
 
-  // Силуэт 3: охотник (L10 — матёрый, L20 — заряженная сигнатурная форма)
+  // Силуэт 3: взрослый (L10 — матёрый, L20 — заряженная сигнатурная форма)
   10: {
     rimGlowOpacity: 0.35,
     rimStrokeWidth: 1.6,
@@ -64,7 +57,7 @@ export const WOLF_FX_MATRIX: Record<number, TierFxConfig> = {
     filterStyle: "contrast(1.12) brightness(1.08)",
   },
 
-  // Силуэты 4 и 5: двуногий волк-воин / мифический
+  // Силуэты 4 и 5: вознесённый / мифический
   35: {
     rimGlowOpacity: 0.75,
     rimStrokeWidth: 2.6,
@@ -83,35 +76,4 @@ export const WOLF_FX_MATRIX: Record<number, TierFxConfig> = {
     auraRadius: 90,
     filterStyle: "contrast(1.15) brightness(1.10)",
   },
-};
-
-// Extract named configs for type-safe access (avoids Record[number] = undefined issue)
-const WOLF_FX_L1 = WOLF_FX_MATRIX[1];
-const WOLF_FX_L3 = WOLF_FX_MATRIX[3];
-const WOLF_FX_L5 = WOLF_FX_MATRIX[5];
-const WOLF_FX_L10 = WOLF_FX_MATRIX[10];
-const WOLF_FX_L20 = WOLF_FX_MATRIX[20];
-const WOLF_FX_L35 = WOLF_FX_MATRIX[35];
-const WOLF_FX_L50 = WOLF_FX_MATRIX[50];
-
-if (
-  !WOLF_FX_L1 ||
-  !WOLF_FX_L3 ||
-  !WOLF_FX_L5 ||
-  !WOLF_FX_L10 ||
-  !WOLF_FX_L20 ||
-  !WOLF_FX_L35 ||
-  !WOLF_FX_L50
-) {
-  throw new Error("WOLF_FX_MATRIX: missing required tier entries");
-}
-
-export const getWolfFxConfig = (level: number): TierFxConfig => {
-  if (level >= 50) return WOLF_FX_L50;
-  if (level >= 35) return WOLF_FX_L35;
-  if (level >= 20) return WOLF_FX_L20;
-  if (level >= 10) return WOLF_FX_L10;
-  if (level >= 5) return WOLF_FX_L5;
-  if (level >= 3) return WOLF_FX_L3;
-  return WOLF_FX_L1;
 };

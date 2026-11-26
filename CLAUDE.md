@@ -36,20 +36,24 @@ supabase/migrations/    схема, сиды, RLS, RPC (complete_onboarding, com
 supabase/functions/     parse-day-report, parse-day-plan (Deno); _shared/ai/ — общий AI-модуль (провайдер, кэш промпта,
                         повтор, правила навыков); _shared/skillIcons.json (общий с клиентом)
 supabase/tests/         SQL-тесты на PGlite (vitest)
-src/assets/images/baseForm/<class>/   SVG-ассеты аватара по тирам (foxL1..L5.svg, wolfL1.svg)
+src/assets/images/baseForm/<class>/   SVG-ассеты аватара по тирам (fox/wolf/bear/lion/deer L1..L5)
+scripts/buildCreatureAssets.mjs      npm run build:assets: SVG → данные волка/медведя/льва/оленя (+ aspectAccent)
 scripts/annotateFoxZones.mjs          запекает id групп из SVG в FoxL{N}AssetData.ts (поле zone)
 ```
 
 Аватар (самое важное): `src/entities/character/ui/ModularAvatar/`
 
-- `ModularAvatar.tsx` — диспетчер по классу: `explorer` → `creatures/fox/FoxAvatar.tsx`, `warrior` →
-  `creatures/wolf/WolfAvatar.tsx`; creator/strategist/wanderer — СТАРЫЙ органический рендер `Creature*.tsx`.
+- `ModularAvatar.tsx` — диспетчер: `explorer` → `creatures/fox/FoxAvatar.tsx`; остальные классы →
+  `creatures/creatureRegistry.ts` (волк, медведь, лев, олень) → общий `creatures/AssetCreatureAvatar.tsx`.
+  Новый зверь — `docs/ai-context/adding-creature.md`. Органический рендер удалён (26.11.2026).
+- `shared/aspectAccent.ts` — подкраска полигонов `aspectAccentIds` в цвет аспекта (OKLCH, светотень сохраняется);
+  в SVG — группа `<g id="aspectAccent">`.
 - Атрибуты сейчас: `model/aspect.ts` (аспект) + `ui/AttributeRuneRing/` (круг рун). Тело эффектов не несёт.
 - `attributeFx/` — ОТЛОЖЕНО (только при `legacyAttributeFx` в Playground): универсальные эффекты 7 атрибутов (anatomy, fxContext, fxPalette, fxSeed,
   bodyTone, compute<Attr>.ts + <Attr>Fx.tsx, AttributeFxLayer, тест инвариантов). Ничего лисьего внутри.
 - `creatures/fox/` — FoxAvatar, foxAnatomy (адаптер лисы для attributeFx), foxZones, foxZoneRegistry, foxFxMatrix,
   foxEvolutionConfig.
-- `assets/` — FoxL{1..5}AssetData.ts (полигоны + zone) и FoxZonedAsset (общий рендер полигонов).
+- `assets/` — FoxL{1..5}AssetData.ts (полигоны + zone) и FoxZonedAsset (общий рендер полигонов всех зверей).
 - `creatureFxPalette.ts` — палитры классов (тело, цвет кристаллов Discipline).
 
 ## Команды
@@ -63,6 +67,7 @@ npm run format         # prettier --write
 npm test               # vitest run — фронт + SQL (PGlite) + Edge Function (на Windows из X:\DayForge, не x:)
 npm run eval:day-report # eval разбора отчёта на реальной модели (ключ ANTHROPIC_API_KEY в .env.local; без ключа — пропуск)
 npm run eval:day-plan   # то же для плана дня (+ usage / cache read / стоимость)
+npm run build:assets   # SVG зверей → TS-данные (scripts/creatures.config.mjs); повторный запуск без изменений — нулевой diff
 npx supabase db push   # применить миграции к привязанному проекту
 npx supabase gen types typescript --linked > src/shared/api/supabase/database.types.ts  # (скрипта в package.json нет)
 ```
@@ -83,8 +88,8 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
 Атрибуты: аспект (цвет rim/ауры + сигил за аватаром) + вращающийся круг рун (22.11.2026, в `main`); эффекты на
 теле v2 отложены (тег `avatar-attribute-fx-v2`, чекбокс в Playground). Миграцию онбординга (20261122150000) нужно
 применить `npx supabase db push`. Открытые вопросы — `progress.md`.
-Волк (Warrior) готов (22.11.2026, `scripts/buildWolfAssets.mjs`). Дальше: Ворон, Сова, Олень по образцу волка →
-история прогресса.
+Все 5 классов на SVG-пайплайне (26.11.2026): лиса, волк, медведь, лев, олень. Владелец доразмечает `aspectAccent`
+у волка и добавит оленя L4–L5 → `npm run build:assets`.
 AI-разбор отчёта и AI-план дня (26.11.2026). Следующий шаг — экспорт плана во внешние календари через фид-подписку.
 Supabase CLI: Docker не запускать; удалённый проект — `npx supabase db push` (linked), типы — `gen types --linked`.
 
@@ -119,6 +124,7 @@ Supabase CLI: Docker не запускать; удалённый проект �
 - [decisions.md](docs/ai-context/decisions.md) — журнал решений и отвергнутых подходов (с причинами).
 - [ai-day-report.md](docs/ai-context/ai-day-report.md) — AI-разбор отчёта: схема, лимиты, коды ошибок, eval, деплой.
 - [ai-day-plan.md](docs/ai-context/ai-day-plan.md) — AI-план дня: схема, лимиты, коды, таймлайн, eval.
+- [adding-creature.md](docs/ai-context/adding-creature.md) — добавить/обновить зверя: SVG, разметка aspectAccent, сборка.
 - [progress.md](docs/ai-context/progress.md) — что сделано, текущий статус, открытые задачи, расхождения, результат сборки.
 
 ## Инструкция себе

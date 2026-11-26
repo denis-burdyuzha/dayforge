@@ -1,4 +1,4 @@
-# Система аватара (по коду, состояние на 21.11.2026: аспект + круг рун)
+# Система аватара (по коду, состояние на 26.11.2026: все классы на SVG-пайплайне, aspectAccent)
 
 Ключевая часть продукта: единственное, что даёт ощущение игры. Направление — тотемное **low-poly животное**
 на класс (фасетная геометрия, у каждой зоны своя заливка). Решения — в `decisions.md`.
@@ -8,13 +8,14 @@
 ## 1. Поток данных
 
 ```
-Character + attributes + character_skills + daily_state
+Character + attributes
   → computeAvatarParams()            entities/character/model/avatarEngine.ts
   → AvatarParams                     entities/character/model/avatarTypes.ts
   → <ModularAvatar params size/>     ui/ModularAvatar/ModularAvatar.tsx
-      ├─ classArchetype === "explorer" → creatures/fox/FoxAvatar.tsx   (asset-driven пайплайн)
-      ├─ classArchetype === "warrior"  → creatures/wolf/WolfAvatar.tsx (тот же пайплайн, без зон; 22.11.2026)
-      └─ creator / strategist / wanderer → Creature*.tsx                (СТАРЫЙ органический Безье-рендер, отвергнут)
+      ├─ explorer → creatures/fox/FoxAvatar.tsx              (лиса: ассеты с зонами + архив attributeFx)
+      └─ warrior / creator / strategist / wanderer
+           → creatures/creatureRegistry.ts → creatures/AssetCreatureAvatar.tsx
+             (волк / медведь / лев / олень: один общий компонент на SVG-ассетах, 26.11.2026)
 ```
 
 Используется на HomePage (`size="lg"`, внутри `AttributeRuneRing` size 340) и в `/dev/avatar` (AvatarPlaygroundPage:
@@ -30,18 +31,20 @@ Playground: URL-параметры `class`, `level`, атрибуты (`strength
 
 ### AvatarIdentity и seed (`model/avatarIdentity.ts`)
 
-`seedKey` = id персонажа (для эффектов атрибутов) + сиды 0..1 из FNV-1a(id): bodySeed, faceSeed, eyeSeed,
-earSeed, tailSeed, patternSeed, colorSeed, proportionsSeed. Эффекты атрибутов берут PRNG
+`seedKey` = id персонажа (прочие сиды органического рендера удалены 26.11.2026). Эффекты атрибутов берут PRNG
 `fxRng(seedKey, "<атрибут>")` (FNV-1a → mulberry32) — один персонаж всегда одинаков, разные — разные.
 
 ### avatarEngine.ts — общий слой параметров
 
 - `getEvolutionTier(level)` → 7 тиров: **1:** L1–2, **2:** L3–4, **3:** L5–9, **4:** L10–19, **5:** L20–34, **6:** L35–49, **7:** L50+.
 - `attributeValues` — сырые значения 7 атрибутов (1..18): вход круга рун и (в архиве) эффектов v2.
-- `aspect` — доминирующий атрибут `{ attribute, color, intensity } | null` (`model/aspect.ts`, см. §3); тот же
-  движок ставит `palette.glow` = цвет аспекта и эффект `aura` (для старого рендера Creature\*).
-- Прочие поля (`body`, `posture`, `face`, `markings`, `endurance`, `social`, `creativity`, `effects`, `skillImprints`,
-  `currentMood`) — наследие органического рендера Creature\*; Лиса их не читает.
+- `aspect` — доминирующий атрибут `{ attribute, color, intensity } | null` (`model/aspect.ts`, см. §3).
+- `AvatarParams` = `{ identity, evolution, attributeValues, aspect, silhouetteOnly? }`. Поля органического рендера
+  (`palette`, `body`, `posture`, `face`, `markings`, `skillImprints`, `effects`, `currentMood`, `endurance`, `social`,
+  `creativity`) удалены 26.11.2026 вместе с рендером. Тень (`CreatureShadow`) считает размер от тира и Силы сама
+  (тот же результат, что прежний `body.scale × (1 + bulk·0.2)`), аура (`CreatureAura`) получает явные opacity/radius.
+- `computeAvatarParams(character, attributes, _skills?, _todayState?)` — два последних аргумента больше не нужны,
+  оставлены для совместимости вызовов.
 
 ## 2. Лиса (Explorer) — asset-driven пайплайн
 
@@ -84,12 +87,30 @@ AI-референс → векторизация (полигоны `segment_X_po
    `applyAspectGlow(тир, params.aspect)`: цвет аспекта × intensity, без аспекта — мягкий белый `#e2e8f0` × 0.5;
    в обоих случаях минимум `ASPECT_GLOW_FLOOR` (rim 0.85 / 3.5px, аура 0.55 / r 95). Тировые искры (кол-во,
    радиус, центр — **только от тира**): тёплые оранжевые + нейтральные белые (бывшие cyan — cyan отдан Intelligence).
-2. Ассет тела — группа `avatar-body-group` (CSS-дыхание). Заливка = `defaultFill` ассета; единственное исключение —
-   **кончики хвостов**: при наличии аспекта тёплые полигоны зон хвоста (`tail`, `tailTip`, `tailArray`; тест
-   `isWarmAccent` с мягким порогом: тон 300°–70°, насыщенность > 0.12, светлота > 0.12) перекрашиваются в тон и
-   насыщенность аспекта с сохранением светлоты (`tintToColor`). Без аспекта — как в ассете. Таких полигонов:
-   L1 0, L2 15, L3 0, L4 38, L5 339.
+2. Ассет тела — группа `avatar-body-group` (CSS-дыхание). Заливка = `defaultFill` ассета; исключение —
+   **aspectAccent** (общая механика, §2a): `tierConfig.aspectAccentIds` = зона `eyes` + тёплые кончики хвостов
+   (зоны `tail`/`tailTip`/`tailArray`, `isWarmAccent` с мягким порогом 0.12/0.12 — те же полигоны, что красила
+   прежняя лисья перекраска; `creatures/fox/foxAspectAccent.ts`). Всего (глаза + кончики): L1 25 (кончиков 0 —
+   хвост L1 тёмно-синий), L2 61, L3 19 (кончиков 0), L4 47, L5 348.
 3. Только при `legacyAttributeFx` (Playground): `AttributeFxLayer` back / front / overlay + контраст торса Strength.
+
+### 2a. aspectAccent — подкраска под аспект (общая для всех зверей, `ui/ModularAvatar/shared/aspectAccent.ts`)
+
+- У каждого ассета тира есть `aspectAccentIds`; общий рендер полигонов (`assets/FoxZonedAsset.tsx`) перекрашивает
+  их, если есть аспект. Без аспекта — исходные цвета; пустой список — ничего. Приоритет заливки: силуэт/rim-проход →
+  aspectAccent → `resolveFill` (архивный тон торса) → цвет ассета.
+- Алгоритм (OKLCH, относительно всей группы): светлота L каждого полигона сохраняется как есть (светлые грани светлые,
+  тёмные тёмные, разброс внутри группы тот же); тон = тон аспекта + половина отклонения тона полигона от среднего
+  тона группы (не больше ±25°; у почти серых и «чужих» по тону > 90° — без сдвига); хрома = хрома аспекта ×
+  относительная хрома полигона (0.45–1.5). Вне sRGB — уменьшение хромы с сохранением L и тона.
+- Почему не прежний `tintToColor` (HSL): HSL-светлота неперцептивна — синий и оранжевый с одинаковой HSL L сильно
+  различаются по яркости, а одинаковые тон/насыщенность у всех граней сливали грани, отличавшиеся только оттенком.
+- Кэш: результат на (массив полигонов, список id, цвет) — ~0.2 мс вместо ~4 мс на L5 лисы.
+- Разметка в SVG: группа `<g id="aspectAccent">` (любая вложенность) — см. `adding-creature.md`. У лисы SVG без
+  разметки: список выводится из зон данных.
+- Особенность: светлые исходные грани (жёлтые кристаллы медведя, L≈0.85) в тёмных по тону аспектах (Сила, красный)
+  становятся светлыми оттенками (розоватые), т.к. светлота сохраняется; «Дисциплина» (жёлтый) мало отличается от
+  исходных жёлтых/золотых элементов.
 
 ### FX-матрица тиров (`creatures/fox/foxFxMatrix.ts`, ключ — минимальный уровень)
 
@@ -121,7 +142,7 @@ AI-референс → векторизация (полигоны `segment_X_po
   `NEUTRAL_GLOW_COLOR` `#e2e8f0` с фиксированной интенсивностью 0.5 (все классы; старый рендер — через
   `palette.glow`). У ранних тиров rim/аура = 0 (лиса L1), поэтому всегда действует минимум `ASPECT_GLOW_FLOOR` —
   у «Новичка» на L1 теперь тоже есть белый контур. Cyan `#38bdf8` в свечении означает только Intelligence.
-- Заливка тела и фасеты не меняются (кроме кончиков хвостов, §2). Playground показывает «Аспект: … · интенсивность …» под аватаром.
+- Заливка тела и фасеты не меняются (кроме полигонов aspectAccent, §2a). Playground показывает «Аспект: … · интенсивность …» под аватаром.
 
 **Круг рун** (`entities/character/ui/AttributeRuneRing/`):
 
@@ -277,44 +298,44 @@ DisciplineFx измеряет реальный прямоугольник SVG и
 - Конфликт цветов: accent (янтарь) у Strength, Creativity и Discipline + оранжевые кончики хвостов L5 + тёплые тировые
   искры — всё одного цвета, на L5 сливается.
 
-## 4. Остальные классы
+## 4. Классы и звери
 
-| Класс      | Животное | Статус                                                                                     |
-| ---------- | -------- | ------------------------------------------------------------------------------------------ |
-| Класс      | Животное | Статус                                                                                     |
-| ---------- | -------- | ------------------------------------------------------------------------------------------ |
-| Explorer   | Лиса     | 5 ассетов-тиров с зонами, аспект + сигил + кольцо рун, кончики хвостов в цвете аспекта     |
-| Warrior    | Волк     | 5 ассетов-тиров БЕЗ зон, аспект + сигил + кольцо рун; без перекраски хвоста (22.11.2026)   |
-| Creator    | Ворон    | нет; старый органический рендер                                                            |
-| Strategist | Сова     | нет; старый органический рендер                                                            |
-| Wanderer   | Олень    | нет; старый органический рендер                                                            |
+| Класс      | Животное | Рендер                                   | aspectAccent                             |
+| ---------- | -------- | ---------------------------------------- | ---------------------------------------- |
+| Explorer   | Лиса     | `FoxAvatar` (ассеты с зонами)            | глаза + кончики хвостов (из зон)         |
+| Warrior    | Волк     | `AssetCreatureAvatar`                    | **нет разметки в SVG** (0 на всех тирах) |
+| Creator    | Медведь  | `AssetCreatureAvatar`                    | L1 27, L2 63, L3 93, L4 464, L5 178      |
+| Strategist | Лев      | `AssetCreatureAvatar`                    | L1 82, L2 87, L3 161, L4 257, L5 366     |
+| Wanderer   | Олень    | `AssetCreatureAvatar`; L4, L5 = ассет L3 | L1 56, L2 48, L3 52 (L4/L5 — как L3)     |
 
-**Волк (`creatures/wolf/`, 22.11.2026).** Старый процедурный TSX-волк удалён.
+**SVG-пайплайн (26.11.2026).** Исходники `src/assets/images/baseForm/<класс>/<зверь>L{1..5}.svg` (не изменяются).
+`npm run build:assets` (`scripts/buildCreatureAssets.mjs`, классы — `scripts/creatures.config.mjs`) →
+`creatures/<зверь>/assets/<Зверь>L{N}AssetData.ts` (полигоны в порядке документа, исходные цвета, `*_FIT`,
+`*_ASPECT_ACCENT_IDS` из `<g id="aspectAccent">`, `*_SOURCE`) + `<зверь>Assets.ts` (5 тиров массивом). Нет файла
+тира — реэкспорт ближайшего нижнего + предупреждение; полигоны без id — стабильные id; `transform` — ошибка; вывод
+форматируется prettier (повторный запуск без изменений SVG — нулевой diff).
 
-- Исходники `src/assets/images/baseForm/warrior/wolfL{1..5}.svg` (только треугольники, у каждого своя заливка; не
-  изменяются). `node scripts/buildWolfAssets.mjs` → `creatures/wolf/assets/WolfL{N}AssetData.ts`: полигоны в
-  порядке документа (z-order), исходные цвета (как у лисы — без палитры класса), `WOLF_L{N}_FIT`.
-- Полигонов: L1 672, L2 721, L3 838, L4 560, L5 1375.
-- Вписывание — правило лисы (выведено из её конфигов): bbox полигонов вписан в 168 × 208 (поля 16px канваса
-  200 × 240) с центром (100, 120). Поэтому волк занимает ту же «рамку», что лиса того же тира; но L2/L3 у волка
-  шире и площе (профиль 1.75 : 1 против 1.23 у лисы) — упирается в ширину и выглядит ниже лисы.
-- `WolfL{N}BaseAsset` рендерит общий `FoxZonedAsset` (зону заменяет константа `"unassigned"`, `wolfAssetTypes.ts`).
-- Тиры по уровню — те же пороги, что у лисы: 1–2, 3–9, 10–34, 35–49, 50+ (`wolfEvolutionConfig.ts`).
-- `WOLF_FX_MATRIX` — копия значений `FOX_FX_MATRIX`. Общие модули: `tierFx.ts` (типы), `tierSparks.ts` (шаблоны
-  тировых искр; центр орбиты у волка — (100, 120), у лисы — центроид торса из анатомии).
-- Нет: зон/анатомии, перекраски кончиков хвоста, эффектов атрибутов v2 (переключатель в Playground для warrior
-  ничего не делает). Тест: `creatures/wolf/wolfAvatar.test.tsx`.
+- Полигонов: волк 672/721/838/560/1375; медведь 416/556/574/1206/1079; лев 700/712/1115/1300/1408; олень 524/310/368.
+- Вписывание — правило лисы: bbox вписан в 168 × 208 канваса 200 × 240, центр (100, 120). Доля канваса (bbox тела)
+  на уровнях 1/3/10/35/50: лиса 44/57/48/64/64 %, волк 40/32/34/44/61 %, медведь 39/58/59/72/63 %,
+  лев 35/48/54/51/61 %, олень 49/68/71/71/71 %. Волк L2/L3 и лев L4 заметно мельче (широкий / узкий профиль).
+- Тир ассета по уровню — общий `assetTierForLevel` (`tierFx.ts`): 1–2, 3–9, 10–34, 35–49, 50+; FX — `pickTierFx`
+  по порогам 1, 3, 5, 10, 20, 35, 50. `BEAR/LION/DEER_FX_MATRIX` = значения `WOLF_FX_MATRIX`.
+- Реестр `creatures/creatureRegistry.ts`: classId → `{ animal, label, tierAssets, fxMatrix, tierNames }`;
+  `ModularAvatar`: explorer → лиса, остальное → реестр. Добавление зверя — `adding-creature.md`.
+- Нет: зон/анатомии и эффектов атрибутов v2 (переключатель в Playground действует только на лису).
+- Тесты: `creatures/assetCreatureAvatar.test.tsx` (все классы и уровни, подкраска ровно aspectAccent, фолбэк оленя),
+  `scripts/creatureAssets.test.ts` (парсер, вложенность, id, фолбэк).
+- Playground под аспектом: «aspectAccent: N полигонов · ассет <файл> (L<тир>)» (`avatarAssetInfo.ts`).
 
-Новый класс по образцу волка: SVG на тир → скрипт-генератор данных (+ fit по правилу лисы) → `creatures/<animal>/`
-(BaseAsset’ы, evolutionConfig, FxMatrix, Avatar) → ветка в `ModularAvatar`. Зоны нужны только для эффектов на теле.
+## 5. Удалено 26.11.2026 (старый органический / процедурный рендер)
 
-## 5. Мёртвый код (не импортируется нигде)
-
-- Процедурная Лиса: `FoxBody, FoxHead, FoxEars, FoxLimbs, FoxTail, FoxFace, FoxRimLight, FoxCollarCrest, FoxBackCrest` (+ `avatarShading.ts`).
-- `registry/AvatarNodeRegistry.ts` и `controller/AvatarController.ts`.
-- `assets/foxL1ViewBoxCoords.ts`, `foxL{2..5}_old.svg`.
-- `entities/character/ui/CharacterSigil.tsx` + `model/avatarParams.ts`.
-- Скилл-импринты у Лисы не рендерятся.
+`Creature{Body,CollarCrest,EarsHorns,Face,Head,Limbs,Markings,SkillImprints,Tail,WingsCrest}.tsx`, процедурная лиса
+`Fox{BackCrest,Body,CollarCrest,Ears,Face,Head,Limbs,RimLight,Tail}.tsx`, `avatarShading.ts`, `controller/`,
+`registry/`, `assets/foxL1ViewBoxCoords.ts`, `WolfAvatar` + `wolfEvolutionConfig` + `WolfL{N}BaseAsset` +
+`wolfAssetTypes`, `scripts/buildWolfAssets.mjs`, `tintToColor`, поля органического рендера в `AvatarParams` /
+`avatarEngine` (палитры классов, архетипы тела, позы, мимика, метки, импринты навыков, углы конечностей).
+Остаётся мёртвым, но к рендеру существ не относится: `entities/character/ui/CharacterSigil.tsx` + `model/avatarParams.ts`.
 
 ## 6. Известные баги и техдолг
 
@@ -323,7 +344,8 @@ DisciplineFx измеряет реальный прямоугольник SVG и
 2. Нет вспышки/частиц при смене ассета-тира.
 3. ~~Цвет без аспекта = цвет Intelligence~~ — исправлено 21.11.2026: без аспекта мягкий белый.
 4. `getFoxTierConfig` с `tier` без `level` маппит тиры иначе, чем по уровню (мёртвая ветка).
-5. Ассеты лежат TS-массивами в бандле (~1.15 МБ JS) — нужен code-split / lazy-load по тиру.
+5. Ассеты лежат TS-массивами в бандле — после медведя/льва/оленя JS 2.35 МБ (gzip 562 кБ, было 1.15 МБ); нужен
+   code-split / lazy-load по классу и тиру.
 6. Плейграунд `/dev/avatar` открыт в проде без защиты.
 7. Тировые искры — FX тира: тёплые оранжевые + нейтральные белые (cyan убран 21.11.2026).
 8. (архив v2, только при `legacyFx`) тировые искры на кристаллах Discipline и среди звёзд Social; Strength-фолбэк
@@ -336,3 +358,5 @@ DisciplineFx измеряет реальный прямоугольник SVG и
 13. ~~Сигил = цветной шестиугольник~~ — 22.11.2026 только глиф, без вращения; форма угадывается у всех 7.
 14. ~~360px: кольцо не помещается~~ — 22.11.2026 композиция масштабируется целиком. Цена: на 320px в hero всё
     в 0.68 (руны ~19px, аватар ~136px) — мелко, но различимо.
+15. Волк: SVG без группы `aspectAccent` (все 5 тиров) — подкраски нет, пока владелец не разметит.
+16. Олень: нет `deerL4.svg`, `deerL5.svg` — тиры L4/L5 показывают ассет L3 (только FX тира другие).

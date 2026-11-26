@@ -4,92 +4,31 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { ATTRIBUTE_CODES, type AttributeCode } from "./schema.ts";
+import { countRequestsSince, loadSkillsAndQuests } from "../_shared/ai/supabaseContext.ts";
 import type { AttemptLog, DayReportStore, ParseContext } from "./types.ts";
-
-const isAttributeCode = (code: unknown): code is AttributeCode =>
-  typeof code === "string" && (ATTRIBUTE_CODES as readonly string[]).includes(code);
 
 export function createSupabaseStore(
   userClient: SupabaseClient,
   serviceClient: SupabaseClient,
 ): DayReportStore {
   return {
-    async countParseRequestsSince(userId, sinceIso) {
-      const { count, error } = await serviceClient
-        .from("day_report_parses")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("attempt", 1)
-        .gte("created_at", sinceIso);
-      if (error) throw new Error(`count parses: ${error.message}`);
-      return count ?? 0;
-    },
+    countParseRequestsSince: (userId, sinceIso) =>
+      countRequestsSince(serviceClient, "day_report_parses", userId, sinceIso),
 
     async loadContext(userId, reportDate): Promise<ParseContext> {
-      const { data: character, error: charError } = await userClient
-        .from("characters")
-        .select("id")
-        .eq("profile_id", userId)
-        .maybeSingle();
-      if (charError) throw new Error(`character: ${charError.message}`);
-      if (!character) return { skills: [], plannedQuests: [] };
-
-      const [defsRes, skillsRes, planRes] = await Promise.all([
-        userClient.from("attribute_definitions").select("id, code"),
-        userClient
-          .from("character_skills")
-          .select("id, name, aliases, primary_attribute_id, secondary_attribute_id")
-          .eq("character_id", character.id),
-        userClient
-          .from("daily_plans")
-          .select("id")
-          .eq("character_id", character.id)
-          .eq("date", reportDate)
-          .maybeSingle(),
-      ]);
-      if (defsRes.error) throw new Error(`attributes: ${defsRes.error.message}`);
-      if (skillsRes.error) throw new Error(`skills: ${skillsRes.error.message}`);
-      if (planRes.error) throw new Error(`plan: ${planRes.error.message}`);
-
-      const codeById = new Map<string, unknown>(
-        (defsRes.data ?? []).map((d: { id: string; code: unknown }) => [d.id, d.code]),
-      );
-      const skills = (skillsRes.data ?? []).map(
-        (s: {
-          id: string;
-          name: string;
-          aliases: string[] | null;
-          primary_attribute_id: string | null;
-          secondary_attribute_id: string | null;
-        }) => ({
-          id: s.id,
-          name: s.name,
-          aliases: s.aliases ?? [],
-          attributes: [s.primary_attribute_id, s.secondary_attribute_id]
-            .map((id) => (id ? codeById.get(id) : undefined))
-            .filter(isAttributeCode),
-        }),
-      );
-
-      let plannedQuests: ParseContext["plannedQuests"] = [];
-      if (planRes.data) {
-        const { data: quests, error: questsError } = await userClient
-          .from("quests")
-          .select("id, title, skill_name")
-          .eq("daily_plan_id", planRes.data.id)
-          .eq("status", "pending")
-          .order("position");
-        if (questsError) throw new Error(`quests: ${questsError.message}`);
-        plannedQuests = (quests ?? []).map(
-          (q: { id: string; title: string; skill_name: string | null }) => ({
+      const { skills, quests } = await loadSkillsAndQuests(userClient, userId, reportDate);
+      return {
+        skills,
+        // only pending quests can be linked to an event of the day
+        plannedQuests: quests
+          .filter((q) => q.status === "pending")
+          .map((q) => ({
             id: q.id,
             title: q.title,
             skill: q.skill_name,
-          }),
-        );
-      }
-      return { skills, plannedQuests };
+            startTime: q.start_time ? q.start_time.slice(0, 5) : null,
+          })),
+      };
     },
 
     async logAttempt(log: AttemptLog) {
@@ -106,6 +45,7 @@ export function createSupabaseStore(
           status: log.status,
           error_message: log.errorMessage,
           latency_ms: log.latencyMs,
+          usage: log.usage,
         })
         .select("id")
         .single();

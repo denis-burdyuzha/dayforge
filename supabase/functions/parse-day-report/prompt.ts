@@ -1,5 +1,11 @@
-/** System prompt and user message of the day-report parser (Russian). */
-import { ATTRIBUTE_CODES, ATTRIBUTE_LABELS_RU, SKILL_ICONS, SUBMIT_TOOL_NAME } from "./schema.ts";
+/**
+ * Prompt of the day-report parser (Russian). Order for prompt caching: the static part (rules, skill rules,
+ * catalogs) is the system prompt — cached with the tool schema; the user turn carries the user's skills,
+ * planned quests and the text.
+ */
+import { CATALOG_BLOCK, retryBlock, SKILL_RULES } from "../_shared/ai/prompts.ts";
+import type { ToolRequest } from "../_shared/ai/provider.ts";
+import { SUBMIT_TOOL_INPUT_SCHEMA, SUBMIT_TOOL_NAME } from "./schema.ts";
 import type { ProviderInput } from "./types.ts";
 
 export const SYSTEM_PROMPT = `Ты разбираешь вечерний отчёт пользователя приложения Dayforge — RPG, где реальные дела развивают персонажа.
@@ -19,24 +25,15 @@ export const SYSTEM_PROMPT = `Ты разбираешь вечерний отч�
 - Если указано больше 8 часов на одно занятие или время явно преувеличено («кодил 20 часов»), поставь не больше 8, confidence "low" и объясни в note.
 
 Связь с планом (plannedQuestId)
-- В контексте есть незавершённые квесты, запланированные на эту дату. Если текст явно говорит именно об этом квесте, укажи его id в plannedQuestId.
+- В контексте есть незавершённые квесты, запланированные на эту дату (у некоторых есть время начала startTime). Если текст явно говорит именно об этом квесте, укажи его id в plannedQuestId.
 - Если связь не очевидна — null. Не связывай одно событие с несколькими квестами и один квест с несколькими событиями.
 
-Навык (skill)
-- Сначала сопоставь событие с существующими навыками пользователя по смыслу, синонимам, сокращениям и псевдонимам (aliases): «англ», «english», «урок с репетитором по английскому» → навык «Английский». Тогда skill = { kind: "existing", skillId }.
-- Новый навык (kind: "new") предлагай, только если ни один существующий не подходит. name — короткое существительное в именительном падеже с большой буквы: «Английский», «Бег», «Программирование», «Гитара».
-- attributes нового навыка: один атрибут, если навык однозначен; два — только если занятие явно развивает оба. Коды атрибутов — только из списка ниже.
-- icon нового навыка — ключ из списка иконок ниже; если ничего не подходит — "misc".
-- Если занятие не развивает никакого навыка (отдых, сериалы, сон без цели, дорога), skill = { kind: "none" }.
+${SKILL_RULES}
 
 Уверенность
 - confidence "high" — всё ясно из текста. "low" — ты что-то оценил или додумал; тогда note обязательно объясняет, что именно. Для "high" note = null.
 
-Атрибуты (код — название):
-${ATTRIBUTE_CODES.map((c) => `- ${c} — ${ATTRIBUTE_LABELS_RU[c]}`).join("\n")}
-
-Иконки навыков (ключ — что означает):
-${SKILL_ICONS.map((i) => `- ${i.key} — ${i.label}`).join("\n")}`;
+${CATALOG_BLOCK}`;
 
 /** User turn: the date, the user's skills and planned quests (as JSON), then the report text */
 export function buildUserMessage(input: ProviderInput): string {
@@ -52,9 +49,10 @@ export function buildUserMessage(input: ProviderInput): string {
       id: q.id,
       title: q.title,
       skill: q.skill,
+      ...(q.startTime ? { startTime: q.startTime } : {}),
     })),
   };
-  const parts = [
+  return [
     "Контекст пользователя (JSON):",
     JSON.stringify(context, null, 2),
     "",
@@ -62,16 +60,19 @@ export function buildUserMessage(input: ProviderInput): string {
     "<report>",
     input.text,
     "</report>",
-  ];
-  if (input.validationError) {
-    parts.push(
-      "",
-      "Твой предыдущий ответ не прошёл проверку. Ошибка:",
-      input.validationError,
-      "Предыдущий ответ:",
-      JSON.stringify(input.previousOutput ?? null),
-      `Вызови ${SUBMIT_TOOL_NAME} ещё раз, исправив ошибку.`,
-    );
-  }
-  return parts.join("\n");
+    ...retryBlock(input.retry, SUBMIT_TOOL_NAME),
+  ].join("\n");
+}
+
+export function buildDayReportRequest(input: ProviderInput): ToolRequest {
+  return {
+    system: SYSTEM_PROMPT,
+    tool: {
+      name: SUBMIT_TOOL_NAME,
+      description:
+        "Сохранить события дня, извлечённые из отчёта пользователя. Вызывается ровно один раз.",
+      inputSchema: SUBMIT_TOOL_INPUT_SCHEMA as unknown as Record<string, unknown>,
+    },
+    user: buildUserMessage(input),
+  };
 }

@@ -5,37 +5,20 @@
  */
 import { z } from "zod";
 
-import skillIcons from "../_shared/skillIcons.json" with { type: "json" };
+import { nullableString, SKILL_REF_JSON_SCHEMA, SkillRefSchema } from "../_shared/ai/schemas.ts";
+import type { SkillRef } from "../_shared/ai/skills.ts";
 
-export const ATTRIBUTE_CODES = [
-  "strength",
-  "endurance",
-  "intelligence",
-  "focus",
-  "discipline",
-  "social",
-  "creativity",
-] as const;
-export type AttributeCode = (typeof ATTRIBUTE_CODES)[number];
-
-export const ATTRIBUTE_LABELS_RU: Record<AttributeCode, string> = {
-  strength: "Сила",
-  endurance: "Выносливость",
-  intelligence: "Интеллект",
-  focus: "Фокус",
-  discipline: "Дисциплина",
-  social: "Социальность",
-  creativity: "Креативность",
-};
-
-export interface SkillIconDef {
-  key: string;
-  label: string;
-  lucide: string;
-}
-export const SKILL_ICONS: readonly SkillIconDef[] = skillIcons;
-export const SKILL_ICON_KEYS: readonly string[] = SKILL_ICONS.map((i) => i.key);
-export const FALLBACK_ICON = "misc";
+// catalogs live in the shared AI module; re-exported for the fixtures, tests and eval
+export {
+  ATTRIBUTE_CODES,
+  ATTRIBUTE_LABELS_RU,
+  type AttributeCode,
+  FALLBACK_ICON,
+  SKILL_ICON_KEYS,
+  SKILL_ICONS,
+  type SkillIconDef,
+} from "../_shared/ai/catalog.ts";
+export type { SkillRef } from "../_shared/ai/skills.ts";
 
 export const LIMITS = {
   textMin: 3,
@@ -57,17 +40,6 @@ export type ParseRequest = z.infer<typeof ParseRequestSchema>;
 
 // ── Model output (validated) ──
 
-const SkillRefSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("existing"), skillId: z.string().min(1) }),
-  z.object({
-    kind: z.literal("new"),
-    name: z.string().trim().min(1).max(60),
-    attributes: z.array(z.enum(ATTRIBUTE_CODES)).min(1),
-    icon: z.string(),
-  }),
-  z.object({ kind: z.literal("none") }),
-]);
-
 export const ModelEventSchema = z.object({
   description: z.string().trim().min(1),
   hours: z.number().finite(),
@@ -84,11 +56,6 @@ export type ModelOutput = z.infer<typeof ModelOutputSchema>;
 
 // ── Response event (after sanitizeEvents) ──
 
-export type SkillRef =
-  | { kind: "existing"; skillId: string }
-  | { kind: "new"; name: string; attributes: AttributeCode[]; icon: string }
-  | { kind: "none" };
-
 export interface DayEvent {
   description: string;
   hours: number;
@@ -99,8 +66,6 @@ export interface DayEvent {
 }
 
 // ── JSON Schema for the tool (strict: true) ──
-
-const nullableString = { anyOf: [{ type: "string" }, { type: "null" }] };
 
 export const SUBMIT_TOOL_NAME = "submit_day_events";
 
@@ -122,43 +87,7 @@ export const SUBMIT_TOOL_INPUT_SCHEMA = {
             ...nullableString,
             description: "id запланированного квеста, если событие — он; иначе null",
           },
-          skill: {
-            anyOf: [
-              {
-                type: "object",
-                additionalProperties: false,
-                required: ["kind", "skillId"],
-                properties: {
-                  kind: { type: "string", enum: ["existing"] },
-                  skillId: { type: "string", description: "id существующего навыка из контекста" },
-                },
-              },
-              {
-                type: "object",
-                additionalProperties: false,
-                required: ["kind", "name", "attributes", "icon"],
-                properties: {
-                  kind: { type: "string", enum: ["new"] },
-                  name: {
-                    type: "string",
-                    description: "Существительное, им. падеж, с большой буквы",
-                  },
-                  attributes: {
-                    type: "array",
-                    items: { type: "string", enum: [...ATTRIBUTE_CODES] },
-                    description: "1 атрибут; 2 — только если навык явно развивает оба",
-                  },
-                  icon: { type: "string", enum: [...SKILL_ICON_KEYS] },
-                },
-              },
-              {
-                type: "object",
-                additionalProperties: false,
-                required: ["kind"],
-                properties: { kind: { type: "string", enum: ["none"] } },
-              },
-            ],
-          },
+          skill: SKILL_REF_JSON_SCHEMA,
           confidence: { type: "string", enum: ["high", "low"] },
           note: { ...nullableString, description: "Для low: что неясно; иначе null" },
         },

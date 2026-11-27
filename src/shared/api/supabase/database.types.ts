@@ -163,6 +163,62 @@ export type Database = {
           },
         ];
       };
+      character_snapshots: {
+        Row: {
+          aspect: string | null;
+          attributes: Json;
+          character_id: string;
+          created_at: string;
+          id: string;
+          level: number;
+          relics: Json;
+          skills_count: number;
+          snapshot_date: string;
+          tier: number;
+          top_skills: Json;
+          total_xp: number;
+          updated_at: string;
+        };
+        Insert: {
+          aspect?: string | null;
+          attributes: Json;
+          character_id: string;
+          created_at?: string;
+          id?: string;
+          level: number;
+          relics?: Json;
+          skills_count?: number;
+          snapshot_date: string;
+          tier: number;
+          top_skills?: Json;
+          total_xp: number;
+          updated_at?: string;
+        };
+        Update: {
+          aspect?: string | null;
+          attributes?: Json;
+          character_id?: string;
+          created_at?: string;
+          id?: string;
+          level?: number;
+          relics?: Json;
+          skills_count?: number;
+          snapshot_date?: string;
+          tier?: number;
+          top_skills?: Json;
+          total_xp?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "character_snapshots_character_id_fkey";
+            columns: ["character_id"];
+            isOneToOne: false;
+            referencedRelation: "characters";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       characters: {
         Row: {
           class: string | null;
@@ -764,6 +820,13 @@ export type Database = {
           skill_name: string;
         }[];
       };
+      _skill_level_for_xp: { Args: { p_xp: number }; Returns: number };
+      _snapshot_aspect: { Args: { p_attributes: Json }; Returns: string };
+      _snapshot_tier: { Args: { p_level: number }; Returns: number };
+      _upsert_character_snapshot: {
+        Args: { p_character_id: string; p_date: string };
+        Returns: undefined;
+      };
       apply_day_plan: {
         Args: { p_items: Json; p_parse_id: string; p_plan_date: string };
         Returns: Json;
@@ -780,6 +843,7 @@ export type Database = {
         Args: {
           p_character_name: string;
           p_class_id: string;
+          p_local_date?: string;
           p_starting_directions: string[];
           p_username: string;
         };

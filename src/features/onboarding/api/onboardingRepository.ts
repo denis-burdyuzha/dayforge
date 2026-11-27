@@ -1,4 +1,5 @@
 import { supabase } from "@/shared/api/supabase/client";
+import { getLocalDateString } from "@/shared/lib/localDate";
 
 import type { OnboardingFormValues } from "../model/schema";
 
@@ -13,6 +14,8 @@ export const onboardingRepository = {
       p_character_name: data.characterName,
       p_class_id: data.classId,
       p_starting_directions: data.startingDirections,
+      // the first character snapshot is dated with the user's local day
+      p_local_date: getLocalDateString(),
     });
 
     if (error) {

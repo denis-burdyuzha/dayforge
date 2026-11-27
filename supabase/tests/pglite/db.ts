@@ -41,3 +41,11 @@ export async function asUser<T>(db: PGlite, userId: string, sql: string, params:
     return tx.query<T>(sql, params);
   });
 }
+
+/** Run `sql` as the anonymous API role (no user: auth.uid() = null) inside one transaction */
+export async function asAnon<T>(db: PGlite, sql: string, params: unknown[] = []) {
+  return db.transaction(async (tx) => {
+    await tx.exec("set local role anon;");
+    return tx.query<T>(sql, params);
+  });
+}

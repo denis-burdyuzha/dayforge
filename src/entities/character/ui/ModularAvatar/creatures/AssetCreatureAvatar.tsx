@@ -8,7 +8,8 @@ import { FoxZonedAsset } from "../assets/FoxZonedAsset";
 import { CreatureAura } from "../CreatureAura";
 import { CreatureShadow } from "../CreatureShadow";
 import styles from "../ModularAvatar.module.scss";
-import type { CreatureTierAsset } from "../shared/creatureAssetTypes";
+import type { CreatureTierData, CreatureTierMeta } from "../shared/creatureAssetTypes";
+import { type TierRequest, useLoadedTier } from "../shared/tierAssetStore";
 import { assetTierForLevel, pickTierFx } from "../tierFx";
 import { tierSparkPositions } from "../tierSparks";
 import { type CreatureDefinition, creatureTierAsset } from "./creatureRegistry";
@@ -24,21 +25,31 @@ const BODY_CENTER = [100, 120] as const;
 
 // The shared polygon renderer expects a zone; SVG-pipeline creatures have none. Built once per tier asset
 // (a stable array also keeps the aspect accent cache hot).
-const zonedCache = new WeakMap<CreatureTierAsset, FoxZonePoly[]>();
-function zonedPolygons(asset: CreatureTierAsset): FoxZonePoly[] {
-  let polys = zonedCache.get(asset);
+const zonedCache = new WeakMap<CreatureTierData, FoxZonePoly[]>();
+function zonedPolygons(data: CreatureTierData): FoxZonePoly[] {
+  let polys = zonedCache.get(data);
   if (!polys) {
-    polys = asset.polygons.map((p) => ({ ...p, zone: "unassigned" }));
-    zonedCache.set(asset, polys);
+    polys = data.polygons.map((p) => ({ ...p, zone: "unassigned" }));
+    zonedCache.set(data, polys);
   }
   return polys;
 }
+
+const request = (meta: CreatureTierMeta): TierRequest<CreatureTierData, CreatureTierMeta> => ({
+  key: meta.dataKey,
+  meta,
+  load: meta.load,
+});
 
 /**
  * AssetCreatureAvatar — every creature built from SVG assets (wolf, bear, lion, deer): one asset per tier
  * (own colours, fitted by the shared rule) + the creature's tier FX matrix (rim light, aura, particles,
  * colour grading). Rim light and aura take the aspect colour (neutral soft white without an aspect); the
  * aspectAccent polygons of the asset are recoloured into it with light and shade kept.
+ *
+ * The polygon data of a (creature, tier) is a lazy chunk: while it loads the canvas is empty (same size, with
+ * the ground shadow); on a tier change the previous tier stays until the new one is loaded, then the new one
+ * fades in; the next tier is preloaded in the background.
  */
 export const AssetCreatureAvatar: React.FC<AssetCreatureAvatarProps> = ({
   creature,
@@ -47,12 +58,16 @@ export const AssetCreatureAvatar: React.FC<AssetCreatureAvatarProps> = ({
 }) => {
   const level = params.evolution.level ?? 1;
   const tier = assetTierForLevel(level);
-  const asset = creatureTierAsset(creature, tier);
-  const polygons = zonedPolygons(asset);
+  const requested = creatureTierAsset(creature, tier);
+  const next = tier < 5 ? creatureTierAsset(creature, (tier + 1) as 2 | 3 | 4 | 5) : null;
+  const shown = useLoadedTier(request(requested), next ? request(next) : null);
+  // the tier on screen: the requested one, or the previous one until the requested one is loaded
+  const asset = shown?.meta ?? requested;
+  const polygons = shown ? zonedPolygons(shown.data) : null;
   const fx = pickTierFx(creature.fxMatrix, level);
   const { scale, tx, ty } = asset.fit;
   const bodyTransform = `translate(${tx}, ${ty}) scale(${scale})`;
-  const rootId = `${creature.animal}-l${tier}-asset-root`;
+  const rootId = `${creature.animal}-l${asset.tierIndex}-asset-root`;
 
   const glow = applyAspectGlow(
     {
@@ -77,10 +92,11 @@ export const AssetCreatureAvatar: React.FC<AssetCreatureAvatarProps> = ({
         xmlns="http://www.w3.org/2000/svg"
         className={styles.svgRoot}
         aria-label={`Dayforge ${creature.label} Avatar (${creature.tierNames[tier - 1]} Lvl ${level})`}
+        aria-busy={shown ? undefined : true}
         role="img"
         overflow="visible"
         data-creature={creature.animal}
-        data-asset-tier={tier}
+        data-asset-tier={asset.tierIndex}
         data-asset-source={asset.source}
       >
         <defs>
@@ -96,9 +112,9 @@ export const AssetCreatureAvatar: React.FC<AssetCreatureAvatarProps> = ({
         </defs>
 
         {/* ── Background: shadow, aura, rim light, tier particles ── */}
-        {!isSilhouette && (
+        {!isSilhouette && <CreatureShadow params={params} />}
+        {!isSilhouette && polygons && (
           <>
-            <CreatureShadow params={params} />
             <CreatureAura
               opacity={glow.auraOpacity}
               radius={glow.auraRadius}
@@ -142,24 +158,28 @@ export const AssetCreatureAvatar: React.FC<AssetCreatureAvatarProps> = ({
           </>
         )}
 
-        {/* ── Body group (breathing animation) ── */}
-        <g
-          className={isSilhouette ? "" : "avatar-body-group"}
-          style={isSilhouette ? { fill: "#020617", stroke: "none" } : undefined}
-        >
+        {/* ── Body group (breathing animation); keyed by tier: a new tier fades in once it is loaded ── */}
+        {polygons && shown && (
           <g
-            transform={bodyTransform}
-            style={fx.filterStyle !== "none" ? { filter: fx.filterStyle } : undefined}
+            key={shown.meta.dataKey + shown.meta.tierIndex}
+            className={isSilhouette ? "" : "avatar-body-group"}
+            style={isSilhouette ? { fill: "#020617", stroke: "none" } : undefined}
           >
-            <FoxZonedAsset
-              polygons={polygons}
-              rootId={rootId}
-              isSilhouette={isSilhouette}
-              aspectAccentIds={asset.aspectAccentIds}
-              aspectColor={aspectColor}
-            />
+            <g
+              className="creature-tier-in"
+              transform={bodyTransform}
+              style={fx.filterStyle !== "none" ? { filter: fx.filterStyle } : undefined}
+            >
+              <FoxZonedAsset
+                polygons={polygons}
+                rootId={rootId}
+                isSilhouette={isSilhouette}
+                aspectAccentIds={shown.data.aspectAccentIds}
+                aspectColor={aspectColor}
+              />
+            </g>
           </g>
-        </g>
+        )}
       </svg>
     </div>
   );

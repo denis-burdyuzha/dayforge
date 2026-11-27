@@ -1,15 +1,16 @@
 /**
  * Aspect accent — recolours the marked polygons of a creature asset (`aspectAccentIds`) into the aspect
- * colour while keeping the light and shade of every facet. Shared by all creatures.
+ * colour. Shared by all creatures.
  *
  * Done in OKLCH (perceptual), relative to the whole accent group:
- * - lightness L of every polygon is kept as is → light facets stay light, dark stay dark, the spread
- *   inside the group is unchanged (HSL lightness is not perceptual: an orange and a blue with the same
- *   HSL L differ a lot in brightness, so copying HSL L flattened gradients for cold aspect colours);
- * - hue = aspect hue + half of the polygon's hue offset from the group's mean hue (±25° max), and
- *   chroma = aspect chroma scaled by the polygon's chroma relative to the group → facets that differed
- *   by hue / saturation only (a warm gradient, crystal faces of similar brightness) stay distinct;
- * - colours outside sRGB are brought in by lowering chroma (hue and lightness kept).
+ * - lightness: the group's lightness range is linearly remapped into [0.45, 0.82] (darkest facet → 0.45,
+ *   lightest → 0.82, order kept) — a very light source (pale crystals) would otherwise cap the chroma of
+ *   any aspect colour and give pastel tints. A group with a spread below 0.08 is centred on 0.65 and
+ *   spread to ±0.08 by its original order;
+ * - chroma: every facet gets at least 85 % of the maximum chroma sRGB can show at its (new) lightness and
+ *   hue; facets that were more / less saturated than the group mean get up to 100 % / 85 %;
+ * - hue = aspect hue + half of the facet's offset from the group's mean hue (±25° max), so facets that
+ *   differed by hue (crystal faces, a warm gradient) stay distinct.
  * No aspect → original colours; an empty id list → nothing to do.
  */
 
@@ -22,8 +23,18 @@ type Oklch = { L: number; C: number; h: number };
 
 const HUE_FOLLOW = 0.5;
 const HUE_SPREAD_MAX = 25;
-const CHROMA_MIN_FACTOR = 0.45;
-const CHROMA_MAX_FACTOR = 1.5;
+/** target lightness range of an accent group */
+const L_MIN = 0.45;
+const L_MAX = 0.82;
+/** below this spread the group is centred on L_CENTER and spread to ±L_FLAT_SPREAD */
+const L_MIN_SPREAD = 0.08;
+const L_CENTER = 0.65;
+const L_FLAT_SPREAD = 0.08;
+/** facet chroma = this share … 100 % of the sRGB maximum, by its chroma relative to the group */
+const CHROMA_FLOOR = 0.85;
+/** relative-chroma range (facet / group mean) mapped onto CHROMA_FLOOR … 1 */
+const REL_C_LOW = 0.45;
+const REL_C_HIGH = 1.5;
 
 // ── colour conversions (sRGB ↔ OKLab, Björn Ottosson) ──
 
@@ -89,6 +100,18 @@ export function oklchToHex(color: Oklch): string {
   return `#${((1 << 24) | (to255(rgb[0]) << 16) | (to255(rgb[1]) << 8) | to255(rgb[2])).toString(16).slice(1)}`;
 }
 
+/** Largest chroma sRGB can show at this lightness and hue */
+export function maxChroma(L: number, h: number): number {
+  let lo = 0;
+  let hi = 0.4;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (inGamut(oklchToLinearRgb({ L, C: mid, h }))) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
 export function hexToOklch(hex: string): Oklch | null {
   const rgb = parseHex(hex);
   return rgb ? rgbToOklch(rgb) : null;
@@ -124,15 +147,26 @@ export function recolorAccentGroup(
   }
   const meanH = ((Math.atan2(hy, hx) * 180) / Math.PI + 360) % 360;
 
+  // group lightness range → [L_MIN, L_MAX] (or a flat group → centred, ±L_FLAT_SPREAD)
+  const lMin = Math.min(...src.map((x) => x.c.L));
+  const lMax = Math.max(...src.map((x) => x.c.L));
+  const spread = lMax - lMin;
+  const [outLo, outHi] =
+    spread < L_MIN_SPREAD ? [L_CENTER - L_FLAT_SPREAD, L_CENTER + L_FLAT_SPREAD] : [L_MIN, L_MAX];
+  const remapL = (L: number) =>
+    spread < 1e-6 ? L_CENTER : outLo + ((L - lMin) / spread) * (outHi - outLo);
+
   for (const { id, c } of src) {
+    const L = remapL(c.L);
     const relC = meanC > 1e-4 ? c.C / meanC : 1;
-    const C = target.C * Math.min(CHROMA_MAX_FACTOR, Math.max(CHROMA_MIN_FACTOR, relC));
+    const t = Math.min(1, Math.max(0, (relC - REL_C_LOW) / (REL_C_HIGH - REL_C_LOW)));
     // hue offsets of nearly grey facets are noise, and a facet of another hue family (e.g. blue eyes
     // in a group of orange tail tips) is not a gradient step — both follow the aspect hue exactly
     const delta = hueDelta(c.h, meanH);
     const offset = c.C > 0.02 && Math.abs(delta) <= 90 ? delta * HUE_FOLLOW : 0;
     const h = (target.h + Math.max(-HUE_SPREAD_MAX, Math.min(HUE_SPREAD_MAX, offset)) + 360) % 360;
-    result.set(id, oklchToHex({ L: c.L, C, h }));
+    const C = maxChroma(L, h) * (CHROMA_FLOOR + (1 - CHROMA_FLOOR) * t);
+    result.set(id, oklchToHex({ L, C, h }));
   }
   return result;
 }

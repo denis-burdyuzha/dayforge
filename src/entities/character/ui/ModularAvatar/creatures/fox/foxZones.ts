@@ -6,30 +6,54 @@
  */
 
 import type { FoxZonePoly } from "../../assets/foxAssetTypes";
-import { FOX_L1_POLYGONS } from "../../assets/FoxL1AssetData";
-import { FOX_L2_POLYGONS } from "../../assets/FoxL2AssetData";
-import { FOX_L3_POLYGONS } from "../../assets/FoxL3AssetData";
-import { FOX_L4_POLYGONS } from "../../assets/FoxL4AssetData";
-import { FOX_L5_POLYGONS } from "../../assets/FoxL5AssetData";
+import { loadTier, peekTier } from "../../shared/tierAssetStore";
+import { computeFoxAspectAccentIds } from "./foxAspectAccent";
 export type { FoxZonePoly };
 
 export type FoxTierIndex = 1 | 2 | 3 | 4 | 5;
 
-const TIER_POLYS: Record<FoxTierIndex, ReadonlyArray<FoxZonePoly>> = {
-  1: FOX_L1_POLYGONS,
-  2: FOX_L2_POLYGONS,
-  3: FOX_L3_POLYGONS,
-  4: FOX_L4_POLYGONS,
-  5: FOX_L5_POLYGONS,
+/** The data of one fox tier — a lazy chunk (the five FoxL{N}AssetData files are NOT in the main bundle) */
+export interface FoxTierData {
+  polygons: ReadonlyArray<FoxZonePoly>;
+  /** eyes + warm tail tips (shared aspect accent) */
+  aspectAccentIds: readonly string[];
+}
+
+const toData = (polygons: ReadonlyArray<FoxZonePoly>): FoxTierData => ({
+  polygons,
+  aspectAccentIds: computeFoxAspectAccentIds(polygons),
+});
+
+/** Dynamic importers, one chunk per tier */
+export const FOX_TIER_LOADERS: Record<FoxTierIndex, () => Promise<FoxTierData>> = {
+  1: () => import("../../assets/FoxL1AssetData").then((m) => toData(m.FOX_L1_POLYGONS)),
+  2: () => import("../../assets/FoxL2AssetData").then((m) => toData(m.FOX_L2_POLYGONS)),
+  3: () => import("../../assets/FoxL3AssetData").then((m) => toData(m.FOX_L3_POLYGONS)),
+  4: () => import("../../assets/FoxL4AssetData").then((m) => toData(m.FOX_L4_POLYGONS)),
+  5: () => import("../../assets/FoxL5AssetData").then((m) => toData(m.FOX_L5_POLYGONS)),
 };
 
+export const foxTierKey = (tier: FoxTierIndex) => `fox:L${tier}`;
+
+export function loadFoxTier(tier: FoxTierIndex): Promise<FoxTierData> {
+  return loadTier(foxTierKey(tier), FOX_TIER_LOADERS[tier]);
+}
+
+/** Load all five tiers (tests, the playground) */
+export function preloadAllFoxTiers(): Promise<FoxTierData[]> {
+  return Promise.all(([1, 2, 3, 4, 5] as const).map(loadFoxTier));
+}
+
+/** The polygons of a LOADED tier (throws if it has not been loaded yet) */
 export function getTierPolys(tier: FoxTierIndex): ReadonlyArray<FoxZonePoly> {
-  return TIER_POLYS[tier];
+  const data = peekTier<FoxTierData>(foxTierKey(tier));
+  if (!data) throw new Error(`fox tier ${tier} is not loaded`);
+  return data.polygons;
 }
 
 export function getZonePolys(tier: FoxTierIndex, zone: string): FoxZonePoly[] {
   if (zone === "unassigned") return [];
-  return TIER_POLYS[tier].filter((p) => p.zone === zone);
+  return getTierPolys(tier).filter((p) => p.zone === zone);
 }
 
 export function hasZone(tier: FoxTierIndex, zone: string): boolean {

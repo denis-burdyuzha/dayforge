@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { ATTRIBUTE_COLORS, NEUTRAL_GLOW_COLOR } from "../../../model/aspect";
 import { computeAvatarParams } from "../../../model/avatarEngine";
@@ -7,11 +7,14 @@ import type { CharacterAttribute } from "../../../model/characterTypes";
 import type { CharacterClassId } from "../../../model/types";
 import { ModularAvatar } from "../ModularAvatar";
 import { createAspectAccentResolver } from "../shared/aspectAccent";
+import type { CreatureTierData, CreatureTierMeta } from "../shared/creatureAssetTypes";
+import { peekTier } from "../shared/tierAssetStore";
 import { assetTierForLevel } from "../tierFx";
 import {
   type AssetCreatureClassId,
   CREATURE_REGISTRY,
   creatureTierAsset,
+  preloadAllCreatureAssets,
 } from "./creatureRegistry";
 
 const attrs = (v: Partial<Record<string, number>>): CharacterAttribute[] =>
@@ -50,6 +53,13 @@ const bodyFills = (html: string, rootId: string) => {
   );
 };
 
+/** the loaded polygon data of a tier (the data chunks are lazy; beforeAll loads all of them) */
+const data = (meta: CreatureTierMeta) => peekTier<CreatureTierData>(meta.dataKey)!;
+
+beforeAll(async () => {
+  await preloadAllCreatureAssets();
+});
+
 const CLASSES = Object.keys(CREATURE_REGISTRY) as AssetCreatureClassId[];
 const LEVELS = [1, 3, 5, 10, 20, 35, 50];
 
@@ -65,7 +75,7 @@ describe("AssetCreatureAvatar — every SVG-pipeline class", () => {
         expect(html).toContain(`data-asset-source="${asset.source}"`);
         const fills = bodyFills(html, `${creature.animal}-l${tier}-asset-root`);
         expect(fills.size, `${classId} L${level} polygons`).toBe(
-          new Set(asset.polygons.map((p) => p.id)).size,
+          new Set(data(asset).polygons.map((p) => p.id)).size,
         );
       }
     });
@@ -79,13 +89,15 @@ describe("AssetCreatureAvatar — every SVG-pipeline class", () => {
       const rootId = `bear-l${tier}-asset-root`;
       const plain = bodyFills(render("creator", level), rootId);
       const strong = bodyFills(render("creator", level, { strength: 15 }), rootId);
+      const { polygons, aspectAccentIds } = data(asset);
+      expect(aspectAccentIds.length).toBe(asset.aspectAccentCount);
       const expected = createAspectAccentResolver(
-        asset.polygons,
-        asset.aspectAccentIds,
+        polygons,
+        aspectAccentIds,
         ATTRIBUTE_COLORS.strength,
       )!;
-      const accent = new Set(asset.aspectAccentIds);
-      for (const p of asset.polygons) {
+      const accent = new Set(aspectAccentIds);
+      for (const p of polygons) {
         expect(plain.get(p.id)).toBe(p.defaultFill);
         expect(strong.get(p.id), p.id).toBe(accent.has(p.id) ? expected(p) : p.defaultFill);
       }
@@ -94,9 +106,9 @@ describe("AssetCreatureAvatar — every SVG-pipeline class", () => {
 
   it("the wolf (no aspectAccent markup yet) keeps its colours with an aspect; nothing breaks", () => {
     const asset = creatureTierAsset(CREATURE_REGISTRY.warrior, 3);
-    expect(asset.aspectAccentIds).toEqual([]);
+    expect(data(asset).aspectAccentIds).toEqual([]);
     const fills = bodyFills(render("warrior", 10, { strength: 15 }), "wolf-l3-asset-root");
-    for (const p of asset.polygons) expect(fills.get(p.id)).toBe(p.defaultFill);
+    for (const p of data(asset).polygons) expect(fills.get(p.id)).toBe(p.defaultFill);
   });
 
   it("deer L4 / L5 fall back to the L3 asset until the owner adds the SVGs", () => {

@@ -7,8 +7,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const TIERS = [1, 2, 3, 4, 5];
-/** Avatar canvas and the fox fit rule: bbox contained in 168 × 208 (16px margin), centred on (100, 120) */
-export const CANVAS = { w: 200, h: 240, margin: 16 };
+/**
+ * Avatar canvas and the fit rule shared by every creature (also the fox, see foxEvolutionConfig):
+ * scale = min(208 · 0.86 / bbox height, 168 / bbox width); the bbox is centred horizontally on x = 100 and
+ * its bottom stands on the common ground line y = 212 (where the ground shadow is drawn).
+ * So the height is 86 % of the 208 field unless the width (168) is the limit.
+ */
+export const CANVAS = { w: 200, h: 240, fieldW: 168, fieldH: 208, heightShare: 0.86, groundY: 212 };
 export const ACCENT_GROUP_ID = "aspectAccent";
 
 const attrOf = (attrs, name) => new RegExp(`(?:^|\\s)${name}="([^"]*)"`).exec(attrs)?.[1];
@@ -25,7 +30,9 @@ function fillOf(attrs) {
  * - every <polygon> in document order, with its fill (no palette remap);
  * - polygons anywhere inside an element with id="aspectAccent" (any nesting depth) → aspectAccentIds;
  * - a polygon without an id gets a stable generated id `<label>_p<index>` (index in document order);
- * - duplicate ids get a `_<n>` suffix; `transform` attributes are not supported (error).
+ * - duplicate ids get a `_<n>` suffix; `transform` attributes are not supported (error);
+ * - background leftovers (near-black / transparent polygons sticking out of the animal, see
+ *   findBackgroundLeftovers) are dropped; their count is returned in `filtered`.
  * @param {string} svg
  * @param {string} label file label for messages / generated ids, e.g. "bearL1"
  */
@@ -65,7 +72,13 @@ export function parseCreatureSvg(svg, label) {
         const n = seen.get(id) ?? 0;
         seen.set(id, n + 1);
         if (n > 0) id = `${id}_${n}`;
-        polygons.push({ id, points, defaultFill: fill.toLowerCase() });
+        const opacity = Math.min(
+          ...[attrOf(attrs, "opacity"), attrOf(attrs, "fill-opacity")]
+            .filter((v) => v !== undefined)
+            .map(Number),
+          1,
+        );
+        polygons.push({ id, points, defaultFill: fill.toLowerCase(), opacity });
         if (isAccent) aspectAccentIds.push(id);
       }
     }
@@ -77,11 +90,20 @@ export function parseCreatureSvg(svg, label) {
   } else if (aspectAccentIds.length === 0) {
     warnings.push(`${label}: <g id="${ACCENT_GROUP_ID}"> has no polygons`);
   }
-  return { viewBox, polygons, aspectAccentIds, warnings };
+  const drop = new Set(findBackgroundLeftovers(polygons));
+  const kept = polygons
+    .filter((p) => !drop.has(p.id))
+    .map(({ id, points, defaultFill }) => ({ id, points, defaultFill }));
+  return {
+    viewBox,
+    polygons: kept,
+    aspectAccentIds: aspectAccentIds.filter((id) => !drop.has(id)),
+    warnings,
+    filtered: drop.size,
+  };
 }
 
-/** Canvas fit by the shared rule (fox rule): contain the polygon bbox in 168 × 208, centre on (100, 120) */
-export function computeFit(polygons) {
+const bboxOf = (polygons) => {
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -94,14 +116,54 @@ export function computeFit(polygons) {
       x1 = Math.max(x1, x);
       y1 = Math.max(y1, y);
     }
-  const boxW = CANVAS.w - 2 * CANVAS.margin;
-  const boxH = CANVAS.h - 2 * CANVAS.margin;
-  const scale = Math.min(boxW / (x1 - x0), boxH / (y1 - y0));
+  return [x0, y0, x1, y1];
+};
+
+/** largest sRGB channel 0..1 of a #rrggbb fill (1 for anything that is not a hex colour) */
+export function maxChannel(fill) {
+  const m = /^#([0-9a-f]{6})$/i.exec(fill);
+  if (!m) return 1;
+  const n = parseInt(m[1], 16);
+  return Math.max((n >> 16) & 255, (n >> 8) & 255, n & 255) / 255;
+}
+
+export const NEAR_BLACK = 0.08;
+export const MIN_OPACITY = 0.1;
+
+/**
+ * Leftovers of the vectorisation that must not define the silhouette: near-black (largest channel < 8 %) or
+ * almost transparent (opacity < 0.1) polygons — but ONLY those whose removal shrinks the bbox, i.e. the
+ * background ones sticking out of the animal. Dark polygons inside the body (shadows, pupils, dark fur) stay:
+ * removing them would punch holes (a plain «relative luminance < 8 %» filter would delete 30–70 % of the
+ * dark bodies of the fox, wolf, bear and deer). Returns the ids to drop.
+ */
+export function findBackgroundLeftovers(polygons) {
+  const isDark = (p) => maxChannel(p.defaultFill) < NEAR_BLACK || (p.opacity ?? 1) < MIN_OPACITY;
+  const body = polygons.filter((p) => !isDark(p));
+  if (body.length === 0 || body.length === polygons.length) return [];
+  const [bx0, by0, bx1, by1] = bboxOf(body);
+  const eps = 1e-6;
+  return polygons
+    .filter((p) => {
+      if (!isDark(p)) return false;
+      const [x0, y0, x1, y1] = bboxOf([p]);
+      return x0 < bx0 - eps || y0 < by0 - eps || x1 > bx1 + eps || y1 > by1 + eps;
+    })
+    .map((p) => p.id);
+}
+
+/** Canvas fit by the shared rule (see CANVAS): scale from the bbox, centred on x = 100, standing on y = 212 */
+export function computeFit(polygons) {
+  const [x0, y0, x1, y1] = bboxOf(polygons);
+  const scale = Math.min(
+    (CANVAS.fieldH * CANVAS.heightShare) / (y1 - y0),
+    CANVAS.fieldW / (x1 - x0),
+  );
   const r = (v) => Math.round(v * 10000) / 10000;
   return {
     scale: r(scale),
     tx: r(CANVAS.w / 2 - ((x0 + x1) / 2) * scale),
-    ty: r(CANVAS.h / 2 - ((y0 + y1) / 2) * scale),
+    ty: r(CANVAS.groundY - y1 * scale),
     bbox: [x0, y0, x1, y1],
   };
 }
@@ -124,65 +186,79 @@ export function resolveTierFiles(sourceDir, filePrefix, exists) {
 
 const posix = (p) => p.split(path.sep).join("/");
 
-/** TS module of one tier with its own SVG */
+/** Data module of one tier with its own SVG — the heavy chunk, imported lazily by the index module */
 export function tierModule({ constPrefix, tier, sourceFile, parsed, fit }) {
   const P = `${constPrefix}_L${tier}`;
   return (
-    `/* Generated by scripts/buildCreatureAssets.mjs from ${posix(sourceFile)} — do not edit by hand. */\n` +
-    `import type { CreaturePolygonDef } from "../../../shared/creatureAssetTypes";\n\n` +
-    `export const ${P}_SOURCE = "${path.basename(sourceFile)}";\n\n` +
-    `/** Source viewBox ${parsed.viewBox}; polygon bbox ${fit.bbox.join(",")} */\n` +
-    `export const ${P}_FIT = { scale: ${fit.scale}, tx: ${fit.tx}, ty: ${fit.ty}, viewBox: "${parsed.viewBox}" } as const;\n\n` +
-    `/** polygons of <g id="aspectAccent"> (recoloured into the aspect colour) */\n` +
-    `export const ${P}_ASPECT_ACCENT_IDS: readonly string[] = ${JSON.stringify(parsed.aspectAccentIds)};\n\n` +
-    `export const ${P}_POLYGONS: CreaturePolygonDef[] = ${JSON.stringify(parsed.polygons, null, 2)};\n`
+    `/* Generated by scripts/buildCreatureAssets.mjs from ${posix(sourceFile)} — do not edit by hand. */
+` +
+    `import type { CreaturePolygonDef } from "../../../shared/creatureAssetTypes";
+
+` +
+    `/** Source viewBox ${parsed.viewBox}; polygon bbox ${fit.bbox.join(",")} */
+
+` +
+    `/** polygons of <g id="aspectAccent"> (recoloured into the aspect colour) */
+` +
+    `export const ${P}_ASPECT_ACCENT_IDS: readonly string[] = ${JSON.stringify(parsed.aspectAccentIds)};
+
+` +
+    `export const ${P}_POLYGONS: CreaturePolygonDef[] = ${JSON.stringify(parsed.polygons, null, 2)};
+`
   );
 }
 
-/** TS module of a tier without its own SVG: re-exports the data of the lower tier it falls back to */
-export function fallbackTierModule({
-  constPrefix,
-  filePrefixPascal,
-  tier,
-  fallbackFrom,
-  sourceFile,
-}) {
-  const P = `${constPrefix}_L${tier}`;
-  const F = `${constPrefix}_L${fallbackFrom}`;
-  return (
-    `/* Generated by scripts/buildCreatureAssets.mjs — no ${filePrefixPascal}L${tier} SVG yet: tier ${tier} uses\n` +
-    ` * ${posix(sourceFile)} (tier ${fallbackFrom}). Add the SVG and run \`npm run build:assets\`. Do not edit by hand. */\n` +
-    `export {\n` +
-    `  ${F}_ASPECT_ACCENT_IDS as ${P}_ASPECT_ACCENT_IDS,\n` +
-    `  ${F}_FIT as ${P}_FIT,\n` +
-    `  ${F}_POLYGONS as ${P}_POLYGONS,\n` +
-    `  ${F}_SOURCE as ${P}_SOURCE,\n` +
-    `} from "./${filePrefixPascal}L${fallbackFrom}AssetData";\n`
-  );
-}
+/** First line of a data module that only re-exported a lower tier (old format) — such files are removed */
+export const STALE_FALLBACK_MARKER = "Generated by scripts/buildCreatureAssets.mjs — no ";
 
-/** Index module: the 5 tier assets of the creature as one array */
-export function indexModule({ constPrefix, filePrefixPascal, resolved }) {
-  const imports = resolved
-    .map(
-      (r) =>
-        `import {\n  ${constPrefix}_L${r.tier}_ASPECT_ACCENT_IDS,\n  ${constPrefix}_L${r.tier}_FIT,\n` +
-        `  ${constPrefix}_L${r.tier}_POLYGONS,\n  ${constPrefix}_L${r.tier}_SOURCE,\n} from "./${filePrefixPascal}L${r.tier}AssetData";`,
-    )
-    .join("\n");
-  const entries = resolved
-    .map(
-      (r) =>
-        `  {\n    tierIndex: ${r.tier},\n    polygons: ${constPrefix}_L${r.tier}_POLYGONS,\n` +
-        `    fit: ${constPrefix}_L${r.tier}_FIT,\n    aspectAccentIds: ${constPrefix}_L${r.tier}_ASPECT_ACCENT_IDS,\n` +
-        `    source: ${constPrefix}_L${r.tier}_SOURCE,\n    fallbackFrom: ${r.fallbackFrom ?? "null"},\n  },`,
-    )
+/**
+ * Index module: the static metadata of the 5 tiers (fit, source, counts) + a loader per tier. The polygon data
+ * is NOT imported statically: each `load` is a dynamic import (its own chunk). A tier without its own SVG
+ * loads the data of the lower tier it falls back to (same cache key).
+ * @param {{ tier: number, usesTier: number, fallbackFrom: number | null, sourceFile: string, fit: object,
+ *           polygonCount: number, accentCount: number }[]} tiers
+ */
+export function indexModule({ constPrefix, animal, filePrefixPascal, tiers }) {
+  const entries = tiers
+    .map((t) => {
+      const mod = `${filePrefixPascal}L${t.usesTier}AssetData`;
+      const P = `${constPrefix}_L${t.usesTier}`;
+      return (
+        `  {
+    tierIndex: ${t.tier},
+` +
+        `    fit: { scale: ${t.fit.scale}, tx: ${t.fit.tx}, ty: ${t.fit.ty} },
+` +
+        `    source: "${path.basename(t.sourceFile)}",
+    fallbackFrom: ${t.fallbackFrom ?? "null"},
+` +
+        `    polygonCount: ${t.polygonCount},
+    aspectAccentCount: ${t.accentCount},
+` +
+        `    dataKey: "${animal}:L${t.usesTier}",
+` +
+        `    load: () =>
+      import("./${mod}").then((m) => ({
+        polygons: m.${P}_POLYGONS,
+` +
+        `        aspectAccentIds: m.${P}_ASPECT_ACCENT_IDS,
+      })),
+  },`
+      );
+    })
     .join("\n");
   return (
-    `/* Generated by scripts/buildCreatureAssets.mjs — do not edit by hand. */\n` +
-    `import type { CreatureTierAsset } from "../../../shared/creatureAssetTypes";\n` +
-    `${imports}\n\n` +
-    `export const ${constPrefix}_TIER_ASSETS: readonly CreatureTierAsset[] = [\n${entries}\n];\n`
+    `/* Generated by scripts/buildCreatureAssets.mjs — do not edit by hand. */
+` +
+    `import type { CreatureTierMeta } from "../../../shared/creatureAssetTypes";
+
+` +
+    `/** Static tier metadata; the polygon data of each tier is loaded lazily (own chunk) */
+` +
+    `export const ${constPrefix}_TIER_ASSETS: readonly CreatureTierMeta[] = [
+${entries}
+];
+`
   );
 }
 

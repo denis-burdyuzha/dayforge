@@ -6,22 +6,31 @@ export interface CreaturePolygonDef {
   defaultFill: string;
 }
 
-/** Canvas fit: the polygon bbox contained in 168 × 208 of the 200 × 240 canvas, centred on (100, 120) */
+/** Canvas fit (shared/creatureFit.ts): bbox centred on x = 100, standing on the ground line y = 212 */
 export interface CreatureFit {
   scale: number;
   tx: number;
   ty: number;
-  viewBox: string;
 }
 
-export interface CreatureTierAsset {
-  tierIndex: 1 | 2 | 3 | 4 | 5;
+/** The heavy part of a tier — a separate chunk, loaded on demand */
+export interface CreatureTierData {
   polygons: ReadonlyArray<CreaturePolygonDef>;
-  fit: CreatureFit;
   /** polygons of <g id="aspectAccent"> — recoloured into the aspect colour (shared aspect accent) */
   aspectAccentIds: readonly string[];
+}
+
+/** Static metadata of a tier (in the main bundle) + the loader of its polygon data */
+export interface CreatureTierMeta {
+  tierIndex: 1 | 2 | 3 | 4 | 5;
+  fit: CreatureFit;
   /** SVG file the data was built from (a lower tier's file when this tier has none yet) */
   source: string;
   /** tier whose SVG is used because this tier has none yet; null = own SVG */
   fallbackFrom: number | null;
+  polygonCount: number;
+  aspectAccentCount: number;
+  /** cache key of the data: the same for a fallback tier and the tier it falls back to */
+  dataKey: string;
+  load: () => Promise<CreatureTierData>;
 }

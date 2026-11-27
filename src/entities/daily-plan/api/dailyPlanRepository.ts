@@ -3,7 +3,7 @@ import { supabase } from "@/shared/api/supabase/client";
 import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
 import { getLocalDateString } from "@/shared/lib/localDate";
 
-import type { DailyPlan, NewQuestInput, Quest } from "../model/dailyPlanTypes";
+import type { DailyPlan, NewQuestInput, Quest, QuestUpdateInput } from "../model/dailyPlanTypes";
 
 function mapQuestRow(row: {
   id: string;
@@ -85,105 +85,93 @@ export const dailyPlanRepository = {
   },
 
   /**
-   * Creates today's plan for the character and returns it (empty quests).
+   * Today's plan of the signed-in user's character, created on the server when missing (empty quests).
+   * The client never writes game tables directly (RPC get_or_create_daily_plan).
    */
-  async createTodayPlan(characterId: string): Promise<DailyPlan> {
-    const today = getLocalDateString();
-
-    const { data, error } = await supabase
-      .from("daily_plans")
-      .insert({ character_id: characterId, date: today, status: "planned" })
-      .select("id, character_id, date, status")
-      .single();
+  async createTodayPlan(_characterId?: string): Promise<DailyPlan> {
+    const { data, error } = await supabase.rpc("get_or_create_daily_plan", {
+      p_date: getLocalDateString(),
+    });
 
     if (error) throw new Error(error.message);
 
+    const plan = data as { id: string; character_id: string; date: string; status: string };
     return {
-      id: data.id,
-      characterId: data.character_id,
-      date: data.date,
-      status: data.status as DailyPlan["status"],
+      id: plan.id,
+      characterId: plan.character_id,
+      date: plan.date,
+      status: plan.status as DailyPlan["status"],
       quests: [],
     };
   },
 
   /**
-   * Adds a quest to the plan. Stores skill_name, hours, and skill_id.
-   * If the skill is new, inserts it into character_skills with primary/secondary attribute IDs.
+   * Adds a manual quest on the plan date (RPC create_quest). A skill typed by name: an existing one is linked by
+   * id; a new one is created first (RPC create_skill — 1–2 attribute codes, the server dedups by name/alias).
+   * hours → duration in minutes (the server derives hours from it for the skill credit).
    */
-  async addQuest(planId: string, input: NewQuestInput): Promise<Quest> {
-    // Get current max position
-    const { data: existing } = await supabase
-      .from("quests")
-      .select("position")
-      .eq("daily_plan_id", planId)
-      .order("position", { ascending: false })
-      .limit(1);
-
-    const nextPosition = existing && existing.length > 0 ? (existing[0]?.position ?? 0) + 1 : 1;
-
+  async addQuest(planDate: string, input: NewQuestInput): Promise<Quest> {
     const rawSkillName = input.skillName?.trim();
     let skillId: string | null = null;
 
     if (rawSkillName) {
-      // Get character_id from daily_plans
-      const { data: planData } = await supabase
-        .from("daily_plans")
-        .select("character_id")
-        .eq("id", planId)
-        .single();
+      // existing character skill (case-insensitive, RLS: own skills only)
+      const { data: existingSkill, error: findErr } = await supabase
+        .from("character_skills")
+        .select("id")
+        .ilike("name", rawSkillName)
+        .maybeSingle();
+      if (findErr && findErr.code !== "PGRST116") throw new Error(findErr.message);
 
-      if (planData) {
-        // Find existing character skill (case-insensitive)
-        const { data: existingSkill } = await supabase
-          .from("character_skills")
-          .select("id")
-          .eq("character_id", planData.character_id)
-          .ilike("name", rawSkillName)
-          .maybeSingle();
-
-        if (existingSkill) {
-          skillId = existingSkill.id;
-        } else {
-          // Create new skill with attribute tags
-          const { data: newSkill, error: createSkillErr } = await supabase
-            .from("character_skills")
-            .insert({
-              character_id: planData.character_id,
-              name: rawSkillName,
-              primary_attribute_id: input.primaryAttributeId ?? null,
-              secondary_attribute_id: input.secondaryAttributeId ?? null,
-            })
-            .select("id")
-            .single();
-
-          if (!createSkillErr && newSkill) {
-            skillId = newSkill.id;
-          }
-        }
+      if (existingSkill) {
+        skillId = existingSkill.id;
+      } else {
+        const { data: created, error: createErr } = await supabase.rpc("create_skill", {
+          p_name: rawSkillName,
+          p_attributes: input.attributeCodes ?? [],
+        });
+        if (createErr) throw new Error(createErr.message);
+        skillId = (created as { id: string }).id;
       }
     }
 
-    const { data, error } = await supabase
-      .from("quests")
-      .insert({
-        daily_plan_id: planId,
-        title: input.title,
-        description: input.description ?? null,
-        status: "pending",
-        position: nextPosition,
-        xp_reward: 10,
-        attribute_id: null,
-        skill_name: rawSkillName ?? null,
-        hours: rawSkillName ? (input.hours ?? 1) : null,
-        skill_id: skillId,
-      })
-      .select(QUEST_SELECT)
-      .single();
+    const durationMinutes = rawSkillName && input.hours ? Math.round(input.hours * 60) : null;
+
+    const { data, error } = await supabase.rpc("create_quest", {
+      p_date: planDate,
+      p_title: input.title,
+      ...(durationMinutes !== null ? { p_duration_minutes: durationMinutes } : {}),
+      ...(skillId !== null ? { p_skill_id: skillId } : {}),
+    });
 
     if (error) throw new Error(error.message);
 
-    return mapQuestRow(data);
+    return mapQuestRow(data as Parameters<typeof mapQuestRow>[0]);
+  },
+
+  /**
+   * Updates the editable fields of a quest (RPC update_quest; the full state is sent — null clears a field).
+   * A completed quest accepts only a new title (QUEST_COMPLETED otherwise). No UI uses it yet.
+   */
+  async updateQuest(questId: string, input: QuestUpdateInput): Promise<Quest> {
+    const { data, error } = await supabase.rpc("update_quest", {
+      p_quest_id: questId,
+      p_title: input.title,
+      p_date: input.date,
+      ...(input.startTime !== null ? { p_start_time: input.startTime } : {}),
+      ...(input.durationMinutes !== null ? { p_duration_minutes: input.durationMinutes } : {}),
+      ...(input.skillId !== null ? { p_skill_id: input.skillId } : {}),
+    });
+
+    if (error) throw new Error(error.message);
+
+    return mapQuestRow(data as Parameters<typeof mapQuestRow>[0]);
+  },
+
+  /** Deletes a pending quest (RPC delete_quest; a completed quest cannot be deleted). No UI uses it yet. */
+  async deleteQuest(questId: string): Promise<void> {
+    const { error } = await supabase.rpc("delete_quest", { p_quest_id: questId });
+    if (error) throw new Error(error.message);
   },
 
   /**

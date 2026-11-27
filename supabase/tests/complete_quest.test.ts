@@ -80,6 +80,30 @@ describe("complete_quest", () => {
     expect(xp.rows[0]?.total_xp).toBe(10);
   });
 
+  it("a resent completion (pending completion sent again on the next start) credits nothing twice", async () => {
+    const snapshot = async () =>
+      (
+        await db.query<{ xp: number; tx: number; endurance: number; skill_xp: number }>(`
+          select c.total_xp as xp,
+                 (select count(*)::int from xp_transactions t where t.character_id = c.id) as tx,
+                 (select value from character_attributes ca join attribute_definitions ad on ad.id = ca.attribute_id
+                   where ca.character_id = c.id and ad.code = 'endurance') as endurance,
+                 (select total_xp from character_skills where id = '5a000000-0000-0000-0000-000000000002') as skill_xp
+          from characters c where c.profile_id = '${USER_A}'`)
+      ).rows[0];
+    const before = await snapshot();
+    for (let i = 0; i < 2; i++) {
+      const res = await asUser<{ r: Record<string, unknown> }>(
+        db,
+        USER_A,
+        "select public.complete_quest($1) as r",
+        [RUN_QUEST],
+      );
+      expect(res.rows[0]?.r).toMatchObject({ success: false, xpAwarded: 0 });
+    }
+    expect(await snapshot()).toEqual(before);
+  });
+
   it("refuses another user's quest", async () => {
     await expect(
       asUser(db, USER_B, "select public.complete_quest($1) as r", [RUN_QUEST]),

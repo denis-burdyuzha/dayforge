@@ -622,7 +622,9 @@ export type Database = {
           duration_minutes: number | null;
           hours: number | null;
           id: string;
+          planned_at: string;
           position: number;
+          scheduled_at: string;
           skill_id: string | null;
           skill_name: string | null;
           source: string;
@@ -640,7 +642,9 @@ export type Database = {
           duration_minutes?: number | null;
           hours?: number | null;
           id?: string;
+          planned_at?: string;
           position?: number;
+          scheduled_at?: string;
           skill_id?: string | null;
           skill_name?: string | null;
           source?: string;
@@ -658,7 +662,9 @@ export type Database = {
           duration_minutes?: number | null;
           hours?: number | null;
           id?: string;
+          planned_at?: string;
           position?: number;
+          scheduled_at?: string;
           skill_id?: string | null;
           skill_name?: string | null;
           source?: string;
@@ -850,7 +856,34 @@ export type Database = {
         Returns: Json;
       };
       complete_quest: { Args: { p_quest_id: string }; Returns: Json };
-      test_quest_engine: { Args: never; Returns: Json };
+      create_quest: {
+        Args: {
+          p_date: string;
+          p_duration_minutes?: number;
+          p_skill_id?: string;
+          p_start_time?: string;
+          p_title: string;
+        };
+        Returns: Json;
+      };
+      create_skill: {
+        Args: { p_attributes: string[]; p_icon?: string; p_name: string };
+        Returns: Json;
+      };
+      delete_quest: { Args: { p_quest_id: string }; Returns: Json };
+      get_or_create_daily_plan: { Args: { p_date: string }; Returns: Json };
+      save_daily_report: { Args: { p_content: string; p_date: string }; Returns: Json };
+      update_quest: {
+        Args: {
+          p_date: string;
+          p_duration_minutes?: number;
+          p_quest_id: string;
+          p_skill_id?: string;
+          p_start_time?: string;
+          p_title: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -50,6 +50,16 @@
   }
 }
 
+.characterName {
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
 .levelBadge {
   font-size: var(--font-size-xs);
   font-weight: 700;

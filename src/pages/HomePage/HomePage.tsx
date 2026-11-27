@@ -278,9 +278,11 @@ const HomePage = () => {
             </AttributeRuneRing>
           </div>
 
-          <SkillTitlePlate skill={titleSkill} className={styles.titlePlate} />
+          <h1 className={styles.heroName} data-testid="hero-name">
+            {character.name}
+          </h1>
 
-          <h1 className={styles.heroName}>{character.name}</h1>
+          <SkillTitlePlate skill={titleSkill} className={styles.titlePlate} />
 
           {charClass && (
             <div className={styles.heroClass}>

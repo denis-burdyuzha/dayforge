@@ -902,6 +902,10 @@ export type Database = {
         Args: { p_quest_id: string };
         Returns: boolean;
       };
+      rename_character: {
+        Args: { p_name: string };
+        Returns: Json;
+      };
       save_daily_report: {
         Args: { p_content: string; p_date: string };
         Returns: Json;

@@ -7,6 +7,7 @@ import { Loading } from "@/shared/ui/Loading/ui/Loading";
 
 import styles from "./SettingsPage.module.scss";
 import { AccountSection } from "./ui/AccountSection";
+import { CharacterSection } from "./ui/CharacterSection";
 import { DaySection } from "./ui/DaySection";
 
 /** What every section receives */
@@ -21,6 +22,7 @@ interface SectionContext {
  * (the next tasks add «Персонаж» and «Приватность» this way).
  */
 const SECTIONS: ReadonlyArray<{ id: string; render: (ctx: SectionContext) => ReactNode }> = [
+  { id: "character", render: ({ userId }) => <CharacterSection userId={userId} /> },
   { id: "account", render: ({ email }) => <AccountSection email={email} /> },
   { id: "day", render: ({ userId, profile }) => <DaySection userId={userId} profile={profile} /> },
 ];

@@ -156,6 +156,16 @@ export const characterRepository = {
   },
 
   /**
+   * Renames the signed-in user's character (RPC rename_character: the server checks the rules and banned words —
+   * INVALID_NAME / NAME_NOT_ALLOWED). Returns the stored (trimmed) name.
+   */
+  async renameCharacter(name: string): Promise<string> {
+    const { data, error } = await supabase.rpc("rename_character", { p_name: name });
+    if (error) throw new Error(error.message);
+    return (data as { name: string }).name;
+  },
+
+  /**
    * Returns the daily snapshots of a character, oldest date first (data for the evolution replay).
    * RLS: only the owner's character returns rows.
    */

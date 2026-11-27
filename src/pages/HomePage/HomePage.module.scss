@@ -209,7 +209,10 @@
 /* Character name */
 .heroName {
   margin: 0;
-  font-size: var(--font-size-2xl);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-3xl, 2rem);
+  line-height: 1.15;
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
   letter-spacing: -0.01em;
@@ -379,7 +382,7 @@
 
 /* Title plate under the rune ring */
 .titlePlate {
-  margin-top: calc(-1 * var(--space-1));
+  margin-top: 0;
 }
 
 .skillsScroll {

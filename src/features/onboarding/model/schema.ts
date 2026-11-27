@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { characterNameSchema } from "@/entities/character/model/characterName";
+
 export const onboardingSchema = z.object({
   username: z
     .string()
@@ -7,11 +9,8 @@ export const onboardingSchema = z.object({
     .min(2, "Имя должно содержать минимум 2 символа")
     .max(30, "Имя слишком длинное"),
 
-  characterName: z
-    .string()
-    .trim()
-    .min(2, "Имя персонажа должно содержать минимум 2 символа")
-    .max(30, "Имя слишком длинное"),
+  // the same rules as rename_character / complete_onboarding on the server
+  characterName: characterNameSchema,
 
   classId: z.enum(["warrior", "creator", "explorer", "strategist", "wanderer"], {
     message: "Выбери класс",

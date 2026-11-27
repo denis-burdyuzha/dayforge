@@ -9,20 +9,20 @@ Edge Functions пишут через `service_role` — не затронуты.
 
 ## Итог: что может клиент
 
-| Таблица                                        | authenticated                                                                | anon   | Запись — через                                                                                                      |
-| ---------------------------------------------- | ---------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
-| profiles                                       | SELECT своей строки; UPDATE своей строки только `display_name`, `avatar_url` | —      | `complete_onboarding` (username, onboarding_completed), триггер `handle_new_user`                                   |
-| characters, character_attributes               | SELECT своих                                                                 | —      | `complete_onboarding`, `complete_quest`, `apply_day_report`                                                         |
-| character_skills                               | SELECT своих                                                                 | —      | `create_skill`, `apply_day_report`, `apply_day_plan`, `complete_quest`                                              |
-| character_snapshots                            | SELECT своих                                                                 | —      | ядро начислений, `complete_onboarding`                                                                              |
-| daily_plans                                    | SELECT своих                                                                 | —      | `get_or_create_daily_plan`, `create_quest`, `update_quest`, `apply_day_plan`, `apply_day_report`                    |
-| quests                                         | SELECT своих                                                                 | —      | `create_quest`, `update_quest`, `delete_quest`, `apply_day_plan`; завершение — `complete_quest`, `apply_day_report` |
-| daily_reports                                  | SELECT своих                                                                 | —      | `save_daily_report`                                                                                                 |
-| xp_transactions                                | SELECT своих                                                                 | —      | ядро начислений                                                                                                     |
-| day_report_parses, day_plan_parses             | SELECT своих                                                                 | —      | Edge Functions (service_role)                                                                                       |
-| day_report_applications, day_plan_applications | SELECT своих                                                                 | —      | `apply_day_report`, `apply_day_plan`                                                                                |
-| daily_states, report_events, event_impacts     | SELECT своих                                                                 | —      | никто (не используются)                                                                                             |
-| attribute_definitions, skills (справочники)    | SELECT                                                                       | SELECT | миграции (сиды)                                                                                                     |
+| Таблица                                        | authenticated                                                                                              | anon   | Запись — через                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| profiles                                       | SELECT своей строки; UPDATE своей строки только `display_name`, `avatar_url`, `day_start_time`, `timezone` | —      | `complete_onboarding` (username, onboarding_completed), триггер `handle_new_user`                                   |
+| characters, character_attributes               | SELECT своих                                                                                               | —      | `complete_onboarding`, `complete_quest`, `apply_day_report`                                                         |
+| character_skills                               | SELECT своих                                                                                               | —      | `create_skill`, `apply_day_report`, `apply_day_plan`, `complete_quest`                                              |
+| character_snapshots                            | SELECT своих                                                                                               | —      | ядро начислений, `complete_onboarding`                                                                              |
+| daily_plans                                    | SELECT своих                                                                                               | —      | `get_or_create_daily_plan`, `create_quest`, `update_quest`, `apply_day_plan`, `apply_day_report`                    |
+| quests                                         | SELECT своих                                                                                               | —      | `create_quest`, `update_quest`, `delete_quest`, `apply_day_plan`; завершение — `complete_quest`, `apply_day_report` |
+| daily_reports                                  | SELECT своих                                                                                               | —      | `save_daily_report`                                                                                                 |
+| xp_transactions                                | SELECT своих                                                                                               | —      | ядро начислений                                                                                                     |
+| day_report_parses, day_plan_parses             | SELECT своих                                                                                               | —      | Edge Functions (service_role)                                                                                       |
+| day_report_applications, day_plan_applications | SELECT своих                                                                                               | —      | `apply_day_report`, `apply_day_plan`                                                                                |
+| daily_states, report_events, event_impacts     | SELECT своих                                                                                               | —      | никто (не используются)                                                                                             |
+| attribute_definitions, skills (справочники)    | SELECT                                                                                                     | SELECT | миграции (сиды)                                                                                                     |
 
 Политики RLS: остались только SELECT own и «update own profile»; все insert/update/delete политики удалены.
 anon сохраняет SELECT на справочниках на будущее, хотя до входа клиент сейчас ни одну таблицу не читает
@@ -45,7 +45,8 @@ anon сохраняет SELECT на справочниках на будущее
 
 Внутренние функции (`_complete_quest_core`, `_resolve_event_skill`, `_find_skill_by_name`, `_upsert_character_snapshot`,
 `_current_character_id`, `_ensure_daily_plan`, `_check_quest_fields`, `_own_skill_name`, `calculate_quest_effects`,
-`_normalize_skill_name`, `_snapshot_*`, `_skill_level_for_xp`, `handle_new_user`) клиентам не исполнимы.
+`_normalize_skill_name`, `_snapshot_*`, `_skill_level_for_xp`, `handle_new_user`, `quest_counts_for_league`)
+клиентам не исполнимы.
 `test_quest_engine` удалена. Default privileges на **функции** Supabase по-прежнему дают EXECUTE anon/authenticated —
 каждая новая функция обязана явно `REVOKE … FROM PUBLIC, anon` (и `authenticated`, если внутренняя).
 
@@ -57,10 +58,13 @@ anon сохраняет SELECT на справочниках на будущее
   insert `daily_plans`, update `profiles.username` — 42501; update `display_name` — ок; RPC create/delete_quest — ок;
   anon update/select `characters` — 42501, select `attribute_definitions` — ок.
 
-## Ожидаемое
+## Изменения 27.11.2026 (feature/calendar-and-day-boundary)
 
-- Следующей задачей в `profiles` появятся `timezone` и `day_start_time` — их ожидаемо разрешат к UPDATE клиентом
-  (column-level GRANT, как `display_name`/`avatar_url`).
+- `profiles.day_start_time` (time, 00:00–06:00 шаг 30, CHECK) и `profiles.timezone` (text ≤ 64) — column-level
+  GRANT UPDATE authenticated (`20261129120000_day_boundary.sql`). Проверено на живой базе: UPDATE разрешён ровно
+  `avatar_url, day_start_time, display_name, timezone`.
+- `quest_counts_for_league` — внутренняя (EXECUTE отозван у PUBLIC/anon/authenticated; проверено на живой базе).
+- `apply_day_plan` пересоздан (пункты на две даты) с прежними правами: authenticated — да, anon — нет.
 
 ---
 

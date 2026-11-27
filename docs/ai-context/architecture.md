@@ -22,7 +22,10 @@
   `class`, `level`, `strength`, `endurance`, `discipline`, `intelligence`, `focus`, `social`, `creativity`, `big=1`, `silhouette=true`.
 - GuestLayout: `/` (Landing), `/onboarding`, `/login`.
 - `/auth/callback` — завершение OAuth + досабмит онбординга из `localStorage["dayforge:onboarding:draft"]`.
-- ProtectedLayout → AppShell: `/app` (HomePage), `/app/plan`, `/app/report`; заглушки `/app/report/review`, `/app/character`, `/app/settings`.
+- ProtectedLayout → AppShell: `/app` (HomePage), `/app/plan` (`?date=`), `/app/calendar` (`?date=&view=day|week`),
+  `/app/report`, `/app/settings` (граница дня); заглушки `/app/report/review`, `/app/character`.
+- Нижняя навигация: Главная, План, Календарь, Отчёт (иконки lucide). ProtectedLayout синхронизирует
+  `profiles.timezone` с часовым поясом устройства при входе.
 - `*` → `/`.
 
 ## Auth Gate (`entities/auth/model/useAppState.ts`)
@@ -54,7 +57,10 @@ GuestLayout: ready на `/`, `/login`, `/onboarding` → `/app`; needs-onboardin
 - TanStack Query: `useCharacter(userId)` ключ `['character', userId]` (общий для Header и HomePage);
   `useCharacterData` — подзапросы `['character', characterId, 'attributes'|'state'|'xp-events'|'character-skills']`.
 - Zustand установлен, но **не используется**.
-- «Сегодня» вычисляется как `new Date().toISOString().slice(0,10)` — это дата по **UTC**, не локальная (баг для UTC+3 в 00:00–03:00).
+- **«Сегодня» = день пользователя:** `getUserDayDate(now, profiles.day_start_time)` (`shared/lib/userDay.ts`): до
+  границы дня (по умолчанию 04:00, настройка 00:00–06:00) ночь относится к предыдущей дате. `useUserToday(userId)`
+  (`entities/profile`) даёт today/tomorrow/dayStartTime; используется в плане, отчёте (и XP за день —
+  `getUserDayRangeIso`), календаре, главной, черновиках, онбординге. Репозитории получают дату параметром.
 
 ## Игровой цикл (как реально работает)
 
@@ -63,7 +69,15 @@ GuestLayout: ready на `/`, `/login`, `/onboarding` → `/app`; needs-onboardin
    (duration = часы × 60, сервер ставит hours, skill_name, planned_at/scheduled_at). Клиент таблицы не пишет.
    С 26.11.2026 там же «Опиши план на день» → Edge Function `parse-day-plan` → предпросмотр пунктов (время,
    длительность, навык) → RPC `apply_day_plan` → pending-квесты `source='ai_plan'` с `start_time`/`duration_minutes`
-   → таймлайн дня (`DayTimeline`) + «Без времени». Подробно — `ai-day-plan.md`.
+   с 27.11.2026 — на сегодня или завтра (переключатель), дописывание к плану. Список квестов дня по времени;
+   таймлайн и правка квестов — во вкладке «Календарь». Подробно — `ai-day-plan.md`.
+   1a. `/app/calendar` (`features/calendar`): вид «День» (шкала min(07:00) – max(23:00), пересечения в колонках,
+   «Без времени», линия «сейчас», стрелки/свайп/«Сегодня») и «Неделя» (пн–вс, компактные блоки, тап → день).
+   Нижняя карточка (`Drawer side=bottom`): название, дата, время, длительность, навык, «Выполнено», «Удалить»
+   (выполненный — только название). Перетаскивание по 15 мин (мышь сразу, тач после удержания 400 мс), тап по
+   шкале — новый квест. Запись только `create_quest`/`update_quest`/`delete_quest`/`complete_quest`; при ошибке блок
+   возвращается и показывается сообщение. Данные — `dailyPlanRepository.getQuestsInRange` (ключ
+   `['calendar', characterId, monday]`).
 2. Отметка квеста → RPC `complete_quest(p_quest_id)` → XP, уровень, атрибуты, навык; micro-toast; LevelUp при росте уровня.
    Квест без навыка (с 26.11.2026) завершается с 0 XP и без атрибутов.
 3. `/app/report` (с 26.11.2026): свободный текст → «Разобрать день» → Edge Function `parse-day-report` → превью
@@ -77,7 +91,7 @@ GuestLayout: ready на `/`, `/login`, `/onboarding` → `/app`; needs-onboardin
 
 | Таблица                      | Ключевые колонки                                                                                                                                                                                                                                                                                                    | Статус                                |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| profiles                     | id (=auth.users.id), username (unique), display_name, avatar_url, onboarding_completed                                                                                                                                                                                                                              | используется                          |
+| profiles                     | id (=auth.users.id), username (unique), display_name, avatar_url, onboarding_completed, day_start_time (04:00), timezone                                                                                                                                                                                            | используется                          |
 | characters                   | id, profile_id, name, class, level (≥1), total_xp (≥0)                                                                                                                                                                                                                                                              | используется                          |
 | attribute_definitions        | id, code (unique), name, description — сид 7 атрибутов                                                                                                                                                                                                                                                              | используется                          |
 | character_attributes         | character_id, attribute_id, value (≥0) — unique(character_id, attribute_id)                                                                                                                                                                                                                                         | используется                          |
@@ -113,6 +127,13 @@ GuestLayout: ready на `/`, `/login`, `/onboarding` → `/app`; needs-onboardin
 | `create_skill`, `get_or_create_daily_plan`, `create_quest`, `update_quest`, `delete_quest`, `save_daily_report` | `20261128120000_lock_game_data.sql`       | Клиентские RPC записи (SECURITY DEFINER, auth.uid(), проверка принадлежности). Правила — `security.md`. `test_quest_engine()` удалена этой же миграцией.                                                                                                                                                                                                                                                                                                                      |
 | `handle_new_user()`                                                                                             | `20260811174717_auth_profile.sql`         | Триггер создания профиля.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Ранние версии complete_quest (`20260914104000`, `20260914141500`, `20260915180200`) перезаписаны.               |
+
+## Правило лиги «запланировано заранее» (27.11.2026, задел)
+
+`quest_counts_for_league(quest_id)` (`20261129130000_league_rule.sql`, внутренняя, STABLE, без GRANT клиентам) — по
+`quests.scheduled_at` и `profiles.timezone` (NULL/неизвестный → UTC): запланирован до начала дня квеста (дата +
+`day_start_time`) → true; со временем — не позже чем за 1 ч до начала; без времени — до 14:00 даты. `planned_at` не
+используется (не меняется никогда). В начислениях пока нигде не вызывается.
 
 ## Снимки персонажа (`character_snapshots`, 27.11.2026)
 

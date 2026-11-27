@@ -811,11 +811,31 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _check_quest_fields: {
+        Args: { p_duration_minutes: number; p_title: string };
+        Returns: string;
+      };
       _complete_quest_core: {
         Args: { p_character_id: string; p_quest_id: string; p_skill_id: string };
         Returns: Json;
       };
+      _current_character_id: { Args: never; Returns: string };
+      _ensure_daily_plan: {
+        Args: { p_character_id: string; p_date: string };
+        Returns: string;
+      };
+      _find_skill_by_name: {
+        Args: { p_character_id: string; p_name: string };
+        Returns: {
+          skill_id: string;
+          skill_name: string;
+        }[];
+      };
       _normalize_skill_name: { Args: { p_name: string }; Returns: string };
+      _own_skill_name: {
+        Args: { p_character_id: string; p_skill_id: string };
+        Returns: string;
+      };
       _resolve_event_skill: {
         Args: { p_character_id: string; p_invalid_code: string; p_skill: Json };
         Returns: {
@@ -872,7 +892,10 @@ export type Database = {
       };
       delete_quest: { Args: { p_quest_id: string }; Returns: Json };
       get_or_create_daily_plan: { Args: { p_date: string }; Returns: Json };
-      save_daily_report: { Args: { p_content: string; p_date: string }; Returns: Json };
+      save_daily_report: {
+        Args: { p_content: string; p_date: string };
+        Returns: Json;
+      };
       update_quest: {
         Args: {
           p_date: string;

@@ -1,5 +1,4 @@
 import { supabase } from "@/shared/api/supabase/client";
-import { getLocalDateString } from "@/shared/lib/localDate";
 
 import type { CharacterSkill } from "../model/characterSkillTypes";
 import { type CharacterSnapshot, mapSnapshotRow } from "../model/characterSnapshotTypes";
@@ -69,8 +68,8 @@ export const characterRepository = {
   /**
    * Returns today's daily state for the character, or null if none exists yet.
    */
-  async getTodayState(characterId: string): Promise<DailyState | null> {
-    const today = getLocalDateString(); // YYYY-MM-DD, local day
+  async getDayState(characterId: string, date: string): Promise<DailyState | null> {
+    const today = date; // YYYY-MM-DD, the user's day
 
     const { data, error } = await supabase
       .from("daily_states")

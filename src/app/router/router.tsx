@@ -8,6 +8,7 @@ import { AvatarPlaygroundPage } from "@/pages/AvatarPlaygroundPage/AvatarPlaygro
 import HomePage from "@/pages/HomePage/HomePage";
 import { LandingPage } from "@/pages/LandingPage/LandingPage";
 import { LoginPage } from "@/pages/LoginPage/LoginPage";
+import { SettingsPage } from "@/pages/SettingsPage/SettingsPage";
 
 import { AppShell } from "../layouts/AppShell";
 import { GuestLayout } from "../layouts/GuestLayout";
@@ -72,7 +73,7 @@ export const appRouter = createBrowserRouter([
           },
           {
             path: "settings",
-            element: <div>⚙️ Settings Page </div>,
+            element: <SettingsPage />,
           },
         ],
       },

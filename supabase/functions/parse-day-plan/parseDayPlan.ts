@@ -7,6 +7,7 @@ import { formatZodIssues, runAttempts, utcDayStart } from "../_shared/ai/attempt
 import { fail } from "../_shared/ai/http.ts";
 import type { AiProvider } from "../_shared/ai/provider.ts";
 import { normalizeSkillName, resolveSkillRef } from "../_shared/ai/skills.ts";
+import { isBefore, localDateTime, toHHMM, toMinutes, userDayDate } from "../_shared/ai/userDay.ts";
 import { buildDayPlanRequest } from "./prompt.ts";
 import {
   HHMM,
@@ -25,38 +26,27 @@ export interface PlanParseDeps {
   timeoutMs?: number;
 }
 
-const toMinutes = (hhmm: string): number => {
-  const [h, m] = hhmm.split(":").map(Number);
-  return (h ?? 0) * 60 + (m ?? 0);
-};
-
-const toHHMM = (minutes: number): string =>
-  `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
-
 /** The client's local date (YYYY-MM-DD) in `timezone`, or null for an unknown zone */
 export function localDate(now: Date, timezone: string): string | null {
-  try {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(now);
-  } catch {
-    return null;
-  }
+  return localDateTime(now, timezone)?.date ?? null;
 }
 
 export interface SanitizeOptions {
-  isToday: boolean;
+  /** the date the items are planned on */
+  planDate: string;
+  /** the user's day today (by the day boundary) — items before it are never moved */
+  userToday: string;
+  /** the local calendar date and time now — «the past» is everything before this moment */
+  calendarDate: string;
   nowLocal: string;
 }
 
 /**
  * Make validated model output safe to show and apply:
  * - duration → a multiple of 5 within 5–480 (out of range → low + note);
- * - startTime must be HH:MM (else null + low); for today, a time before nowLocal moves to the next 5-minute
- *   slot after now (low + note) — the plan is never put into the past;
+ * - startTime must be HH:MM (else null + low); on the user's today (or later) a moment already in the past
+ *   (date + time before now) moves after now — cascading in time order, each after the previous one (low + note);
+ *   the plan is never put into the past;
  * - skills by the shared rules (foreign id → a new skill to review, alias → existing, icon fallback);
  * - duplicateOfExisting is also set when the title equals a quest already on the date;
  * - a note on every low-confidence item.
@@ -67,10 +57,49 @@ export function sanitizeItems(
   options: SanitizeOptions,
 ): PlanItem[] {
   const existingTitles = new Set(context.quests.map((q) => normalizeSkillName(q.title)));
+  const itemDate = options.planDate;
   const nowMin = toMinutes(options.nowLocal);
-  const nextSlot = Math.ceil(nowMin / LIMITS.durationStep) * LIMITS.durationStep;
+  /** the first free 5-minute slot after now; past items are placed from here on, one after another */
+  let cursor =
+    itemDate === options.calendarDate
+      ? Math.ceil(nowMin / LIMITS.durationStep) * LIMITS.durationStep
+      : null; // the whole date is in the past (planning the user's day after midnight) → no slot left on it
+  const mayShift = itemDate >= options.userToday;
+  const pastOrder = output.items
+    .map((item, index) => ({ index, time: item.startTime?.trim() ?? "" }))
+    .filter(
+      ({ time }) =>
+        mayShift &&
+        HHMM.test(time.length === 4 ? `0${time}` : time) &&
+        isBefore(
+          itemDate,
+          time.length === 4 ? `0${time}` : time,
+          options.calendarDate,
+          options.nowLocal,
+        ),
+    )
+    .sort((a, b) => toMinutes(a.time) - toMinutes(b.time) || a.index - b.index)
+    .map(({ index }) => index);
+  /** index → the new start of a past item (null: no time left on the date) */
+  const shifted = new Map<number, string | null>();
+  for (const index of pastOrder) {
+    const item = output.items[index]!;
+    const duration = Math.min(
+      LIMITS.durationMax,
+      Math.max(
+        LIMITS.durationMin,
+        Math.round(item.durationMinutes / LIMITS.durationStep) * LIMITS.durationStep,
+      ),
+    );
+    if (cursor !== null && cursor < 24 * 60) {
+      shifted.set(index, toHHMM(cursor));
+      cursor += duration;
+    } else {
+      shifted.set(index, null);
+    }
+  }
 
-  return output.items.map((item) => {
+  return output.items.map((item, index) => {
     const notes: string[] = item.note ? [item.note] : [];
     let confidence = item.confidence;
 
@@ -96,14 +125,14 @@ export function sanitizeItems(
       confidence = "low";
       notes.push("время не распознано — укажи вручную");
     }
-    if (startTime && options.isToday && toMinutes(startTime) < nowMin) {
-      if (nextSlot < 24 * 60) {
-        notes.push(`время ${startTime} уже прошло — сдвинуто на ${toHHMM(nextSlot)}`);
-        startTime = toHHMM(nextSlot);
-      } else {
-        notes.push(`время ${startTime} уже прошло`);
-        startTime = null;
-      }
+    if (startTime && shifted.has(index)) {
+      const next = shifted.get(index) ?? null;
+      notes.push(
+        next
+          ? `время ${startTime} уже прошло — сдвинуто на ${next}`
+          : `время ${startTime} уже прошло`,
+      );
+      startTime = next;
       confidence = "low";
     }
 
@@ -147,7 +176,7 @@ export async function parseDayPlan(
       "Нужны planDate (YYYY-MM-DD), text, nowLocal (HH:MM) и timezone",
     );
   }
-  const { planDate, nowLocal, timezone } = request.data;
+  const { planDate, nowLocal, timezone, dayStartTime } = request.data;
   const text = request.data.text.trim();
   if (Number.isNaN(Date.parse(`${planDate}T00:00:00Z`))) {
     return fail(400, "INVALID_INPUT", "Неверная дата плана");
@@ -159,9 +188,12 @@ export async function parseDayPlan(
       `Текст должен быть от ${LIMITS.textMin} до ${LIMITS.textMax} символов`,
     );
   }
-  const today = localDate(now(), timezone);
-  if (!today) return fail(400, "INVALID_INPUT", "Неизвестный часовой пояс");
-  const isToday = today === planDate;
+  const calendarDate = localDate(now(), timezone);
+  if (!calendarDate) return fail(400, "INVALID_INPUT", "Неизвестный часовой пояс");
+  // the user's day: before the day boundary the night still belongs to the previous date
+  const userToday = userDayDate(calendarDate, nowLocal, dayStartTime);
+  const isToday = userToday === planDate;
+  const sanitizeOptions: SanitizeOptions = { planDate, userToday, calendarDate, nowLocal };
 
   // 2. Daily limit (requests since 00:00 UTC; a retry is not a new request)
   const used = await deps.store.countParseRequestsSince(userId, utcDayStart(now()));
@@ -181,7 +213,7 @@ export async function parseDayPlan(
     validate(raw) {
       const parsed = ModelOutputSchema.safeParse(raw);
       return parsed.success
-        ? { ok: true, value: sanitizeItems(parsed.data, context, { isToday, nowLocal }) }
+        ? { ok: true, value: sanitizeItems(parsed.data, context, sanitizeOptions) }
         : { ok: false, error: formatZodIssues(parsed.error) };
     },
     log: (record) =>

@@ -16,11 +16,18 @@ import {
 import { mapPlanFunctionError, mapPlanRpcError } from "./aiDayPlanErrors";
 
 export const aiDayPlanRepository = {
-  async parse(planDate: string, text: string): Promise<ParseDayPlanResponse> {
+  /** dayStartTime: the user's day boundary — the server decides «today» and «now» with it */
+  async parse(planDate: string, text: string, dayStartTime: string): Promise<ParseDayPlanResponse> {
     let result: Awaited<ReturnType<typeof supabase.functions.invoke<ParseDayPlanResponse>>>;
     try {
       result = await supabase.functions.invoke<ParseDayPlanResponse>("parse-day-plan", {
-        body: { planDate, text, nowLocal: nowLocalHHMM(), timezone: browserTimezone() },
+        body: {
+          planDate,
+          text,
+          nowLocal: nowLocalHHMM(),
+          timezone: browserTimezone(),
+          dayStartTime,
+        },
       });
     } catch (error) {
       throw await mapPlanFunctionError(error);

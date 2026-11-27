@@ -19,6 +19,8 @@ export type AiDayPlanPhase = "input" | "parsing" | "preview" | "applying";
 
 export interface UseAiDayPlanOptions {
   planDate: string;
+  /** the user's day boundary ("HH:MM") */
+  dayStartTime: string;
   /** quests already on the plan — for the «Пересекается с …» warnings */
   existingQuests: ReadonlyArray<TimedEntry>;
   /** called after apply_day_plan succeeded (draft already cleared) */
@@ -34,7 +36,12 @@ const asDayPlanError = (error: unknown) =>
  * AI day plan flow: text (draft saved per date) → parse → editable preview → apply.
  * Errors stay in `error`; on PLAN_HOURS_LIMIT the preview stays for editing.
  */
-export function useAiDayPlan({ planDate, existingQuests, onApplied }: UseAiDayPlanOptions) {
+export function useAiDayPlan({
+  planDate,
+  dayStartTime,
+  existingQuests,
+  onApplied,
+}: UseAiDayPlanOptions) {
   const [text, setText] = useState(() => planDrafts.load(planDate));
   const [phase, setPhase] = useState<AiDayPlanPhase>("input");
   const [items, setItems] = useState<EditablePlanItem[]>([]);
@@ -54,7 +61,7 @@ export function useAiDayPlan({ planDate, existingQuests, onApplied }: UseAiDayPl
     setError(null);
     setPhase("parsing");
     try {
-      const response = await aiDayPlanRepository.parse(planDate, trimmed);
+      const response = await aiDayPlanRepository.parse(planDate, trimmed, dayStartTime);
       setItems(toEditableItems(response.items));
       setParseId(response.parseId);
       setPhase("preview");

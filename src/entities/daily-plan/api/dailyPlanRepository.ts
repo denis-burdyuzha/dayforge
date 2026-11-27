@@ -1,7 +1,6 @@
 import { xpRequiredForLevel } from "@/entities/character/model/characterTypes";
 import { supabase } from "@/shared/api/supabase/client";
 import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
-import { getLocalDateString } from "@/shared/lib/localDate";
 
 import type { DailyPlan, NewQuestInput, Quest, QuestUpdateInput } from "../model/dailyPlanTypes";
 
@@ -49,16 +48,14 @@ const QUEST_SELECT =
 
 export const dailyPlanRepository = {
   /**
-   * Returns today's plan for the character (with quests), or null if none.
+   * Returns the character's plan of a date ("YYYY-MM-DD", the user's day) with quests, or null if none.
    */
-  async getTodayPlan(characterId: string): Promise<DailyPlan | null> {
-    const today = getLocalDateString();
-
+  async getPlan(characterId: string, date: string): Promise<DailyPlan | null> {
     const { data: plan, error: planError } = await supabase
       .from("daily_plans")
       .select("id, character_id, date, status")
       .eq("character_id", characterId)
-      .eq("date", today)
+      .eq("date", date)
       .maybeSingle();
 
     if (planError && planError.code !== "PGRST116") {
@@ -85,12 +82,12 @@ export const dailyPlanRepository = {
   },
 
   /**
-   * Today's plan of the signed-in user's character, created on the server when missing (empty quests).
+   * The plan of a date of the signed-in user's character, created on the server when missing (empty quests).
    * The client never writes game tables directly (RPC get_or_create_daily_plan).
    */
-  async createTodayPlan(_characterId?: string): Promise<DailyPlan> {
+  async getOrCreatePlan(date: string): Promise<DailyPlan> {
     const { data, error } = await supabase.rpc("get_or_create_daily_plan", {
-      p_date: getLocalDateString(),
+      p_date: date,
     });
 
     if (error) throw new Error(error.message);

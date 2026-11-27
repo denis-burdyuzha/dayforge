@@ -17,7 +17,7 @@ import { useCharacterData } from "@/entities/character/model/useCharacterData";
 import { AttributeRune, AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
-import { getLocalDateString } from "@/shared/lib/localDate";
+import { isInUserDay } from "@/shared/lib/userDay";
 import { Badge } from "@/shared/ui/Badge/ui/Badge";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
@@ -179,8 +179,17 @@ function RevealSection({ children, className }: { children: React.ReactNode; cla
 const HomePage = () => {
   const { session } = useAppState();
   const userId = session?.user?.id;
-  const { character, attributes, characterSkills, todayState, xpEvents, isLoading, error } =
-    useCharacterData(userId);
+  const {
+    character,
+    attributes,
+    characterSkills,
+    todayState,
+    xpEvents,
+    today,
+    dayStartTime,
+    isLoading,
+    error,
+  } = useCharacterData(userId);
 
   if (isLoading) {
     return (
@@ -219,9 +228,9 @@ const HomePage = () => {
   const requiredXp = xpRequiredForLevel(character.level);
   const xpToNext = requiredXp - currentLevelXp;
 
-  const todayStr = getLocalDateString();
-  const todayXpEvents = xpEvents.filter(
-    (e) => getLocalDateString(new Date(e.createdAt)) === todayStr,
+  // XP of the user's day (by the day boundary, not the calendar date)
+  const todayXpEvents = xpEvents.filter((e) =>
+    isInUserDay(new Date(e.createdAt), today, dayStartTime),
   );
 
   const dayCount = character.createdAt ? daysSince(character.createdAt) : 0;

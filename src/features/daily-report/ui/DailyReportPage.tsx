@@ -10,8 +10,9 @@ import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanReposito
 import { dailyReportRepository } from "@/entities/daily-report/api/dailyReportRepository";
 import type { ApplyDayReportResult } from "@/entities/daily-report/model/aiDayReport";
 import type { DayCompletionResult } from "@/entities/daily-report/model/dailyReportTypes";
+import { useUserToday } from "@/entities/profile/model/useProfile";
 import { supabase } from "@/shared/api/supabase/client";
-import { getLocalDateString, getLocalDayRangeIso } from "@/shared/lib/localDate";
+import { getUserDayRangeIso } from "@/shared/lib/userDay";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
 import { LevelUp } from "@/shared/ui/LevelUp/ui/LevelUp";
 import { Loading } from "@/shared/ui/Loading/ui/Loading";
@@ -39,7 +40,8 @@ export function DailyReportPage() {
     new Map(),
   );
   const [submitting, setSubmitting] = useState(false);
-  const reportDate = getLocalDateString();
+  // the user's day (by the profile's day boundary): the night before it still reports the previous day
+  const { today: reportDate, dayStartTime, ready: dayReady } = useUserToday(userId);
 
   // LevelUp overlay
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -47,7 +49,7 @@ export function DailyReportPage() {
 
   // Load character + check if today'"'"'s report already done
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !dayReady) return;
     let cancelled = false;
 
     async function load() {
@@ -60,7 +62,7 @@ export function DailyReportPage() {
         const [charSkills, attributes, todayPlan] = await Promise.all([
           characterRepository.getCharacterSkills(char.id),
           characterRepository.getCharacterAttributes(char.id),
-          dailyPlanRepository.getTodayPlan(char.id),
+          dailyPlanRepository.getPlan(char.id, reportDate),
         ]);
         if (cancelled) return;
         setSkills(charSkills.map((s) => toSkillView(enrichSkillWithStats(s), attributes)));
@@ -72,12 +74,12 @@ export function DailyReportPage() {
           ),
         );
 
-        const todayReport = await dailyReportRepository.getTodayReport(char.id);
+        const todayReport = await dailyReportRepository.getReport(char.id, reportDate);
 
         if (todayReport && !cancelled) {
           // Day already completed — compute aggregated result for display
-          const today = getLocalDateString();
-          const { start: todayStart, end: todayEnd } = getLocalDayRangeIso(today);
+          const today = reportDate;
+          const { start: todayStart, end: todayEnd } = getUserDayRangeIso(today, dayStartTime);
 
           // Aggregate XP for today
           const { data: txRows } = await supabase
@@ -155,12 +157,17 @@ export function DailyReportPage() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, dayReady, reportDate, dayStartTime]);
 
   /** Saves the report text and shows the day result (the existing flow after quests were credited) */
   async function finishDay(text: string, levelBefore: number, levelAfter?: number) {
     if (!characterId) return;
-    const result = await dailyReportRepository.completeDay(characterId, text);
+    const result = await dailyReportRepository.completeDay(
+      characterId,
+      reportDate,
+      dayStartTime,
+      text,
+    );
     const charAfter = await characterRepository.getCurrentCharacter(userId!);
     const newLevel = levelAfter ?? charAfter?.level ?? levelBefore;
     const didLevelUp = newLevel > levelBefore;

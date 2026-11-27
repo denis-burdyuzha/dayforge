@@ -587,27 +587,33 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           created_at: string;
+          day_start_time: string;
           display_name: string | null;
           id: string;
           onboarding_completed: boolean;
+          timezone: string | null;
           updated_at: string;
           username: string | null;
         };
         Insert: {
           avatar_url?: string | null;
           created_at?: string;
+          day_start_time?: string;
           display_name?: string | null;
           id: string;
           onboarding_completed?: boolean;
+          timezone?: string | null;
           updated_at?: string;
           username?: string | null;
         };
         Update: {
           avatar_url?: string | null;
           created_at?: string;
+          day_start_time?: string;
           display_name?: string | null;
           id?: string;
           onboarding_completed?: boolean;
+          timezone?: string | null;
           updated_at?: string;
           username?: string | null;
         };

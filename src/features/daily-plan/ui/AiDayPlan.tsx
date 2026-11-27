@@ -15,6 +15,8 @@ import { PlanItemCard } from "./PlanItemCard";
 
 interface AiDayPlanProps {
   planDate: string;
+  /** the user's day boundary ("HH:MM") */
+  dayStartTime: string;
   skills: SkillView[];
   existingQuests: ReadonlyArray<TimedEntry>;
   onApplied: (result: ApplyDayPlanResult) => void | Promise<void>;
@@ -97,12 +99,13 @@ function ErrorBanner({
 /** Morning plan: free text → AI parse → editable preview → apply_day_plan (quests with time on the date) */
 export function AiDayPlan({
   planDate,
+  dayStartTime,
   skills,
   existingQuests,
   onApplied,
   onManual,
 }: AiDayPlanProps) {
-  const flow = useAiDayPlan({ planDate, existingQuests, onApplied });
+  const flow = useAiDayPlan({ planDate, dayStartTime, existingQuests, onApplied });
 
   if (flow.phase === "parsing") {
     return (

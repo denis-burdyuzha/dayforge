@@ -32,6 +32,12 @@ export const ParseRequestSchema = z.object({
   nowLocal: z.string().regex(HHMM),
   /** IANA time zone of the client, e.g. "Europe/Moscow" */
   timezone: z.string().min(1).max(64),
+  /** the user's day boundary "HH:MM" (00:00–06:00); before it the night belongs to the previous date */
+  dayStartTime: z
+    .string()
+    .regex(/^0[0-6]:[03]0$/)
+    .refine((t) => t <= "06:00")
+    .default("04:00"),
 });
 export type ParseRequest = z.infer<typeof ParseRequestSchema>;
 

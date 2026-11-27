@@ -1,3 +1,4 @@
+import { Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useAppState } from "@/entities/auth/model/useAppState";
@@ -21,19 +22,31 @@ export function Header() {
         {/* ── Brand ────────────────────────────────── */}
         <span className={styles.brand}>DAYFORGE</span>
 
-        {/* ── Character info ────────────────────────── */}
-        {character && (
-          <button
-            className={styles.characterBtn}
-            onClick={() => navigate("/app")}
-            aria-label={`Персонаж ${character.name}, уровень ${character.level}`}
-          >
-            <Avatar size="sm" />
-            <Badge variant="primary" className={styles.levelBadge}>
-              Lv.&nbsp;{character.level}
-            </Badge>
-          </button>
-        )}
+        <div className={styles.actions}>
+          {/* ── Character info ────────────────────────── */}
+          {character && (
+            <button
+              className={styles.characterBtn}
+              onClick={() => navigate("/app")}
+              aria-label={`Персонаж ${character.name}, уровень ${character.level}`}
+            >
+              <Avatar size="sm" />
+              <Badge variant="primary" className={styles.levelBadge}>
+                Lv.&nbsp;{character.level}
+              </Badge>
+            </button>
+          )}
+          {userId && (
+            <button
+              className={styles.iconBtn}
+              onClick={() => navigate("/app/settings")}
+              aria-label="Настройки"
+              title="Настройки"
+            >
+              <Settings size={18} aria-hidden="true" />
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

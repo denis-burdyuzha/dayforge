@@ -10,7 +10,8 @@ import { characterQueryKey } from "@/entities/character/model/useCharacter";
 import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanRepository";
 import type { ApplyDayPlanResult, TimedEntry } from "@/entities/daily-plan/model/aiDayPlan";
 import type { DailyPlan, NewQuestInput, Quest } from "@/entities/daily-plan/model/dailyPlanTypes";
-import { getLocalDateString, parseLocalDate } from "@/shared/lib/localDate";
+import { useUserToday } from "@/entities/profile/model/useProfile";
+import { parseLocalDate } from "@/shared/lib/localDate";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
 import { LevelUp } from "@/shared/ui/LevelUp/ui/LevelUp";
@@ -382,10 +383,12 @@ export function DailyPlanPage() {
   const addSectionRef = useRef<HTMLDivElement>(null);
 
   const { toasts, push: pushToast } = useMicroToasts();
+  // the user's day by the profile's day boundary
+  const { today, dayStartTime, ready: dayReady } = useUserToday(userId);
 
-  // Load today's plan, skills, and attributes
+  // Load the plan of the user's day, skills, and attributes
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !dayReady) return;
 
     let cancelled = false;
 
@@ -394,8 +397,8 @@ export function DailyPlanPage() {
         if (!characterId || cancelled) return;
 
         const [todayPlan, existingSkills, charAttributes] = await Promise.all([
-          dailyPlanRepository.getTodayPlan(characterId).then(async (plan) => {
-            if (!plan) return dailyPlanRepository.createTodayPlan(characterId);
+          dailyPlanRepository.getPlan(characterId, today).then(async (plan) => {
+            if (!plan) return dailyPlanRepository.getOrCreatePlan(today);
             return plan;
           }),
           characterRepository.getCharacterSkills(characterId),
@@ -420,7 +423,7 @@ export function DailyPlanPage() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, dayReady, today]);
 
   async function handleCompleteQuest(quest: Quest) {
     if (!plan || completing) return;
@@ -492,7 +495,7 @@ export function DailyPlanPage() {
     if (!plan) return;
     const characterId = plan.characterId;
     const [fresh, charSkills] = await Promise.all([
-      dailyPlanRepository.getTodayPlan(characterId),
+      dailyPlanRepository.getPlan(characterId, plan.date),
       characterRepository.getCharacterSkills(characterId),
     ]);
     if (fresh) setPlan(fresh);
@@ -527,7 +530,6 @@ export function DailyPlanPage() {
     );
   }
 
-  const today = getLocalDateString();
   const pendingCount = plan?.quests.filter((q) => q.status === "pending").length ?? 0;
   const completedCount = plan?.quests.filter((q) => q.status === "completed").length ?? 0;
   const quests = plan?.quests ?? [];
@@ -559,6 +561,7 @@ export function DailyPlanPage() {
       {plan && (
         <AiDayPlan
           planDate={plan.date}
+          dayStartTime={dayStartTime}
           skills={skills}
           existingQuests={existingTimed}
           onApplied={handleAiPlanApplied}

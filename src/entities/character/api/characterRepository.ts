@@ -2,6 +2,7 @@ import { supabase } from "@/shared/api/supabase/client";
 import { getLocalDateString } from "@/shared/lib/localDate";
 
 import type { CharacterSkill } from "../model/characterSkillTypes";
+import { type CharacterSnapshot, mapSnapshotRow } from "../model/characterSnapshotTypes";
 import type { Character, CharacterAttribute, DailyState, XpEvent } from "../model/characterTypes";
 
 export const characterRepository = {
@@ -153,5 +154,25 @@ export const characterRepository = {
       aliases: row.aliases ?? [],
       icon: row.icon,
     }));
+  },
+
+  /**
+   * Returns the daily snapshots of a character, oldest date first (data for the evolution replay).
+   * RLS: only the owner's character returns rows.
+   */
+  async getCharacterSnapshots(characterId: string): Promise<CharacterSnapshot[]> {
+    const { data, error } = await supabase
+      .from("character_snapshots")
+      .select(
+        "snapshot_date, level, tier, total_xp, attributes, aspect, top_skills, skills_count, relics",
+      )
+      .eq("character_id", characterId)
+      .order("snapshot_date", { ascending: true });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return (data ?? []).map(mapSnapshotRow);
   },
 };

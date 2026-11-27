@@ -1,29 +1,69 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 import { profileRepository } from "@/entities/profile/api/profileRepository";
-import { DAY_START_OPTIONS, type Profile } from "@/entities/profile/model/profileTypes";
+import {
+  BEDTIME_OPTIONS,
+  type BedtimeChoice,
+  bedtimeToDayStart,
+  dayStartExplanation,
+  dayStartToBedtime,
+  isBedtimeChoice,
+} from "@/entities/profile/model/bedtime";
+import type { Profile } from "@/entities/profile/model/profileTypes";
 import { profileQueryKey } from "@/entities/profile/model/useProfile";
 
 import styles from "../SettingsPage.module.scss";
 import { SettingsSection } from "./SettingsSection";
 
-/** «Мой день»: when the user's day starts */
+const CHOICE_KEY = "dayforge:bedtime-choice";
+
+/** The bedtime the user picked last on this device (storage may be unavailable) */
+function loadChoice(): BedtimeChoice | null {
+  try {
+    const value = window.localStorage.getItem(CHOICE_KEY);
+    return isBedtimeChoice(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveChoice(choice: BedtimeChoice) {
+  try {
+    window.localStorage.setItem(CHOICE_KEY, choice);
+  } catch {
+    /* the choice is then recovered from the boundary alone */
+  }
+}
+
+/** «Мой день»: the bedtime question that sets profiles.day_start_time */
 export function DaySection({ userId, profile }: { userId: string; profile: Profile }) {
   const queryClient = useQueryClient();
   const selectId = useId();
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ text: string; error: boolean } | null>(null);
+  const [remembered, setRemembered] = useState(loadChoice);
+  const toastTimer = useRef<number | undefined>(undefined);
 
-  async function changeDayStart(value: string) {
+  /** one toast at a time; a new one restarts the timer (an old timer must not hide it early) */
+  function showToast(text: string, error: boolean) {
+    window.clearTimeout(toastTimer.current);
+    setToast({ text, error });
+    toastTimer.current = window.setTimeout(() => setToast(null), 2200);
+  }
+
+  const choice = dayStartToBedtime(profile.dayStartTime, remembered);
+
+  async function change(next: BedtimeChoice) {
     setSaving(true);
-    setMessage(null);
     try {
-      await profileRepository.updateDayStartTime(userId, value);
+      await profileRepository.updateDayStartTime(userId, bedtimeToDayStart(next));
+      saveChoice(next);
+      setRemembered(next);
       await queryClient.invalidateQueries({ queryKey: profileQueryKey(userId) });
-      setMessage("Сохранено");
+      showToast("Сохранено", false);
     } catch {
-      setMessage("Не удалось сохранить — проверь соединение и попробуй ещё раз");
+      showToast("Не удалось сохранить — проверь соединение", true);
     } finally {
       setSaving(false);
     }
@@ -32,28 +72,35 @@ export function DaySection({ userId, profile }: { userId: string; profile: Profi
   return (
     <SettingsSection id="day" title="Мой день">
       <label htmlFor={selectId} className={styles.label}>
-        Мой день начинается в
+        Во сколько ты обычно ложишься спать?
       </label>
       <select
         id={selectId}
         className={styles.select}
-        value={profile.dayStartTime}
+        value={choice}
         disabled={saving}
-        onChange={(e) => void changeDayStart(e.target.value)}
+        onChange={(e) => {
+          if (isBedtimeChoice(e.target.value)) void change(e.target.value);
+        }}
+        data-testid="bedtime-select"
       >
-        {DAY_START_OPTIONS.map((t) => (
-          <option key={t} value={t}>
-            {t}
+        {BEDTIME_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
           </option>
         ))}
       </select>
-      <p className={styles.hint}>
-        До этого времени ночь считается предыдущим днём: план, отчёт, календарь и XP за день.
+      <p className={styles.hint} data-testid="bedtime-hint">
+        {dayStartExplanation(choice)}
       </p>
-      {message && (
-        <p className={styles.message} role="status">
-          {message}
-        </p>
+      {toast && (
+        <div
+          className={toast.error ? styles.toastError : styles.toast}
+          role={toast.error ? "alert" : "status"}
+          data-testid="settings-toast"
+        >
+          {toast.text}
+        </div>
       )}
     </SettingsSection>
   );

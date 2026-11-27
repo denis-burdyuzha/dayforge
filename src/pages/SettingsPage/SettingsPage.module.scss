@@ -13,10 +13,36 @@
   letter-spacing: -0.02em;
 }
 
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+.readonlyRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.readonlyValue {
+  font-size: var(--font-size-md, 1rem);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
 }
 
 .label {

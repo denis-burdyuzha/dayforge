@@ -1,40 +1,36 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import type { ReactNode } from "react";
 
 import { useAppState } from "@/entities/auth/model/useAppState";
-import { profileRepository } from "@/entities/profile/api/profileRepository";
-import { DAY_START_OPTIONS } from "@/entities/profile/model/profileTypes";
-import { profileQueryKey, useProfile } from "@/entities/profile/model/useProfile";
-import { Card } from "@/shared/ui/Card/ui/Card";
+import type { Profile } from "@/entities/profile/model/profileTypes";
+import { useProfile } from "@/entities/profile/model/useProfile";
 import { Loading } from "@/shared/ui/Loading/ui/Loading";
 
 import styles from "./SettingsPage.module.scss";
+import { AccountSection } from "./ui/AccountSection";
+import { DaySection } from "./ui/DaySection";
+
+/** What every section receives */
+interface SectionContext {
+  userId: string;
+  email: string | undefined;
+  profile: Profile;
+}
+
+/**
+ * The sections of the page in display order. A new section is one component + one entry here
+ * (the next tasks add «Персонаж» and «Приватность» this way).
+ */
+const SECTIONS: ReadonlyArray<{ id: string; render: (ctx: SectionContext) => ReactNode }> = [
+  { id: "account", render: ({ email }) => <AccountSection email={email} /> },
+  { id: "day", render: ({ userId, profile }) => <DaySection userId={userId} profile={profile} /> },
+];
 
 export function SettingsPage() {
   const { session } = useAppState();
   const userId = session?.user?.id;
-  const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfile(userId);
-  const selectId = useId();
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
-  async function changeDayStart(value: string) {
-    if (!userId) return;
-    setSaving(true);
-    setMessage(null);
-    try {
-      await profileRepository.updateDayStartTime(userId, value);
-      await queryClient.invalidateQueries({ queryKey: profileQueryKey(userId) });
-      setMessage("Сохранено");
-    } catch {
-      setMessage("Не удалось сохранить — проверь соединение и попробуй ещё раз");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (isLoading || !profile) {
+  if (!userId || isLoading || !profile) {
     return (
       <div className={styles.center}>
         <Loading label="Загружаем настройки…" />
@@ -42,35 +38,13 @@ export function SettingsPage() {
     );
   }
 
+  const ctx: SectionContext = { userId, email: session?.user?.email, profile };
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Настройки</h1>
-      <Card className={styles.card}>
-        <label htmlFor={selectId} className={styles.label}>
-          Мой день начинается в
-        </label>
-        <select
-          id={selectId}
-          className={styles.select}
-          value={profile.dayStartTime}
-          disabled={saving}
-          onChange={(e) => void changeDayStart(e.target.value)}
-        >
-          {DAY_START_OPTIONS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <p className={styles.hint}>
-          До этого времени ночь считается предыдущим днём: план, отчёт, календарь и XP за день.
-        </p>
-        {message && (
-          <p className={styles.message} role="status">
-            {message}
-          </p>
-        )}
-      </Card>
+      {SECTIONS.map((section) => (
+        <div key={section.id}>{section.render(ctx)}</div>
+      ))}
     </div>
   );
 }

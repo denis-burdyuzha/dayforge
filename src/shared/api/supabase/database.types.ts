@@ -897,6 +897,7 @@ export type Database = {
         Returns: Json;
       };
       delete_quest: { Args: { p_quest_id: string }; Returns: Json };
+      get_my_streak: { Args: never; Returns: Json };
       get_or_create_daily_plan: { Args: { p_date: string }; Returns: Json };
       quest_counts_for_league: {
         Args: { p_quest_id: string };

@@ -14,9 +14,11 @@ import {
 import { characterClasses } from "@/entities/character/model/classes";
 import { pickTitleSkill, toSkillView } from "@/entities/character/model/skillPresentation";
 import { useCharacterData } from "@/entities/character/model/useCharacterData";
+import { useStreak } from "@/entities/character/model/useStreak";
 import { AttributeRune, AttributeRuneRing } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
+import { StreakBadge, StreakWeek } from "@/entities/character/ui/Streak";
 import { isInUserDay } from "@/shared/lib/userDay";
 import { Badge } from "@/shared/ui/Badge/ui/Badge";
 import { Card } from "@/shared/ui/Card/ui/Card";
@@ -26,6 +28,7 @@ import { Loading } from "@/shared/ui/Loading/ui/Loading";
 import { XPBar } from "@/shared/ui/XPBar/ui/XPBar";
 
 import styles from "./HomePage.module.scss";
+import { WelcomeBackCard } from "./ui/WelcomeBackCard";
 
 // ---------------------------------------------------------------------------
 // Decorative attribute icons (fallback: ✨)
@@ -190,6 +193,7 @@ const HomePage = () => {
     isLoading,
     error,
   } = useCharacterData(userId);
+  const { data: streak } = useStreak(userId);
 
   if (isLoading) {
     return (
@@ -251,6 +255,8 @@ const HomePage = () => {
 
   return (
     <div className={styles.page}>
+      {streak?.brokenRecently && streak.brokenOn && <WelcomeBackCard brokenOn={streak.brokenOn} />}
+
       {/* ══════════════════════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════════════════════ */}
@@ -289,6 +295,13 @@ const HomePage = () => {
               <Badge variant="primary">
                 {charClass.avatarIcon}&nbsp;{charClass.name}
               </Badge>
+            </div>
+          )}
+
+          {streak && (
+            <div className={styles.streakRow} data-testid="hero-streak">
+              <StreakBadge value={streak.current} active={streak.todayDone} />
+              <StreakWeek days={streak.week} />
             </div>
           )}
 

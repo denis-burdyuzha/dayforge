@@ -3,6 +3,7 @@ import { supabase } from "@/shared/api/supabase/client";
 import type { CharacterSkill } from "../model/characterSkillTypes";
 import { type CharacterSnapshot, mapSnapshotRow } from "../model/characterSnapshotTypes";
 import type { Character, CharacterAttribute, DailyState, XpEvent } from "../model/characterTypes";
+import { mapStreak, type Streak } from "../model/streakTypes";
 
 export const characterRepository = {
   /**
@@ -163,6 +164,13 @@ export const characterRepository = {
     const { data, error } = await supabase.rpc("rename_character", { p_name: name });
     if (error) throw new Error(error.message);
     return (data as { name: string }).name;
+  },
+
+  /** The caller's daily streak (RPC get_my_streak; the server counts by the user's day and the weekly freeze) */
+  async getMyStreak(): Promise<Streak> {
+    const { data, error } = await supabase.rpc("get_my_streak");
+    if (error) throw new Error(error.message);
+    return mapStreak(data);
   },
 
   /**

@@ -5,9 +5,9 @@ export const DEER_L3_SOURCE = "deerL3.svg";
 
 /** Source viewBox 0 0 1024 1024; polygon bbox 142,92,857,953 */
 export const DEER_L3_FIT = {
-  scale: 0.235,
-  tx: -17.365,
-  ty: -2.7692,
+  scale: 0.2078,
+  tx: -3.7753,
+  ty: 14.0062,
   viewBox: "0 0 1024 1024",
 } as const;
 

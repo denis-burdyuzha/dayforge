@@ -7,7 +7,7 @@ export const DEER_L1_SOURCE = "deerL1.svg";
 export const DEER_L1_FIT = {
   scale: 0.2311,
   tx: -15.89,
-  ty: -3.8624,
+  ty: 17.8872,
   viewBox: "0 0 1024 1024",
 } as const;
 

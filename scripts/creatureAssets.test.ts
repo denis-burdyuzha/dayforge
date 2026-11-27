@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeFit,
   defaultExists,
+  findBackgroundLeftovers,
   parseCreatureSvg,
   resolveTierFiles,
 } from "./creatureAssets.lib.mjs";
@@ -41,7 +42,12 @@ describe("creature SVG parsing", () => {
     expect(parsed.polygons).toHaveLength(672);
     expect(parsed.aspectAccentIds).toEqual([]);
     expect(parsed.warnings.join()).toMatch(/no <g id="aspectAccent">/);
-    expect(computeFit(parsed.polygons)).toMatchObject({ scale: 0.0997, tx: -36.4439, ty: 37.695 });
+    // the wolf pup is wide: the 168 width is the limit, bottom on the ground line y = 212
+    const fit = computeFit(parsed.polygons);
+    expect(parsed.filtered).toBe(0);
+    const [x0, , x1, y1] = fit.bbox as [number, number, number, number];
+    expect(fit.scale * (x1 - x0)).toBeCloseTo(168, 0);
+    expect(fit.ty + y1 * fit.scale).toBeCloseTo(212, 1);
   });
 
   it("aspectAccent at any nesting depth; polygons without id get stable generated ids; order kept", () => {
@@ -71,6 +77,48 @@ describe("creature SVG parsing", () => {
         "x",
       ),
     ).toThrow(/transform/);
+  });
+});
+
+describe("fit and background filter", () => {
+  const poly = (id: string, points: string, defaultFill: string, opacity?: number) => ({
+    id,
+    points,
+    defaultFill,
+    ...(opacity === undefined ? {} : { opacity }),
+  });
+
+  it("scale = min(208·0.86 / h, 168 / w); centred on x = 100; bottom on y = 212", () => {
+    const tall = computeFit([poly("a", "10,20 60,20 60,220", "#888888")]); // 50 × 200
+    expect(tall.scale).toBeCloseTo((208 * 0.86) / 200, 4);
+    expect(tall.tx + 35 * tall.scale).toBeCloseTo(100, 2);
+    expect(tall.ty + 220 * tall.scale).toBeCloseTo(212, 2);
+    const wide = computeFit([poly("a", "0,0 400,0 400,100", "#888888")]); // 400 × 100: width-limited
+    expect(wide.scale).toBeCloseTo(168 / 400, 4);
+    expect(wide.scale * 100).toBeLessThan(208 * 0.86);
+  });
+
+  it("drops near-black / transparent polygons sticking out of the animal; keeps dark ones inside", () => {
+    const body = poly("body", "0,0 100,0 100,100", "#403020");
+    const inside = poly("pupil", "40,40 50,40 50,50", "#050505"); // dark, but inside the body: stays
+    const bg = poly("bg", "-50,-50 300,-50 300,300", "#000000"); // background leftover
+    const ghost = poly("ghost", "0,0 90,0 90,400", "#808080", 0.05); // transparent, sticks out
+    expect(findBackgroundLeftovers([body, inside, bg, ghost]).sort()).toEqual(["bg", "ghost"]);
+    expect(findBackgroundLeftovers([body, inside])).toEqual([]);
+    expect(findBackgroundLeftovers([inside, bg])).toEqual([]); // nothing but dark ones: nothing to compare
+  });
+
+  it("the parser applies it: svg with a black background polygon", () => {
+    const svg = `<svg viewBox="0 0 10 10"><polygon id="bg" points="-9,-9 99,-9 99,99" fill="#000000"/>
+      <polygon id="a" points="0,0 10,0 10,10" fill="#aa8844"/><polygon id="eye" points="2,2 3,2 3,3" fill="#010101"/></svg>`;
+    const parsed = parseCreatureSvg(svg, "t");
+    expect(parsed.polygons.map((p) => p.id)).toEqual(["a", "eye"]);
+    expect(parsed.filtered).toBe(1);
+    expect(parsed.polygons[0]).toEqual({
+      id: "a",
+      points: "0,0 10,0 10,10",
+      defaultFill: "#aa8844",
+    });
   });
 });
 

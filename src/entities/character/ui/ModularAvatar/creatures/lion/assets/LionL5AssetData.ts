@@ -5,9 +5,9 @@ export const LION_L5_SOURCE = "lionL5.svg";
 
 /** Source viewBox 0 0 1024 1024; polygon bbox 143,36,783,978 */
 export const LION_L5_FIT = {
-  scale: 0.2208,
-  tx: -2.2335,
-  ty: 8.051,
+  scale: 0.1899,
+  tx: 12.0792,
+  ty: 26.2838,
   viewBox: "0 0 1024 1024",
 } as const;
 

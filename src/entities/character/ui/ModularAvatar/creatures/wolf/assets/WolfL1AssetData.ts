@@ -7,7 +7,7 @@ export const WOLF_L1_SOURCE = "wolfL1.svg";
 export const WOLF_L1_FIT = {
   scale: 0.0997,
   tx: -36.4439,
-  ty: 37.695,
+  ty: 72.8142,
   viewBox: "0 0 2752 1536",
 } as const;
 

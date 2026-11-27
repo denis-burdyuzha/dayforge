@@ -5,9 +5,9 @@ export const WOLF_L4_SOURCE = "wolfL4.svg";
 
 /** Source viewBox 0 0 2752 1536; polygon bbox 1035,125,1714,1502 */
 export const WOLF_L4_FIT = {
-  scale: 0.1511,
-  tx: -107.6224,
-  ty: -2.8816,
+  scale: 0.1299,
+  tx: -78.5552,
+  ty: 16.8818,
   viewBox: "0 0 2752 1536",
 } as const;
 

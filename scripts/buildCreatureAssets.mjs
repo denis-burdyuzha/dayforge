@@ -5,6 +5,7 @@
  *   aspectAccentIds = polygons inside <g id="aspectAccent"> (any nesting), source file name;
  * - a tier without its SVG re-exports the nearest lower tier (warning) — add the SVG and re-run;
  * - <animal>Assets.ts: the 5 tier assets as one array (used by the creature registry).
+ * Background leftovers (near-black / transparent polygons sticking out of the animal) are dropped and counted.
  * Prints per class and tier: polygons / in aspectAccent / file used.
  */
 import fs from "node:fs";
@@ -79,7 +80,8 @@ for (const c of CREATURES) {
     );
     counts.set(r.tier, [parsed.polygons.length, parsed.aspectAccentIds.length]);
     console.log(
-      `  L${r.tier}: ${parsed.polygons.length} polygons / ${parsed.aspectAccentIds.length} aspectAccent / ${path.basename(r.file)}`,
+      `  L${r.tier}: ${parsed.polygons.length} polygons / ${parsed.aspectAccentIds.length} aspectAccent / ${path.basename(r.file)}` +
+        (parsed.filtered ? ` / ${parsed.filtered} background polygons dropped` : ""),
     );
   }
   await writeFormatted(

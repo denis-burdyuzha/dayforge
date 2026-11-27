@@ -5,9 +5,9 @@ export const BEAR_L4_SOURCE = "bearL4.svg";
 
 /** Source viewBox 0 0 1344 756; polygon bbox 397,48,946,722 */
 export const BEAR_L4_FIT = {
-  scale: 0.306,
-  tx: -105.4863,
-  ty: 2.1858,
+  scale: 0.2654,
+  tx: -78.2165,
+  ty: 20.3808,
   viewBox: "0 0 1344 756",
 } as const;
 

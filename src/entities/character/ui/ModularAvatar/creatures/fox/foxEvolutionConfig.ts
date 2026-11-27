@@ -23,14 +23,18 @@ export interface FoxTierConfigItem {
   aspectAccentIds: readonly string[];
 }
 
+/**
+ * Canvas fit per tier = shared rule (shared/creatureFit.ts): height 86 % of the 208 field unless the 168 width
+ * limits; centred on x = 100, bottom on the ground line y = 212. A test recomputes it from the polygon data.
+ */
 export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = {
   1: {
     tierIndex: 1,
     aspectAccentIds: getFoxAspectAccentIds(1),
     component: FoxL1BaseAsset,
     scale: 0.4541,
-    tx: -3.98,
-    ty: -56.63,
+    tx: -3.9784,
+    ty: -26.8324,
     viewBox: "0 0 468 767",
     polygonCount: 238,
     name: "Spark / Larval",
@@ -40,8 +44,8 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
     aspectAccentIds: getFoxAspectAccentIds(2),
     component: FoxL2BaseAsset,
     scale: 0.228,
-    tx: 5.74,
-    ty: 25.29,
+    tx: 5.7422,
+    ty: 36.2497,
     viewBox: "0 0 832 818",
     polygonCount: 438,
     name: "Hatchling",
@@ -51,8 +55,8 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
     aspectAccentIds: getFoxAspectAccentIds(3),
     component: FoxL3BaseAsset,
     scale: 0.4038,
-    tx: 12.77,
-    ty: 38.22,
+    tx: 12.7692,
+    ty: 61.7692,
     viewBox: "0 0 445 402",
     polygonCount: 277,
     name: "Young / Awakened",
@@ -61,9 +65,9 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
     tierIndex: 4,
     aspectAccentIds: getFoxAspectAccentIds(4),
     component: FoxL4BaseAsset,
-    scale: 0.3531,
-    tx: 21.96,
-    ty: 11.06,
+    scale: 0.3037,
+    tx: 32.882,
+    ty: 28.8682,
     viewBox: "0 0 443 624",
     polygonCount: 383,
     name: "Ascended",
@@ -72,9 +76,9 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
     tierIndex: 5,
     aspectAccentIds: getFoxAspectAccentIds(5),
     component: FoxL5BaseAsset,
-    scale: 0.1755,
-    tx: 19.96,
-    ty: -1.73,
+    scale: 0.151,
+    tx: 31.1652,
+    ty: 17.8737,
     viewBox: "0 0 912 1312",
     polygonCount: 935,
     name: "Mythic",

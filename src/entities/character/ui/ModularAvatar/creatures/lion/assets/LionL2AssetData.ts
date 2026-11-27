@@ -7,7 +7,7 @@ export const LION_L2_SOURCE = "lionL2.svg";
 export const LION_L2_FIT = {
   scale: 0.1907,
   tx: -1.7344,
-  ty: 14.3564,
+  ty: 37.1351,
   viewBox: "0 0 1024 1024",
 } as const;
 

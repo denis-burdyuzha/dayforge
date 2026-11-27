@@ -5,9 +5,9 @@ export const DEER_L2_SOURCE = "deerL2.svg";
 
 /** Source viewBox 0 0 1024 1024; polygon bbox 164,86,821,951 */
 export const DEER_L2_FIT = {
-  scale: 0.2405,
-  tx: -18.4277,
-  ty: -4.6798,
+  scale: 0.2068,
+  tx: -1.8479,
+  ty: 15.3354,
   viewBox: "0 0 1024 1024",
 } as const;
 

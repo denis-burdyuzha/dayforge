@@ -7,7 +7,7 @@ export const BEAR_L2_SOURCE = "bearL2.svg";
 export const BEAR_L2_FIT = {
   scale: 0.3105,
   tx: -108.525,
-  ty: -2.9723,
+  ty: 6.7357,
   viewBox: "0 0 1344 756",
 } as const;
 

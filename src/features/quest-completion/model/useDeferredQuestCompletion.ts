@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 
 import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanRepository";
 import { questErrorMessage } from "@/entities/daily-plan/model/calendar";
 import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
 
 import { type CompletingQuest, createDeferredCompletionController } from "./deferredCompletion";
+import { addPending, isNetworkError, removePending } from "./pendingStore";
 
 export type { CompletingQuest, PendingCompletion } from "./deferredCompletion";
 
@@ -37,8 +38,11 @@ export function useDeferredQuestCompletion(options: Options) {
     controller.setSend(async (quest) => {
       try {
         const result = await dailyPlanRepository.completeQuest(quest.id, options.characterId);
+        removePending(quest.id); // the server answered (also «already completed»)
         options.onCompleted(quest, result);
       } catch (err) {
+        // a final server error is forgotten; a lost request (offline, page closing) is sent again on the next start
+        if (!isNetworkError(err)) removePending(quest.id);
         options.onFailed(quest, questErrorMessage(err));
       }
     });
@@ -59,13 +63,32 @@ export function useDeferredQuestCompletion(options: Options) {
     };
   }, [controller]);
 
+  // the window is mirrored to localStorage, so a closed / killed tab does not lose the completion
+  const complete = useCallback(
+    (quest: CompletingQuest) => {
+      if (controller.complete(quest))
+        addPending({ id: quest.id, title: quest.title, at: Date.now() });
+    },
+    [controller],
+  );
+  const undo = useCallback(
+    (id: string) => {
+      if (controller.undo(id)) removePending(id);
+    },
+    [controller],
+  );
+  const undoLast = useCallback(() => {
+    const id = controller.undoLast();
+    if (id) removePending(id);
+  }, [controller]);
+
   return {
     /** quests to show as completed: waiting for the end of the window or being sent */
     optimisticIds: snapshot.optimisticIds,
     pending: snapshot.pending,
-    complete: controller.complete,
-    undo: controller.undo,
-    undoLast: controller.undoLast,
+    complete,
+    undo,
+    undoLast,
     flushAll: controller.flushAll,
   };
 }

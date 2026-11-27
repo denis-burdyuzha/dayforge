@@ -21,9 +21,12 @@ export interface CompletionSnapshot {
 }
 
 export interface DeferredCompletionController {
-  complete(quest: CompletingQuest): void;
-  undo(id: string): void;
-  undoLast(): void;
+  /** opens a window; false when the quest already has one (or is being sent) */
+  complete(quest: CompletingQuest): boolean;
+  /** true when a waiting window was cancelled */
+  undo(id: string): boolean;
+  /** the id of the cancelled window, or null */
+  undoLast(): string | null;
   flushAll(): void;
   /** replace the sender (the hook keeps the latest callbacks without recreating the controller) */
   setSend(send: (quest: CompletingQuest) => Promise<void>): void;
@@ -63,26 +66,28 @@ export function createDeferredCompletionController(
     });
   };
 
-  const undo = (id: string) => {
+  const undo = (id: string): boolean => {
     const entry = timers.get(id);
-    if (!entry) return;
+    if (!entry) return false;
     clearTimeout(entry.timer);
     timers.delete(id);
     refresh();
+    return true;
   };
 
   return {
     complete(quest) {
       // a second tap opens no second window (also while the request is in flight)
-      if (timers.has(quest.id) || sending.has(quest.id)) return;
+      if (timers.has(quest.id) || sending.has(quest.id)) return false;
       const entry: PendingCompletion = { ...quest, startedAt: Date.now() };
       timers.set(quest.id, { timer: setTimeout(() => fire(quest.id), delayMs), quest: entry });
       refresh();
+      return true;
     },
     undo,
     undoLast() {
       const last = [...timers.keys()].at(-1);
-      if (last) undo(last);
+      return last && undo(last) ? last : null;
     },
     flushAll() {
       for (const id of [...timers.keys()]) fire(id);

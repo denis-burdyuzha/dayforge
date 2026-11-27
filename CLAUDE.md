@@ -112,6 +112,8 @@ Supabase CLI: Docker не запускать; удалённый проект �
 8. В конце каждой сессии самому обновить `docs/ai-context/progress.md`.
 9. Не перезаписывай файлы через PowerShell Get-Content/Set-Content — только инструментами редактирования или с
    явной записью UTF-8 без BOM. Prettier — только на изменённых файлах.
+10. Клиент не пишет игровые данные напрямую — только через SECURITY DEFINER RPC с проверкой auth.uid(). Любая новая
+    таблица по умолчанию только для чтения клиентом (см. `docs/ai-context/security.md`).
 
 Дополнительно (из опыта прошлых агентов):
 
@@ -128,6 +130,7 @@ Supabase CLI: Docker не запускать; удалённый проект �
 - [ai-day-report.md](docs/ai-context/ai-day-report.md) — AI-разбор отчёта: схема, лимиты, коды ошибок, eval, деплой.
 - [ai-day-plan.md](docs/ai-context/ai-day-plan.md) — AI-план дня: схема, лимиты, коды, таймлайн, eval.
 - [adding-creature.md](docs/ai-context/adding-creature.md) — добавить/обновить зверя: SVG, разметка aspectAccent, сборка.
+- [security.md](docs/ai-context/security.md) — доступ к данным: что клиент может, RPC записи, проверки.
 - [progress.md](docs/ai-context/progress.md) — что сделано, текущий статус, открытые задачи, расхождения, результат сборки.
 
 ## Инструкция себе

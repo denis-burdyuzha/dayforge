@@ -898,6 +898,10 @@ export type Database = {
       };
       delete_quest: { Args: { p_quest_id: string }; Returns: Json };
       get_or_create_daily_plan: { Args: { p_date: string }; Returns: Json };
+      quest_counts_for_league: {
+        Args: { p_quest_id: string };
+        Returns: boolean;
+      };
       save_daily_report: {
         Args: { p_content: string; p_date: string };
         Returns: Json;

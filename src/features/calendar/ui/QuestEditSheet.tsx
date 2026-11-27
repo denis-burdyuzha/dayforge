@@ -42,6 +42,12 @@ export function QuestEditSheet(props: QuestEditSheetProps) {
   );
 }
 
+/** the focused field stays visible above the on-screen keyboard (the sheet scrolls inside) */
+function keepVisible(e: React.FocusEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  window.setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 250);
+}
+
 function QuestForm({
   draft,
   skills,
@@ -101,6 +107,7 @@ function QuestForm({
           value={title}
           maxLength={120}
           onChange={(e) => setTitle(e.target.value)}
+          onFocus={keepVisible}
           autoFocus={!draft.id}
           data-testid="sheet-title"
         />
@@ -114,6 +121,7 @@ function QuestForm({
             value={date}
             disabled={completed}
             onChange={(e) => setDate(e.target.value)}
+            onFocus={keepVisible}
             data-testid="sheet-date"
           />
         </label>
@@ -126,25 +134,28 @@ function QuestForm({
             value={startTime}
             disabled={completed}
             onChange={(e) => setStartTime(e.target.value)}
+            onFocus={keepVisible}
             data-testid="sheet-time"
           />
         </label>
-        <label className={styles.field} htmlFor={ids.duration}>
-          <span>Мин</span>
-          <input
-            id={ids.duration}
-            type="number"
-            min={DURATION_LIMITS.min}
-            max={DURATION_LIMITS.max}
-            step={DURATION_LIMITS.step}
-            value={duration}
-            disabled={completed}
-            onChange={(e) => setDuration(e.target.value)}
-            aria-invalid={!durationOk}
-            data-testid="sheet-duration"
-          />
-        </label>
       </div>
+      <label className={styles.field} htmlFor={ids.duration}>
+        <span>Длительность, мин</span>
+        <input
+          id={ids.duration}
+          type="number"
+          inputMode="numeric"
+          min={DURATION_LIMITS.min}
+          max={DURATION_LIMITS.max}
+          step={DURATION_LIMITS.step}
+          value={duration}
+          disabled={completed}
+          onChange={(e) => setDuration(e.target.value)}
+          onFocus={keepVisible}
+          aria-invalid={!durationOk}
+          data-testid="sheet-duration"
+        />
+      </label>
       <label className={styles.field} htmlFor={ids.skill}>
         <span>Навык</span>
         <select
@@ -152,6 +163,7 @@ function QuestForm({
           value={skillId}
           disabled={completed}
           onChange={(e) => setSkillId(e.target.value)}
+          onFocus={keepVisible}
           data-testid="sheet-skill"
         >
           <option value="">Без навыка (0 XP)</option>
@@ -179,10 +191,11 @@ function QuestForm({
           {busy ? "Сохраняю…" : "Сохранить"}
         </Button>
         {draft.id && !completed && (
-          <div className={styles.sheetSecondary}>
+          <>
             <Button
               type="button"
               variant="secondary"
+              fullWidth
               onClick={onComplete}
               disabled={busy}
               data-testid="sheet-complete"
@@ -191,14 +204,15 @@ function QuestForm({
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="danger"
+              fullWidth
               onClick={onDelete}
               disabled={busy}
               data-testid="sheet-delete"
             >
               Удалить
             </Button>
-          </div>
+          </>
         )}
       </div>
     </form>

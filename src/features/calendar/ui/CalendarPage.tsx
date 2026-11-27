@@ -19,6 +19,12 @@ import {
 } from "@/entities/daily-plan/model/calendar";
 import type { CalendarQuest, QuestUpdateInput } from "@/entities/daily-plan/model/dailyPlanTypes";
 import { useUserToday } from "@/entities/profile/model/useProfile";
+import {
+  type CompletingQuest,
+  useDeferredQuestCompletion,
+} from "@/features/quest-completion/model/useDeferredQuestCompletion";
+import { QuestUndoBar } from "@/features/quest-completion/ui/QuestUndoBar";
+import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
 import { dayLabel } from "@/shared/lib/dayLabel";
 import { addDays } from "@/shared/lib/userDay";
 import { ErrorState } from "@/shared/ui/ErrorState/ui/ErrorState";
@@ -97,9 +103,28 @@ export function CalendarPage() {
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["calendar", characterId] });
 
-  const allQuests = (questsQuery.data ?? []).map((q) =>
-    moved.has(q.id) ? { ...q, startTime: moved.get(q.id) ?? q.startTime } : q,
-  );
+  /** complete_quest answered (after the undo window): XP toast, LevelUp, caches */
+  function handleCompleted(_quest: CompletingQuest, result: QuestCompletionResult) {
+    let text = result.xpAwarded > 0 ? `+${result.xpAwarded} XP` : "Выполнено ✓";
+    if (result.attributeGained > 0) text += ` · +${result.attributeGained} к хар.`;
+    if (result.skillXpGained > 0) text += ` · +${result.skillXpGained} к навыку`;
+    showToast(text);
+    if (result.newLevel > result.oldLevel) setLevelUp(result.newLevel);
+    void refresh();
+    if (userId) void queryClient.invalidateQueries({ queryKey: characterQueryKey(userId) });
+    void queryClient.invalidateQueries({ queryKey: ["character", characterId] });
+  }
+
+  const completion = useDeferredQuestCompletion({
+    characterId,
+    onCompleted: handleCompleted,
+    onFailed: (_quest, message) => showToast(message, true),
+  });
+
+  const allQuests = (questsQuery.data ?? []).map((q) => {
+    const shown = moved.has(q.id) ? { ...q, startTime: moved.get(q.id) ?? q.startTime } : q;
+    return completion.optimisticIds.has(q.id) ? { ...shown, status: "completed" as const } : shown;
+  });
   const dayQuests = allQuests.filter((q) => q.date === date);
 
   function openQuest(q: CalendarQuest) {
@@ -197,27 +222,11 @@ export function CalendarPage() {
     }
   }
 
-  /** «Выполнено» — the existing completion (XP, level, skill, snapshot) via complete_quest */
-  async function complete() {
-    if (!draft?.id || !characterId) return;
-    setBusy(true);
-    setSheetError(null);
-    try {
-      const result = await dailyPlanRepository.completeQuest(draft.id, characterId);
-      let text = result.xpAwarded > 0 ? `+${result.xpAwarded} XP` : "Выполнено ✓";
-      if (result.attributeGained > 0) text += ` · +${result.attributeGained} к хар.`;
-      if (result.skillXpGained > 0) text += ` · +${result.skillXpGained} к навыку`;
-      showToast(text);
-      if (result.newLevel > result.oldLevel) setLevelUp(result.newLevel);
-      setDraft(null);
-      await refresh();
-      if (userId) void queryClient.invalidateQueries({ queryKey: characterQueryKey(userId) });
-      void queryClient.invalidateQueries({ queryKey: ["character", characterId] });
-    } catch (err) {
-      setSheetError(questErrorMessage(err));
-    } finally {
-      setBusy(false);
-    }
+  /** «Выполнено» — shows at once, complete_quest is sent after the 5-second undo window */
+  function complete() {
+    if (!draft?.id) return;
+    completion.complete({ id: draft.id, title: draft.title });
+    setDraft(null);
   }
 
   if (!dayReady || (questsQuery.isLoading && !questsQuery.data)) {
@@ -338,8 +347,10 @@ export function CalendarPage() {
         onClose={() => !busy && setDraft(null)}
         onSave={(input) => void save(input)}
         onDelete={() => void remove()}
-        onComplete={() => void complete()}
+        onComplete={complete}
       />
+
+      <QuestUndoBar pending={completion.pending} onUndoLast={completion.undoLast} />
 
       {levelUp !== null && <LevelUp level={levelUp} onComplete={() => setLevelUp(null)} />}
 

@@ -23,7 +23,11 @@
 - GuestLayout: `/` (Landing), `/onboarding`, `/login`.
 - `/auth/callback` — завершение OAuth + досабмит онбординга из `localStorage["dayforge:onboarding:draft"]`.
 - ProtectedLayout → AppShell: `/app` (HomePage), `/app/plan` (`?date=`), `/app/calendar` (`?date=&view=day|week`),
-  `/app/report`, `/app/settings` (граница дня); заглушки `/app/report/review`, `/app/character`.
+  `/app/report`, `/app/settings`; заглушки `/app/report/review`, `/app/character`.
+- Шапка: кнопка профиля (аватар + уровень) ведёт на `/app/settings` (шестерёнки нет). Настройки
+  (`pages/SettingsPage`): список секций `SECTIONS` (id + компонент, каждая через `SettingsSection`) —
+  «Аккаунт» (email, «Выйти» → `signOut` + полная перезагрузка на лендинг) и «Мой день» (вопрос о времени сна).
+  Новая секция = компонент в `ui/` + запись в `SECTIONS`.
 - Нижняя навигация: Главная, План, Календарь, Отчёт (иконки lucide). ProtectedLayout синхронизирует
   `profiles.timezone` с часовым поясом устройства при входе.
 - `*` → `/`.
@@ -78,7 +82,16 @@ GuestLayout: ready на `/`, `/login`, `/onboarding` → `/app`; needs-onboardin
    шкале — новый квест. Запись только `create_quest`/`update_quest`/`delete_quest`/`complete_quest`; при ошибке блок
    возвращается и показывается сообщение. Данные — `dailyPlanRepository.getQuestsInRange` (ключ
    `['calendar', characterId, monday]`).
-2. Отметка квеста → RPC `complete_quest(p_quest_id)` → XP, уровень, атрибуты, навык; micro-toast; LevelUp при росте уровня.
+2. Отметка квеста (план, карточка календаря) → **окно отмены 5 с** (`features/quest-completion`:
+   `useDeferredQuestCompletion` + `QuestUndoBar`): квест сразу выглядит выполненным, плашка «Квест выполнен ·
+   Отменить» с полосой отсчёта; только по истечении окна RPC `complete_quest(p_quest_id)` → XP, уровень, атрибуты,
+   навык; micro-toast; LevelUp при росте уровня. У каждого квеста своё окно; при `visibilitychange`→hidden,
+   `pagehide` и уходе со страницы всё ожидающее отправляется сразу; ошибка → квест возвращается + сообщение.
+   Сервер не менялся. Ядро — `deferredCompletion.ts` (без React, тесты на таймерах).
+   2a. «Мой день» в настройках: вопрос «Во сколько ты обычно ложишься спать?» → `profiles.day_start_time` = время
+   сна + 2 ч (не позже 06:00), «До полуночи» = 04:00 (`entities/profile/model/bedtime.ts`). Отдельной колонки нет;
+   выбор запоминается на устройстве (localStorage `dayforge:bedtime-choice`) только чтобы отличить 02:00 от
+   «До полуночи» (оба дают 04:00).
    Квест без навыка (с 26.11.2026) завершается с 0 XP и без атрибутов.
 3. `/app/report` (с 26.11.2026): свободный текст → «Разобрать день» → Edge Function `parse-day-report` → превью
    событий (правка часов/навыков) → «Подтвердить» → RPC `apply_day_report` → `completeDay` сохраняет текст → LevelUp.

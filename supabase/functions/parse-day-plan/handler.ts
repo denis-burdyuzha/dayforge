@@ -12,7 +12,7 @@ export interface PlanHandlerDeps {
 export function handleRequest(req: Request, deps: PlanHandlerDeps): Promise<Response> {
   return handleAiRequest(req, {
     name: "parse-day-plan",
-    bodyHint: "{ planDate, text, nowLocal, timezone }",
+    bodyHint: "{ planDate, text, nowLocal, timezone, dayStartTime? }",
     authenticate: deps.authenticate,
     async run(authorization, userId, body) {
       const result = await parseDayPlan(deps.parseDeps(authorization), userId, body);

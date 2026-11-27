@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { useUserToday } from "@/entities/profile/model/useProfile";
+
 import { characterRepository } from "../api/characterRepository";
 import type { CharacterSkill } from "../model/characterSkillTypes";
 import { enrichSkillWithStats } from "../model/characterSkillTypes";
@@ -14,6 +16,7 @@ import { useCharacter } from "./useCharacter";
 export function useCharacterData(userId: string | undefined) {
   const characterQuery = useCharacter(userId);
   const characterId = characterQuery.data?.id;
+  const { today, dayStartTime, ready: dayReady } = useUserToday(userId);
 
   const attributesQuery = useQuery<CharacterAttribute[]>({
     queryKey: ["character", characterId, "attributes"],
@@ -23,9 +26,9 @@ export function useCharacterData(userId: string | undefined) {
   });
 
   const stateQuery = useQuery<DailyState | null>({
-    queryKey: ["character", characterId, "state", "today"],
-    queryFn: () => characterRepository.getTodayState(characterId!),
-    enabled: Boolean(characterId),
+    queryKey: ["character", characterId, "state", today],
+    queryFn: () => characterRepository.getDayState(characterId!, today),
+    enabled: Boolean(characterId) && dayReady,
     staleTime: 30_000,
   });
 
@@ -72,6 +75,9 @@ export function useCharacterData(userId: string | undefined) {
     xpEvents: xpEventsQuery.data ?? [],
     /** User-defined skills with computed level + form stats */
     characterSkills: (characterSkillsQuery.data ?? []).map(enrichSkillWithStats),
+    /** the user's day (by the profile's day boundary) */
+    today,
+    dayStartTime,
     isLoading,
     error,
   };

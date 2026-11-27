@@ -15,12 +15,13 @@ export function createSupabaseStore(
     countParseRequestsSince: (userId, sinceIso) =>
       countRequestsSince(serviceClient, "day_plan_parses", userId, sinceIso),
 
-    async loadContext(userId, planDate): Promise<PlanParseContext> {
-      const { skills, quests } = await loadSkillsAndQuests(userClient, userId, planDate);
+    async loadContext(userId, dates): Promise<PlanParseContext> {
+      const { skills, quests } = await loadSkillsAndQuests(userClient, userId, dates);
       return {
         skills,
         quests: quests.map((q) => ({
           id: q.id,
+          date: q.plan_date,
           title: q.title,
           startTime: q.start_time ? q.start_time.slice(0, 5) : null,
           durationMinutes:

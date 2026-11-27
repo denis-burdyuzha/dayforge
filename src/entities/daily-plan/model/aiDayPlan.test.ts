@@ -16,6 +16,7 @@ import { layoutTimeline } from "./timelineLayout";
 
 const item = (over: Partial<PlanItem> = {}): PlanItem => ({
   title: "Английский",
+  date: "2026-11-27",
   startTime: "10:00",
   durationMinutes: 60,
   skill: { kind: "existing", skillId: "s1" },
@@ -23,6 +24,28 @@ const item = (over: Partial<PlanItem> = {}): PlanItem => ({
   confidence: "high",
   note: null,
   ...over,
+});
+
+describe("AI day plan model — two dates", () => {
+  it("preview sorted by date then time; payload carries the date; overlaps only within a date", () => {
+    const items = toEditableItems([
+      item({ title: "Завтра утро", date: "2026-11-28", startTime: "08:00" }),
+      item({ title: "Сегодня вечер", startTime: "20:00" }),
+      item({ title: "Сегодня утро", startTime: "08:00" }),
+    ]);
+    expect(items.map((i) => i.title)).toEqual(["Сегодня утро", "Сегодня вечер", "Завтра утро"]);
+    expect(toApplyPayload(items).map((p) => p.date)).toEqual([
+      "2026-11-27",
+      "2026-11-27",
+      "2026-11-28",
+    ]);
+    const overlaps = findOverlaps(
+      items.map((i) => ({ ...i, key: i.key })),
+      [{ key: "q", title: "Квест", date: "2026-11-28", startTime: "08:30", durationMinutes: 30 }],
+    );
+    expect(overlaps.get(items[0]!.key)).toBeUndefined(); // 08:00 today vs 08:00 tomorrow
+    expect(overlaps.get(items[2]!.key)).toEqual(["Квест"]);
+  });
 });
 
 describe("AI day plan model", () => {
@@ -76,12 +99,14 @@ describe("AI day plan model", () => {
     expect(toApplyPayload(items)).toEqual([
       {
         title: "Урок",
+        date: "2026-11-27",
         start_time: "10:00",
         duration_minutes: 60,
         skill: { kind: "existing", skill_id: "s1" },
       },
       {
         title: "Шахматы",
+        date: "2026-11-27",
         start_time: null,
         duration_minutes: 45,
         skill: { kind: "new", name: "Шахматы", attributes: ["intelligence"], icon: "chess" },

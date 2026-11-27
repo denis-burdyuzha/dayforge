@@ -1,5 +1,5 @@
 ﻿import { supabase } from "@/shared/api/supabase/client";
-import { getLocalDateString, getLocalDayRangeIso } from "@/shared/lib/localDate";
+import { getUserDayRangeIso } from "@/shared/lib/userDay";
 
 import type { DailyReport, DayCompletionResult } from "../model/dailyReportTypes";
 
@@ -7,8 +7,8 @@ export const dailyReportRepository = {
   /**
    * Returns today'"'"'s report for the character, or null if none completed yet.
    */
-  async getTodayReport(characterId: string): Promise<DailyReport | null> {
-    const today = getLocalDateString();
+  async getReport(characterId: string, date: string): Promise<DailyReport | null> {
+    const today = date;
 
     const { data, error } = await supabase
       .from("daily_reports")
@@ -39,8 +39,13 @@ export const dailyReportRepository = {
    * 3. Calculate attribute deltas from today'"'"'s completed quests with attribute_id
    * 4. Return DayCompletionResult (no extra XP awarded here — already done per quest)
    */
-  async completeDay(characterId: string, text: string): Promise<DayCompletionResult> {
-    const today = getLocalDateString();
+  async completeDay(
+    characterId: string,
+    date: string,
+    dayStartTime: string,
+    text: string,
+  ): Promise<DayCompletionResult> {
+    const today = date;
 
     // 1. Upsert report (RPC save_daily_report — the client never writes game tables directly)
     const { data: savedReport, error: reportError } = await supabase.rpc("save_daily_report", {
@@ -59,8 +64,8 @@ export const dailyReportRepository = {
     };
 
     // 2. Aggregate XP gained today
-    // local day bounds (not the UTC day)
-    const { start: todayStart, end: todayEnd } = getLocalDayRangeIso(today);
+    // bounds of the user's day (from the day boundary to the next one), not the UTC day
+    const { start: todayStart, end: todayEnd } = getUserDayRangeIso(today, dayStartTime);
 
     const { data: txRows, error: txError } = await supabase
       .from("xp_transactions")

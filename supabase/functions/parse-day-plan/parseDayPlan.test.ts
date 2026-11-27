@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { ToolRequest } from "../_shared/ai/provider.ts";
 import { handleRequest } from "./handler.ts";
-import { localDate, parseDayPlan, type PlanParseDeps, sanitizeItems } from "./parseDayPlan.ts";
+import {
+  localDate,
+  nextDayAllowed,
+  parseDayPlan,
+  type PlanParseDeps,
+  sanitizeItems,
+} from "./parseDayPlan.ts";
+import { planDateStatus } from "./prompt.ts";
 import type { ModelOutput } from "./schema.ts";
 import type { AiProvider, DayPlanStore, PlanAttemptLog, PlanParseContext } from "./types.ts";
 import { ProviderError } from "./types.ts";
@@ -15,12 +22,20 @@ const CONTEXT: PlanParseContext = {
     { id: "skill-run", name: "Бег", aliases: [], attributes: ["endurance"] },
   ],
   quests: [
-    { id: "q1", title: "Пробежка", startTime: "07:00", durationMinutes: 30, status: "pending" },
+    {
+      id: "q1",
+      date: "2026-11-28",
+      title: "Пробежка",
+      startTime: "07:00",
+      durationMinutes: 30,
+      status: "pending",
+    },
   ],
 };
 
 const item = (over: Record<string, unknown> = {}) => ({
   title: "Урок английского",
+  date: "plan",
   startTime: "10:00",
   durationMinutes: 60,
   skill: { kind: "existing", skillId: "skill-en" },
@@ -141,6 +156,7 @@ describe("parseDayPlan — model calls", () => {
       items: [
         {
           title: "Урок английского",
+          date: "2026-11-27",
           startTime: "10:00",
           durationMinutes: 60,
           skill: { kind: "existing", skillId: "skill-en" },
@@ -170,6 +186,21 @@ describe("parseDayPlan — model calls", () => {
     const p = scriptedProvider([{ items: [item()] }]);
     await parseDayPlan(deps(p), USER, { ...BODY, planDate: "2026-11-28" });
     expect(p.calls[0]!.user).toContain('"isToday": false');
+  });
+
+  it("dayStartTime: before the boundary «today» is the previous date; a bad boundary → 400", async () => {
+    // NOW in Moscow is 2026-11-27 morning; a 06:00 boundary with nowLocal 05:00 → the user's day is the 26th
+    const p = scriptedProvider([{ items: [item()] }]);
+    await parseDayPlan(deps(p), USER, {
+      ...BODY,
+      planDate: "2026-11-26",
+      nowLocal: "05:00",
+      dayStartTime: "06:00",
+    });
+    expect(p.calls[0]!.user).toContain('"isToday": true');
+    expect(
+      await parseDayPlan(deps(scriptedProvider([])), USER, { ...BODY, dayStartTime: "07:00" }),
+    ).toMatchObject({ ok: false, code: "INVALID_INPUT" });
   });
 
   it("timeout → one retry → ok; invalid → retry with the error → ok", async () => {
@@ -212,8 +243,14 @@ describe("parseDayPlan — model calls", () => {
 });
 
 describe("sanitizeItems", () => {
+  /** isToday: planDate = the user's today = the calendar date (2026-11-27); else the plan is for tomorrow */
   const sanitize = (items: unknown[], isToday = false, nowLocal = "08:00") =>
-    sanitizeItems({ items } as ModelOutput, CONTEXT, { isToday, nowLocal });
+    sanitizeItems({ items } as ModelOutput, CONTEXT, {
+      planDate: isToday ? "2026-11-27" : "2026-11-28",
+      userToday: "2026-11-27",
+      calendarDate: "2026-11-27",
+      nowLocal,
+    });
 
   it("foreign skillId → new skill named after the item (low); a new name matching an alias → existing", () => {
     const [foreign, alias] = sanitize([
@@ -258,6 +295,67 @@ describe("sanitizeItems", () => {
     expect(sanitize([item({ startTime: "07:00" })], false, "15:32")[0]!.startTime).toBe("07:00");
   });
 
+  it("past items cascade after now, in time order, each after the previous one", () => {
+    const [b, a, keep] = sanitize(
+      [
+        item({ startTime: "09:00", durationMinutes: 30 }),
+        item({ startTime: "07:00", durationMinutes: 60 }),
+        item({ startTime: "20:00" }),
+      ],
+      true,
+      "15:32",
+    );
+    expect(a!.startTime).toBe("15:35"); // earliest first
+    expect(b!.startTime).toBe("16:35"); // after a (60 min)
+    expect(keep!.startTime).toBe("20:00");
+  });
+
+  it("night before the day boundary: the user's day is the previous date", () => {
+    const opts = { userToday: "2026-11-26", calendarDate: "2026-11-27", nowLocal: "01:00" };
+    // planning the user's today (26th) at 01:00 on the 27th: all its times are past, no slot left
+    const [late] = sanitizeItems(
+      { items: [item({ startTime: "22:00" })] } as ModelOutput,
+      CONTEXT,
+      {
+        ...opts,
+        planDate: "2026-11-26",
+      },
+    );
+    expect(late).toMatchObject({ startTime: null, confidence: "low" });
+    // planning the next day (27th = calendar today): morning stays, 00:30 is past → after 01:00
+    const [night, morning] = sanitizeItems(
+      { items: [item({ startTime: "00:30" }), item({ startTime: "08:00" })] } as ModelOutput,
+      CONTEXT,
+      { ...opts, planDate: "2026-11-27" },
+    );
+    expect(night!.startTime).toBe("01:00");
+    expect(morning!.startTime).toBe("08:00");
+  });
+
+  it("date: plan → planDate, next → the day after; the same title on the other date is not a duplicate", () => {
+    // planDate 2026-11-27 (today); «Пробежка» exists on the 28th
+    const [today, tomorrow] = sanitize(
+      [item({ title: "Пробежка", date: "plan" }), item({ title: "Пробежка", date: "next" })],
+      true,
+    );
+    expect(today).toMatchObject({ date: "2026-11-27", duplicateOfExisting: false });
+    expect(tomorrow).toMatchObject({ date: "2026-11-28", duplicateOfExisting: true });
+  });
+
+  it("past items shift only on the date that is in progress; next-day items keep their time", () => {
+    const [evening, nextMorning] = sanitize(
+      [item({ startTime: "07:00", date: "plan" }), item({ startTime: "07:00", date: "next" })],
+      true,
+      "19:02",
+    );
+    expect(evening!.startTime).toBe("19:05");
+    expect(nextMorning).toMatchObject({
+      date: "2026-11-28",
+      startTime: "07:00",
+      confidence: "high",
+    });
+  });
+
   it("duplicate: the model flag or the same title as a quest on the date", () => {
     const [byTitle, byModel, fresh] = sanitize([
       item({ title: "  пробежка " }),
@@ -272,6 +370,37 @@ describe("sanitizeItems", () => {
   it("low confidence always carries a note", () => {
     const [x] = sanitize([item({ confidence: "low", note: null })]);
     expect(x!.note).toBeTruthy();
+  });
+});
+
+describe("nextDayAllowed", () => {
+  it("next only while the plan date is in progress and the text says «завтра» or it is evening", () => {
+    expect(nextDayAllowed("in_progress", "сегодня гитара, завтра утром бег", "12:00")).toBe(true);
+    expect(nextDayAllowed("in_progress", "вечером гитара, утром бег", "19:00")).toBe(true);
+    expect(nextDayAllowed("in_progress", "пробежка утром, вечером гитара", "15:30")).toBe(false);
+    expect(nextDayAllowed("ahead", "завтра в 8 пробежка", "20:30")).toBe(false);
+  });
+
+  it("a disallowed next goes back to the plan date", () => {
+    const [x] = sanitizeItems({ items: [item({ date: "next" })] } as ModelOutput, CONTEXT, {
+      planDate: "2026-11-27",
+      userToday: "2026-11-27",
+      calendarDate: "2026-11-27",
+      nowLocal: "08:00",
+      allowNext: false,
+    });
+    expect(x!.date).toBe("2026-11-27");
+  });
+});
+
+describe("planDateStatus", () => {
+  const s = (planDate: string, nowDate: string, nowLocal: string, dayStartTime = "04:00") =>
+    planDateStatus({ planDate, nowDate, nowLocal, dayStartTime });
+  it("in progress after the boundary on the plan date; ahead before it or on a later date", () => {
+    expect(s("2026-11-27", "2026-11-27", "15:30")).toBe("in_progress");
+    expect(s("2026-11-27", "2026-11-27", "01:00")).toBe("ahead"); // the night before the 04:00 boundary
+    expect(s("2026-11-28", "2026-11-27", "20:00")).toBe("ahead");
+    expect(s("2026-11-26", "2026-11-27", "01:00")).toBe("in_progress"); // the user's day after midnight
   });
 });
 

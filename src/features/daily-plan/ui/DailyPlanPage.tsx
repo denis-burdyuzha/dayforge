@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { useAppState } from "@/entities/auth/model/useAppState";
 import { characterRepository } from "@/entities/character/api/characterRepository";
@@ -8,9 +9,17 @@ import type { CharacterAttribute } from "@/entities/character/model/characterTyp
 import { type SkillView, toSkillView } from "@/entities/character/model/skillPresentation";
 import { characterQueryKey } from "@/entities/character/model/useCharacter";
 import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanRepository";
-import type { ApplyDayPlanResult, TimedEntry } from "@/entities/daily-plan/model/aiDayPlan";
+import {
+  type ApplyDayPlanResult,
+  formatDuration,
+  sortByTime,
+  type TimedEntry,
+} from "@/entities/daily-plan/model/aiDayPlan";
 import type { DailyPlan, NewQuestInput, Quest } from "@/entities/daily-plan/model/dailyPlanTypes";
-import { getLocalDateString, parseLocalDate } from "@/shared/lib/localDate";
+import { useUserToday } from "@/entities/profile/model/useProfile";
+import { dayLabel } from "@/shared/lib/dayLabel";
+import { parseLocalDate } from "@/shared/lib/localDate";
+import { addDays, defaultPlanTarget, type PlanTarget } from "@/shared/lib/userDay";
 import { Card } from "@/shared/ui/Card/ui/Card";
 import { EmptyState } from "@/shared/ui/EmptyState/ui/EmptyState";
 import { LevelUp } from "@/shared/ui/LevelUp/ui/LevelUp";
@@ -18,7 +27,6 @@ import { Loading } from "@/shared/ui/Loading/ui/Loading";
 
 import { AiDayPlan } from "./AiDayPlan";
 import styles from "./DailyPlanPage.module.scss";
-import { DayTimeline } from "./DayTimeline";
 
 // ---------------------------------------------------------------------------
 // Micro-toast
@@ -342,16 +350,20 @@ function QuestItem({
 
       <div className={styles.questBody}>
         <div className={styles.questTitle}>{quest.title}</div>
-        {quest.durationMinutes != null && !quest.skillName && (
-          <div className={styles.questMeta}>
-            <span className={styles.questSkill}>{quest.durationMinutes} мин · без навыка</span>
-          </div>
-        )}
-        {quest.skillName && (
+        {(quest.startTime || quest.skillName || quest.durationMinutes != null) && (
           <div className={styles.questMeta}>
             <span className={styles.questSkill}>
-              🎯 {quest.skillName}
-              {quest.hours != null ? ` · ${quest.hours}ч` : ""}
+              {[
+                quest.startTime,
+                quest.skillName ? `🎯 ${quest.skillName}` : "без навыка",
+                quest.durationMinutes != null
+                  ? formatDuration(quest.durationMinutes)
+                  : quest.hours != null
+                    ? `${quest.hours}ч`
+                    : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           </div>
         )}
@@ -382,10 +394,40 @@ export function DailyPlanPage() {
   const addSectionRef = useRef<HTMLDivElement>(null);
 
   const { toasts, push: pushToast } = useMicroToasts();
+  // the user's day by the profile's day boundary
+  const { today, tomorrow, dayStartTime, ready: dayReady } = useUserToday(userId);
+  const [nextDayQuests, setNextDayQuests] = useState<Quest[]>([]);
 
-  // Load today's plan, skills, and attributes
+  // which day the page plans: «Сегодня» / «Завтра» (default by the clock when the page opened), or
+  // ?date=YYYY-MM-DD from the calendar
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get("date");
+  const [openedAt] = useState(() => new Date());
+  const [chosenTarget, setTarget] = useState<PlanTarget | null>(null);
+  const target: PlanTarget | null =
+    chosenTarget ??
+    (!dayReady
+      ? null
+      : dateParam === today
+        ? "today"
+        : dateParam === tomorrow
+          ? "tomorrow"
+          : defaultPlanTarget(openedAt, dayStartTime));
+  /** a date from the calendar that is neither today nor tomorrow is planned as is (no switch) */
+  const customDate =
+    dateParam &&
+    /^\d{4}-\d{2}-\d{2}$/.test(dateParam) &&
+    dateParam !== today &&
+    dateParam !== tomorrow
+      ? dateParam
+      : null;
+  const planDate = customDate ?? (target === "tomorrow" ? tomorrow : today);
+  const nextDate = addDays(planDate, 1);
+  const textInputId = "ai-day-plan-text";
+
+  // Load the plan of the selected date (+ the next day's quests for overlaps), skills, and attributes
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !dayReady || target === null) return;
 
     let cancelled = false;
 
@@ -393,11 +435,12 @@ export function DailyPlanPage() {
       .then(async (characterId) => {
         if (!characterId || cancelled) return;
 
-        const [todayPlan, existingSkills, charAttributes] = await Promise.all([
-          dailyPlanRepository.getTodayPlan(characterId).then(async (plan) => {
-            if (!plan) return dailyPlanRepository.createTodayPlan(characterId);
+        const [datePlan, nextPlan, existingSkills, charAttributes] = await Promise.all([
+          dailyPlanRepository.getPlan(characterId, planDate).then(async (plan) => {
+            if (!plan) return dailyPlanRepository.getOrCreatePlan(planDate);
             return plan;
           }),
+          dailyPlanRepository.getPlan(characterId, nextDate),
           characterRepository.getCharacterSkills(characterId),
           characterRepository.getCharacterAttributes(characterId),
         ]);
@@ -407,7 +450,8 @@ export function DailyPlanPage() {
         setExistingSkillNames(existingSkills.map((s) => s.name));
         setSkills(existingSkills.map((s) => toSkillView(enrichSkillWithStats(s), charAttributes)));
         setAttributes(charAttributes);
-        setPlan(todayPlan);
+        setPlan(datePlan);
+        setNextDayQuests(nextPlan?.quests ?? []);
         setLoading(false);
       })
       .catch((err: unknown) => {
@@ -420,7 +464,7 @@ export function DailyPlanPage() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, dayReady, target, planDate, nextDate]);
 
   async function handleCompleteQuest(quest: Quest) {
     if (!plan || completing) return;
@@ -491,11 +535,13 @@ export function DailyPlanPage() {
   async function handleAiPlanApplied(result: ApplyDayPlanResult) {
     if (!plan) return;
     const characterId = plan.characterId;
-    const [fresh, charSkills] = await Promise.all([
-      dailyPlanRepository.getTodayPlan(characterId),
+    const [fresh, freshNext, charSkills] = await Promise.all([
+      dailyPlanRepository.getPlan(characterId, plan.date),
+      dailyPlanRepository.getPlan(characterId, addDays(plan.date, 1)),
       characterRepository.getCharacterSkills(characterId),
     ]);
     if (fresh) setPlan(fresh);
+    setNextDayQuests(freshNext?.quests ?? []);
     setSkills(charSkills.map((s) => toSkillView(enrichSkillWithStats(s), attributes)));
     setExistingSkillNames(charSkills.map((s) => s.name));
     pushToast(`В план добавлено: ${result.quests.length}`);
@@ -511,7 +557,15 @@ export function DailyPlanPage() {
     );
   }
 
-  if (loading) {
+  /** «Добавить к плану текстом»: back to the plan text field (a new parse appends to the date) */
+  function focusTextInput() {
+    const input = document.getElementById(textInputId);
+    input?.scrollIntoView({ behavior: "smooth", block: "center" });
+    input?.focus({ preventScroll: true });
+  }
+
+  // first load, or the other day was picked and its plan is still loading
+  if (loading || (plan !== null && plan.date !== planDate && !error)) {
     return (
       <div className={styles.center}>
         <Loading label="Загружаем план дня…" />
@@ -527,18 +581,22 @@ export function DailyPlanPage() {
     );
   }
 
-  const today = getLocalDateString();
   const pendingCount = plan?.quests.filter((q) => q.status === "pending").length ?? 0;
   const completedCount = plan?.quests.filter((q) => q.status === "completed").length ?? 0;
   const quests = plan?.quests ?? [];
   const timedQuests = quests.filter((q) => q.startTime);
-  const untimedQuests = quests.filter((q) => !q.startTime);
-  const existingTimed: TimedEntry[] = timedQuests.map((q) => ({
+  // quests of the plan date and the next day — overlaps of the preview are checked per date
+  const toTimed = (q: Quest, date: string): TimedEntry => ({
     key: `quest:${q.id}`,
     title: q.title,
+    date,
     startTime: q.startTime,
     durationMinutes: q.durationMinutes ?? (q.hours != null ? Math.round(q.hours * 60) : 30),
-  }));
+  });
+  const existingTimed: TimedEntry[] = [
+    ...timedQuests.map((q) => toTimed(q, planDate)),
+    ...nextDayQuests.filter((q) => q.startTime).map((q) => toTimed(q, nextDate)),
+  ];
 
   return (
     <div className={styles.page}>
@@ -546,7 +604,7 @@ export function DailyPlanPage() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Дневной план</h1>
-          <p className={styles.dateLabel}>{formatDate(today)}</p>
+          <p className={styles.dateLabel}>{formatDate(planDate)}</p>
         </div>
         {plan && plan.quests.length > 0 && (
           <div className={styles.dateLabel}>
@@ -555,10 +613,32 @@ export function DailyPlanPage() {
         )}
       </div>
 
-      {/* AI plan: text → preview → quests with time */}
+      {/* Which day to plan: «Сегодня / Завтра» (a date opened from the calendar is planned as is) */}
+      {!customDate && (
+        <div className={styles.dayToggle} role="radiogroup" aria-label="День плана">
+          {(["today", "tomorrow"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="radio"
+              aria-checked={target === t}
+              className={target === t ? styles.dayToggleActive : styles.dayToggleBtn}
+              onClick={() => setTarget(t)}
+              data-testid={`plan-target-${t}`}
+            >
+              {dayLabel(t === "today" ? today : tomorrow, today)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* AI plan: text → preview → quests with time (each parse appends to the date) */}
       {plan && (
         <AiDayPlan
+          key={plan.date}
           planDate={plan.date}
+          today={today}
+          dayStartTime={dayStartTime}
           skills={skills}
           existingQuests={existingTimed}
           onApplied={handleAiPlanApplied}
@@ -566,54 +646,33 @@ export function DailyPlanPage() {
         />
       )}
 
-      {/* Day timeline (timed quests) + the rest */}
+      {/* Quests of the day in time order (the timeline lives in the «Календарь» tab) */}
       {quests.length > 0 ? (
         <>
-          {timedQuests.length > 0 && (
-            <>
-              <p className={styles.sectionTitle}>
-                {pendingCount > 0 ? "План дня" : "Все выполнено!"}
-              </p>
-              <DayTimeline
-                quests={timedQuests}
-                skills={skills}
+          <p className={styles.sectionTitle}>
+            {pendingCount > 0 ? "Квесты дня" : "Все выполнено!"}
+          </p>
+          <div className={styles.questList} data-testid="plan-quest-list">
+            {sortByTime(quests).map((quest) => (
+              <QuestItem
+                key={quest.id}
+                quest={quest}
                 onComplete={handleCompleteQuest}
-                completingId={completing}
+                completing={completing === quest.id}
               />
-            </>
-          )}
-          {untimedQuests.length > 0 && (
-            <>
-              <p className={styles.sectionTitle}>
-                {timedQuests.length > 0
-                  ? "Без времени"
-                  : pendingCount > 0
-                    ? "Квесты"
-                    : "Все выполнено!"}
-              </p>
-              <div className={styles.questList}>
-                {untimedQuests.map((quest) => (
-                  <QuestItem
-                    key={quest.id}
-                    quest={quest}
-                    onComplete={handleCompleteQuest}
-                    completing={completing === quest.id}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+            ))}
+          </div>
         </>
       ) : (
         <div className={styles.emptyQuestsWrap}>
           <EmptyState
             title="Квестов нет"
-            description="Добавь первый квест на сегодня — и начни прокачку."
+            description="Опиши план текстом или добавь первый квест вручную."
           />
         </div>
       )}
 
-      {/* Add quest */}
+      {/* Append to the plan: by text (a new parse adds to the date) or manually */}
       <div className={styles.addSection} ref={addSectionRef}>
         {showAddForm ? (
           <AddQuestForm
@@ -623,14 +682,26 @@ export function DailyPlanPage() {
             attributes={attributes}
           />
         ) : (
-          <button
-            type="button"
-            className={styles.addToggleBtn}
-            onClick={() => setShowAddForm(true)}
-          >
-            <span>＋</span>
-            <span>Добавить квест</span>
-          </button>
+          <div className={styles.appendActions}>
+            <button
+              type="button"
+              className={styles.addToggleBtn}
+              onClick={focusTextInput}
+              data-testid="append-text-btn"
+            >
+              <span>✦</span>
+              <span>Добавить к плану текстом</span>
+            </button>
+            <button
+              type="button"
+              className={styles.addToggleBtn}
+              onClick={() => setShowAddForm(true)}
+              data-testid="append-manual-btn"
+            >
+              <span>＋</span>
+              <span>Добавить вручную</span>
+            </button>
+          </div>
         )}
       </div>
 

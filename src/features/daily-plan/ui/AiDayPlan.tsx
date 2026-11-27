@@ -6,6 +6,8 @@ import {
   formatDuration,
   type TimedEntry,
 } from "@/entities/daily-plan/model/aiDayPlan";
+import { dayLabel, shortDate } from "@/shared/lib/dayLabel";
+import { addDays } from "@/shared/lib/userDay";
 import { Button } from "@/shared/ui/Button/ui/Button";
 import { Loading } from "@/shared/ui/Loading/ui/Loading";
 
@@ -15,6 +17,10 @@ import { PlanItemCard } from "./PlanItemCard";
 
 interface AiDayPlanProps {
   planDate: string;
+  /** the user's today — for the «Сегодня / Завтра» group titles */
+  today: string;
+  /** the user's day boundary ("HH:MM") */
+  dayStartTime: string;
   skills: SkillView[];
   existingQuests: ReadonlyArray<TimedEntry>;
   onApplied: (result: ApplyDayPlanResult) => void | Promise<void>;
@@ -57,7 +63,9 @@ function ErrorBanner({
     case "PLAN_HOURS_LIMIT": {
       const total = error.details?.totalMinutes;
       const existing = error.details?.existingMinutes;
-      title = `В плане получается ${typeof total === "number" ? formatDuration(total) : "больше 16 ч"} — максимум ${DAY_PLAN_LIMITS.planMinutesMax / 60} ч`;
+      const date = error.details?.date;
+      const onDate = typeof date === "string" ? ` на ${shortDate(date)}` : "";
+      title = `В плане${onDate} получается ${typeof total === "number" ? formatDuration(total) : "больше 16 ч"} — максимум ${DAY_PLAN_LIMITS.planMinutesMax / 60} ч`;
       text = `${typeof existing === "number" && existing > 0 ? `Уже запланировано: ${formatDuration(existing)}. ` : ""}Сократи длительность или выключи часть пунктов.`;
       onRetry = null;
       break;
@@ -97,12 +105,14 @@ function ErrorBanner({
 /** Morning plan: free text → AI parse → editable preview → apply_day_plan (quests with time on the date) */
 export function AiDayPlan({
   planDate,
+  today,
+  dayStartTime,
   skills,
   existingQuests,
   onApplied,
   onManual,
 }: AiDayPlanProps) {
-  const flow = useAiDayPlan({ planDate, existingQuests, onApplied });
+  const flow = useAiDayPlan({ planDate, dayStartTime, existingQuests, onApplied });
 
   if (flow.phase === "parsing") {
     return (
@@ -155,6 +165,14 @@ export function AiDayPlan({
 
   // preview / applying
   const applying = flow.phase === "applying";
+  const nextDate = addDays(planDate, 1);
+  const planGroup = { date: planDate, label: dayLabel(planDate, today) };
+  const nextGroup = { date: nextDate, label: dayLabel(nextDate, today) };
+  const shortOf = (g: { label: string }) => g.label.split(",")[0]!.toLowerCase();
+  const groups = [
+    { ...planGroup, other: { date: nextDate, short: shortOf(nextGroup) } },
+    { ...nextGroup, other: { date: planDate, short: shortOf(planGroup) } },
+  ];
   return (
     <section className={styles.section} aria-label="Предпросмотр плана">
       <h2 className={styles.sectionTitle}>Проверь план</h2>
@@ -167,19 +185,46 @@ export function AiDayPlan({
           В тексте не нашлось пунктов плана. Допиши текст или добавь квест вручную.
         </p>
       ) : (
-        <div className={styles.cards}>
-          {flow.items.map((item, i) => (
-            <PlanItemCard
-              key={item.key}
-              item={item}
-              skills={skills}
-              overlapsWith={flow.overlaps.get(item.key)}
-              invalidMessage={flow.invalid[i] ?? null}
-              onChange={(patch) => flow.updateItem(item.key, patch)}
-              onTimeCommitted={flow.resort}
-            />
-          ))}
-        </div>
+        groups.map((group) => {
+          const entries = flow.items
+            .map((item, i) => ({ item, i }))
+            .filter(({ item }) => item.date === group.date);
+          if (entries.length === 0) return null;
+          return (
+            <div
+              key={group.date}
+              className={styles.dateGroup}
+              data-testid={`plan-group-${group.date}`}
+            >
+              <h3 className={styles.groupTitle}>{group.label}</h3>
+              <div className={styles.cards}>
+                {entries.map(({ item, i }) => (
+                  <div key={item.key} className={styles.cardWrap}>
+                    <PlanItemCard
+                      item={item}
+                      skills={skills}
+                      overlapsWith={flow.overlaps.get(item.key)}
+                      invalidMessage={flow.invalid[i] ?? null}
+                      onChange={(patch) => flow.updateItem(item.key, patch)}
+                      onTimeCommitted={flow.resort}
+                    />
+                    <button
+                      type="button"
+                      className={styles.moveButton}
+                      onClick={() => flow.moveToDate(item.key, group.other.date)}
+                      disabled={applying}
+                      data-testid="move-item-btn"
+                    >
+                      {group.date === planDate
+                        ? `→ на ${group.other.short}`
+                        : `← на ${group.other.short}`}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })
       )}
 
       <footer className={styles.summary}>

@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
+import { CalendarPage } from "@/features/calendar/ui/CalendarPage";
 import { DailyPlanPage } from "@/features/daily-plan/ui/DailyPlanPage";
 import { DailyReportPage } from "@/features/daily-report/ui/DailyReportPage";
 import { OnboardingPage } from "@/features/onboarding/ui/OnboardingPage";
@@ -8,6 +9,7 @@ import { AvatarPlaygroundPage } from "@/pages/AvatarPlaygroundPage/AvatarPlaygro
 import HomePage from "@/pages/HomePage/HomePage";
 import { LandingPage } from "@/pages/LandingPage/LandingPage";
 import { LoginPage } from "@/pages/LoginPage/LoginPage";
+import { SettingsPage } from "@/pages/SettingsPage/SettingsPage";
 
 import { AppShell } from "../layouts/AppShell";
 import { GuestLayout } from "../layouts/GuestLayout";
@@ -59,6 +61,10 @@ export const appRouter = createBrowserRouter([
             element: <DailyPlanPage />,
           },
           {
+            path: "calendar",
+            element: <CalendarPage />,
+          },
+          {
             path: "report",
             element: <DailyReportPage />,
           },
@@ -72,7 +78,7 @@ export const appRouter = createBrowserRouter([
           },
           {
             path: "settings",
-            element: <div>⚙️ Settings Page </div>,
+            element: <SettingsPage />,
           },
         ],
       },

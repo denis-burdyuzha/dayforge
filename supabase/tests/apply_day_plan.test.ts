@@ -168,6 +168,7 @@ describe("apply_day_plan", () => {
     ]).catch((e: { message: string; detail?: string }) => e);
     expect(err).toMatchObject({ message: "PLAN_HOURS_LIMIT" });
     expect(JSON.parse((err as { detail: string }).detail)).toEqual({
+      date: DATE,
       existingMinutes: 960,
       newMinutes: 5,
       totalMinutes: 965,
@@ -375,5 +376,80 @@ describe("apply_day_plan", () => {
       .catch((e: Error) => e);
     expect(anon).toBeInstanceOf(Error);
     expect((anon as Error).message).toMatch(/permission denied/);
+  });
+});
+
+describe("apply_day_plan — plan date and the next day", () => {
+  const NEXT = "2026-11-21";
+
+  it("items go to their dates; the next day's plan is created; planned_at = scheduled_at", async () => {
+    const parseId = await newParse();
+    const r = await apply(
+      [
+        item({ title: "Вечером гитара", start_time: "20:00", duration_minutes: 30 }),
+        item({ title: "Утром пробежка", start_time: "07:00", duration_minutes: 30, date: NEXT }),
+        item({ title: "Купить хлеб", duration_minutes: 10, date: DATE }),
+      ],
+      parseId,
+    );
+    expect(r.quests.map((q) => [q.title, (q as { date?: string }).date])).toEqual([
+      ["Вечером гитара", DATE],
+      ["Купить хлеб", DATE],
+      ["Утром пробежка", NEXT],
+    ]);
+    expect(
+      await count(
+        `select count(*) from public.quests q join public.daily_plans dp on dp.id = q.daily_plan_id
+         where dp.date = $1 and q.title = 'Утром пробежка' and q.planned_at = q.scheduled_at`,
+        [NEXT],
+      ),
+    ).toBe(1);
+  });
+
+  it("a date other than the plan date or the next day → INVALID_ITEMS, nothing written", async () => {
+    const parseId = await newParse();
+    await expect(apply([item({ date: "2026-11-23" })], parseId)).rejects.toThrow(/INVALID_ITEMS/);
+    await expect(apply([item({ date: "2026-11-19" })], await newParse())).rejects.toThrow(
+      /INVALID_ITEMS/,
+    );
+    expect(await count("select count(*) from public.daily_plans where date = '2026-11-23'")).toBe(
+      0,
+    );
+  });
+
+  it("the 960-minute limit is per date", async () => {
+    // 900 new minutes on the next day pass (its plan is empty) even though the plan date already has 60
+    const ok = await apply(
+      [
+        item({ duration_minutes: 480, date: NEXT }),
+        item({ title: "Ещё", duration_minutes: 420, date: NEXT }),
+      ],
+      await newParse(),
+    );
+    expect(ok.success).toBe(true);
+    // the next day now has 900 → +90 there fails with the date in DETAIL; the plan date is not affected
+    const err = await apply([item({ duration_minutes: 90, date: NEXT })], await newParse()).catch(
+      (e: Error & { detail?: string }) => e,
+    );
+    expect((err as Error).message).toMatch(/PLAN_HOURS_LIMIT/);
+    expect(JSON.parse((err as { detail: string }).detail)).toMatchObject({
+      date: NEXT,
+      existingMinutes: 900,
+      newMinutes: 90,
+    });
+    const okToday = await apply([item({ duration_minutes: 90 })], await newParse());
+    expect(okToday.totalMinutes).toBe(150);
+  });
+
+  it("appending: a second parse adds to the same date (no per-date lock)", async () => {
+    await apply([item({ title: "Первое" })], await newParse());
+    await apply([item({ title: "Второе" })], await newParse());
+    expect(
+      await count(
+        `select count(*) from public.quests q join public.daily_plans dp on dp.id = q.daily_plan_id
+         where dp.date = $1 and q.title in ('Первое', 'Второе')`,
+        [DATE],
+      ),
+    ).toBe(2);
   });
 });

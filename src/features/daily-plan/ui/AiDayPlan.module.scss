@@ -101,6 +101,50 @@
   gap: var(--space-3);
 }
 
+.dateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  & + & {
+    margin-top: var(--space-4);
+  }
+}
+
+.groupTitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.cardWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.moveButton {
+  align-self: flex-end;
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
 .empty {
   padding: var(--space-4);
   border: 1px dashed var(--color-border);

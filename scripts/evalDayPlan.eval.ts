@@ -28,6 +28,7 @@ const PROBLEM_KINDS: Array<[RegExp, string]> = [
   [/: навык /, "неверный навык"],
   [/раньше текущего/, "время в прошлом"],
   [/: время /, "неверное время"],
+  [/: дата /, "неверная дата (plan/next)"],
   [/ мин вместо /, "длительность вне ±30%"],
   [/duplicateOfExisting/, "дубль не распознан / ложный дубль"],
   [/^лишний пункт/, "выдуманный / лишний пункт"],
@@ -74,6 +75,7 @@ it("eval: parse-day-plan fixtures against the real model", async () => {
       text: fixture.text,
       nowLocal: fixture.nowLocal,
       timezone: "UTC",
+      dayStartTime: fixture.dayStartTime ?? "04:00",
     });
     attempts += logs.length;
     retries += Math.max(0, logs.length - 1);

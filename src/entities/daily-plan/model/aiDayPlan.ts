@@ -14,6 +14,8 @@ export type PlanItemSkill =
 
 export interface PlanItem {
   title: string;
+  /** "YYYY-MM-DD": the plan date or the next day */
+  date: string;
   /** "HH:MM" or null */
   startTime: string | null;
   durationMinutes: number;
@@ -41,6 +43,8 @@ export interface ApplyDayPlanResult {
   quests: Array<{
     id: string;
     title: string;
+    /** the quest's date (the plan date or the next day) */
+    date?: string;
     startTime: string | null;
     durationMinutes: number;
     skillId: string | null;
@@ -149,9 +153,17 @@ export function sortByTime<T extends { startTime: string | null }>(items: readon
     .map((x) => x.item);
 }
 
+/** by date, then by start time (items without a time last within their date) */
+export function sortByDateTime<T extends { date: string; startTime: string | null }>(
+  items: readonly T[],
+): T[] {
+  const dates = [...new Set(items.map((i) => i.date))].sort();
+  return dates.flatMap((d) => sortByTime(items.filter((i) => i.date === d)));
+}
+
 /** duplicates of quests already on the date start switched off */
 export function toEditableItems(items: PlanItem[]): EditablePlanItem[] {
-  return sortByTime(items).map((item, i) => ({
+  return sortByDateTime(items).map((item, i) => ({
     ...item,
     key: `p${i}`,
     enabled: !item.duplicateOfExisting,
@@ -197,6 +209,7 @@ export function toApplyPayload(items: ReadonlyArray<EditablePlanItem>) {
     .filter((i) => i.enabled)
     .map((i) => ({
       title: i.title.trim(),
+      date: i.date,
       start_time: i.startTime,
       duration_minutes: i.durationMinutes,
       skill:
@@ -218,13 +231,15 @@ export function toApplyPayload(items: ReadonlyArray<EditablePlanItem>) {
 export interface TimedEntry {
   key: string;
   title: string;
+  /** "YYYY-MM-DD"; entries of different dates never overlap (no date = same day as everything) */
+  date?: string;
   startTime: string | null;
   durationMinutes: number | null;
 }
 
 /**
  * For every timed entry of `items`: titles of the other entries (items + `others`, e.g. quests already on
- * the plan) whose [start, start + duration) intersects it. Touching intervals do not overlap.
+ * the plan) of the same date whose [start, start + duration) intersects it. Touching intervals do not overlap.
  */
 export function findOverlaps(
   items: ReadonlyArray<TimedEntry>,
@@ -241,6 +256,7 @@ export function findOverlaps(
     if (!a) continue;
     const hits = all.filter((o) => {
       if (o.key === item.key) return false;
+      if (item.date && o.date && item.date !== o.date) return false;
       const b = span(o);
       return b !== null && a[0] < b[1] && b[0] < a[1];
     });

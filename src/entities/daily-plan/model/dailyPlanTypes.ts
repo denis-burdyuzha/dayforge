@@ -41,8 +41,16 @@ export interface NewQuestInput {
   skillName?: string | null;
   /** Hours of practice for the skill */
   hours?: number | null;
-  /** Primary attribute ID for new skill creation */
-  primaryAttributeId?: string | null;
-  /** Secondary attribute ID for new skill creation */
-  secondaryAttributeId?: string | null;
+  /** Attribute codes of a NEW skill: primary first, 1–2 (required when the skill does not exist yet) */
+  attributeCodes?: string[];
+}
+
+/** Editable fields of a quest (update_quest — the full state; null = no time / duration / skill) */
+export interface QuestUpdateInput {
+  title: string;
+  /** "YYYY-MM-DD" — another date moves the quest to that day's plan */
+  date: string;
+  startTime: string | null;
+  durationMinutes: number | null;
+  skillId: string | null;
 }

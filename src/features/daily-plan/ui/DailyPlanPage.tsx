@@ -61,6 +61,11 @@ function formatDate(isoDate: string): string {
 // AddQuestForm
 // ---------------------------------------------------------------------------
 
+/** quest duration limits of the database (create_quest: 5–480 minutes) */
+const MIN_QUEST_HOURS = 0.25;
+const MAX_QUEST_HOURS = 8;
+const clampHours = (h: number) => Math.min(MAX_QUEST_HOURS, Math.max(MIN_QUEST_HOURS, h));
+
 interface AddQuestFormProps {
   onAdd: (input: NewQuestInput) => Promise<void>;
   onCancel: () => void;
@@ -108,7 +113,7 @@ function AddQuestForm({ onAdd, onCancel, existingSkillNames, attributes }: AddQu
       await onAdd({
         title: title.trim(),
         skillName: hasSkill ? skillName.trim() : null,
-        hours: hasSkill ? Math.max(0.25, hours) : null,
+        hours: hasSkill ? clampHours(hours) : null,
       });
       setTitle("");
       setSkillName("");
@@ -118,35 +123,19 @@ function AddQuestForm({ onAdd, onCancel, existingSkillNames, attributes }: AddQu
     }
   }
 
+  /** a new skill needs its primary attribute (the first selected); the second one is optional */
   async function handleSaveTags() {
+    const codes = selectedAttrIds
+      .map((id) => attributes.find((a) => a.attributeId === id)?.code)
+      .filter((code): code is string => code !== undefined);
+    if (codes.length === 0) return;
     setSubmitting(true);
     try {
       await onAdd({
         title: title.trim(),
         skillName: skillName.trim(),
-        hours: Math.max(0.25, hours),
-        primaryAttributeId: selectedAttrIds[0] ?? null,
-        secondaryAttributeId: selectedAttrIds[1] ?? null,
-      });
-      setTitle("");
-      setSkillName("");
-      setHours(1);
-      setSelectedAttrIds([]);
-      setStep("quest");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleSkipTags() {
-    setSubmitting(true);
-    try {
-      await onAdd({
-        title: title.trim(),
-        skillName: skillName.trim(),
-        hours: Math.max(0.25, hours),
-        primaryAttributeId: null,
-        secondaryAttributeId: null,
+        hours: clampHours(hours),
+        attributeCodes: codes,
       });
       setTitle("");
       setSkillName("");
@@ -164,7 +153,8 @@ function AddQuestForm({ onAdd, onCancel, existingSkillNames, attributes }: AddQu
         <div>
           <h3 className={styles.tagStepTitle}>Что развивает этот навык?</h3>
           <p className={styles.tagStepSubtitle}>
-            Навык «{skillName.trim()}» — выбери 1-2 характеристики (максимум 2)
+            Навык «{skillName.trim()}» — выбери основную характеристику (обязательно) и, если нужно,
+            вторую
           </p>
         </div>
 
@@ -204,17 +194,9 @@ function AddQuestForm({ onAdd, onCancel, existingSkillNames, attributes }: AddQu
             type="button"
             className={styles.btnPrimary}
             onClick={handleSaveTags}
-            disabled={submitting}
+            disabled={submitting || selectedAttrIds.length === 0}
           >
             {submitting ? "Сохраняем…" : "Сохранить"}
-          </button>
-          <button
-            type="button"
-            className={styles.btnSecondary}
-            onClick={handleSkipTags}
-            disabled={submitting}
-          >
-            Пропустить
           </button>
           <button
             type="button"
@@ -281,8 +263,8 @@ function AddQuestForm({ onAdd, onCancel, existingSkillNames, attributes }: AddQu
               id={hoursId}
               className={styles.formInput}
               type="number"
-              min={0.25}
-              max={24}
+              min={MIN_QUEST_HOURS}
+              max={MAX_QUEST_HOURS}
               step={0.25}
               value={hours}
               onChange={(e) => setHours(Number(e.target.value))}
@@ -495,7 +477,7 @@ export function DailyPlanPage() {
   async function handleAddQuest(input: NewQuestInput) {
     if (!plan) return;
 
-    const newQuest = await dailyPlanRepository.addQuest(plan.id, input);
+    const newQuest = await dailyPlanRepository.addQuest(plan.date, input);
 
     setPlan((prev) => {
       if (!prev) return prev;

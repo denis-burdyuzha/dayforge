@@ -42,17 +42,21 @@ export const dailyReportRepository = {
   async completeDay(characterId: string, text: string): Promise<DayCompletionResult> {
     const today = getLocalDateString();
 
-    // 1. Upsert report
-    const { data: reportData, error: reportError } = await supabase
-      .from("daily_reports")
-      .upsert(
-        { character_id: characterId, date: today, content: text },
-        { onConflict: "character_id,date" },
-      )
-      .select("id, character_id, date, content, created_at")
-      .single();
+    // 1. Upsert report (RPC save_daily_report — the client never writes game tables directly)
+    const { data: savedReport, error: reportError } = await supabase.rpc("save_daily_report", {
+      p_date: today,
+      p_content: text,
+    });
 
     if (reportError) throw new Error(reportError.message);
+
+    const reportData = savedReport as {
+      id: string;
+      character_id: string;
+      date: string;
+      content: string;
+      created_at: string;
+    };
 
     // 2. Aggregate XP gained today
     // local day bounds (not the UTC day)

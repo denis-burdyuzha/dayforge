@@ -17,6 +17,12 @@ import {
 } from "@/entities/daily-plan/model/aiDayPlan";
 import type { DailyPlan, NewQuestInput, Quest } from "@/entities/daily-plan/model/dailyPlanTypes";
 import { useUserToday } from "@/entities/profile/model/useProfile";
+import {
+  type CompletingQuest,
+  useDeferredQuestCompletion,
+} from "@/features/quest-completion/model/useDeferredQuestCompletion";
+import { QuestUndoBar } from "@/features/quest-completion/ui/QuestUndoBar";
+import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
 import { dayLabel } from "@/shared/lib/dayLabel";
 import { parseLocalDate } from "@/shared/lib/localDate";
 import { addDays, defaultPlanTarget, type PlanTarget } from "@/shared/lib/userDay";
@@ -384,7 +390,6 @@ export function DailyPlanPage() {
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [completing, setCompleting] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [levelUpLevel, setLevelUpLevel] = useState(1);
@@ -466,56 +471,57 @@ export function DailyPlanPage() {
     };
   }, [userId, dayReady, target, planDate, nextDate]);
 
-  async function handleCompleteQuest(quest: Quest) {
-    if (!plan || completing) return;
+  /** complete_quest answered (after the 5-second undo window): toast, LevelUp, list + caches */
+  function handleCompleted(done: CompletingQuest, result: QuestCompletionResult) {
+    // a quest without a skill is completed for 0 XP
+    let toastMsg = result.xpAwarded > 0 ? `+${result.xpAwarded} XP` : "Выполнено ✓";
+    if (result.attributeGained > 0) toastMsg += ` · +${result.attributeGained} к хар.`;
+    if (result.skillXpGained > 0) toastMsg += ` · +${result.skillXpGained} к навыку`;
+    pushToast(toastMsg);
 
-    const characterId = plan.characterId;
-    setCompleting(quest.id);
-
-    try {
-      const result = await dailyPlanRepository.completeQuest(quest.id, characterId);
-
-      // a quest without a skill is completed for 0 XP
-      let toastMsg = result.xpAwarded > 0 ? `+${result.xpAwarded} XP` : "Выполнено ✓";
-      if (result.attributeGained > 0) toastMsg += ` · +${result.attributeGained} к хар.`;
-      if (result.skillXpGained > 0) toastMsg += ` · +${result.skillXpGained} к навыку`;
-      pushToast(toastMsg);
-
-      if (result.newLevel > result.oldLevel) {
-        setLevelUpLevel(result.newLevel);
-        setShowLevelUp(true);
-      }
-
-      setPlan((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          quests: prev.quests.map((q): Quest =>
-            q.id === quest.id ? { ...q, status: "completed" as const } : q,
-          ),
-        };
-      });
-
-      if (userId) {
-        void queryClient.invalidateQueries({ queryKey: characterQueryKey(userId) });
-        void queryClient.invalidateQueries({ queryKey: ["character", characterId, "xp-events"] });
-        void queryClient.invalidateQueries({ queryKey: ["character", characterId, "attributes"] });
-        void queryClient.invalidateQueries({
-          queryKey: ["character", characterId, "character-skills"],
-        });
-      }
-
-      if (quest.skillName) {
-        const lower = quest.skillName.toLowerCase();
-        setExistingSkillNames((prev) =>
-          prev.map((s) => s.toLowerCase()).includes(lower) ? prev : [...prev, quest.skillName!],
-        );
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
-    } finally {
-      setCompleting(null);
+    if (result.newLevel > result.oldLevel) {
+      setLevelUpLevel(result.newLevel);
+      setShowLevelUp(true);
     }
+
+    setPlan((prev) =>
+      prev
+        ? {
+            ...prev,
+            quests: prev.quests.map((q): Quest =>
+              q.id === done.id ? { ...q, status: "completed" as const } : q,
+            ),
+          }
+        : prev,
+    );
+
+    const characterId = plan?.characterId;
+    if (userId) void queryClient.invalidateQueries({ queryKey: characterQueryKey(userId) });
+    if (characterId) {
+      void queryClient.invalidateQueries({ queryKey: ["character", characterId, "xp-events"] });
+      void queryClient.invalidateQueries({ queryKey: ["character", characterId, "attributes"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["character", characterId, "character-skills"],
+      });
+    }
+
+    const skillName = plan?.quests.find((q) => q.id === done.id)?.skillName;
+    if (skillName) {
+      const lower = skillName.toLowerCase();
+      setExistingSkillNames((prev) =>
+        prev.map((s) => s.toLowerCase()).includes(lower) ? prev : [...prev, skillName],
+      );
+    }
+  }
+
+  const completion = useDeferredQuestCompletion({
+    characterId: plan?.characterId,
+    onCompleted: handleCompleted,
+    onFailed: (_quest, message) => pushToast(message),
+  });
+
+  function handleCompleteQuest(quest: Quest) {
+    completion.complete({ id: quest.id, title: quest.title });
   }
 
   async function handleAddQuest(input: NewQuestInput) {
@@ -581,9 +587,12 @@ export function DailyPlanPage() {
     );
   }
 
-  const pendingCount = plan?.quests.filter((q) => q.status === "pending").length ?? 0;
-  const completedCount = plan?.quests.filter((q) => q.status === "completed").length ?? 0;
-  const quests = plan?.quests ?? [];
+  // quests waiting out the undo window already show as completed
+  const quests = (plan?.quests ?? []).map((q): Quest =>
+    completion.optimisticIds.has(q.id) ? { ...q, status: "completed" } : q,
+  );
+  const pendingCount = quests.filter((q) => q.status === "pending").length;
+  const completedCount = quests.filter((q) => q.status === "completed").length;
   const timedQuests = quests.filter((q) => q.startTime);
   // quests of the plan date and the next day — overlaps of the preview are checked per date
   const toTimed = (q: Quest, date: string): TimedEntry => ({
@@ -608,7 +617,7 @@ export function DailyPlanPage() {
         </div>
         {plan && plan.quests.length > 0 && (
           <div className={styles.dateLabel}>
-            {completedCount} / {plan.quests.length}
+            {completedCount} / {quests.length}
           </div>
         )}
       </div>
@@ -658,7 +667,7 @@ export function DailyPlanPage() {
                 key={quest.id}
                 quest={quest}
                 onComplete={handleCompleteQuest}
-                completing={completing === quest.id}
+                completing={false}
               />
             ))}
           </div>
@@ -709,6 +718,8 @@ export function DailyPlanPage() {
       {showLevelUp && <LevelUp level={levelUpLevel} onComplete={() => setShowLevelUp(false)} />}
 
       {/* Micro-toast layer */}
+      <QuestUndoBar pending={completion.pending} onUndoLast={completion.undoLast} />
+
       <div className={styles.toastContainer} aria-live="polite">
         {toasts.map((t) => (
           <div key={t.id} className={styles.microToast}>

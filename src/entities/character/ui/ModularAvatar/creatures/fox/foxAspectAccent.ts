@@ -5,19 +5,17 @@
  * shaded rust/brown facets, hence the loose saturation / lightness thresholds).
  */
 import { isWarmAccent } from "../../../../model/aspect";
-import { type FoxTierIndex, getTierPolys } from "./foxZones";
 
 const EYE_ZONES = new Set(["eyes"]);
 const TAIL_ZONES = new Set(["tail", "tailTip", "tailArray"]);
 const TAIL_TIP_MIN_SAT = 0.12;
 const TAIL_TIP_MIN_LIGHT = 0.12;
 
-const cache = new Map<FoxTierIndex, readonly string[]>();
-
-export function getFoxAspectAccentIds(tier: FoxTierIndex): readonly string[] {
-  const hit = cache.get(tier);
-  if (hit) return hit;
-  const ids = getTierPolys(tier)
+/** ids of the accent polygons among the polygons of one fox tier (eyes + warm tail tips) */
+export function computeFoxAspectAccentIds(
+  polygons: ReadonlyArray<{ id: string; zone: string; defaultFill: string }>,
+): string[] {
+  return polygons
     .filter(
       (p) =>
         EYE_ZONES.has(p.zone) ||
@@ -25,6 +23,4 @@ export function getFoxAspectAccentIds(tier: FoxTierIndex): readonly string[] {
           isWarmAccent(p.defaultFill, TAIL_TIP_MIN_SAT, TAIL_TIP_MIN_LIGHT)),
     )
     .map((p) => p.id);
-  cache.set(tier, ids);
-  return ids;
 }

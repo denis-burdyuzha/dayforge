@@ -25,7 +25,7 @@ export function getAvatarAssetInfo(
       source: asset.source,
       fallbackFrom: asset.fallbackFrom,
       tier,
-      aspectAccentCount: asset.aspectAccentIds.length,
+      aspectAccentCount: asset.aspectAccentCount,
     };
   }
   const fox = getFoxTierConfig(level);
@@ -33,6 +33,6 @@ export function getAvatarAssetInfo(
     source: `foxL${fox.tierIndex}.svg`,
     fallbackFrom: null,
     tier: fox.tierIndex,
-    aspectAccentCount: fox.aspectAccentIds.length,
+    aspectAccentCount: fox.aspectAccentCount,
   };
 }

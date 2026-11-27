@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ATTRIBUTE_LABELS_RU } from "@/entities/character/model/aspect";
 import { ATTRIBUTE_LABELS_RU as ATTR_RU, ATTRIBUTE_ORDER } from "@/entities/character/model/aspect";
@@ -20,6 +20,8 @@ import {
 } from "@/entities/character/ui/AttributeRuneRing";
 import { ModularAvatar } from "@/entities/character/ui/ModularAvatar";
 import { getAvatarAssetInfo } from "@/entities/character/ui/ModularAvatar/avatarAssetInfo";
+import { preloadAllCreatureAssets } from "@/entities/character/ui/ModularAvatar/creatures/creatureRegistry";
+import { preloadAllFoxTiers } from "@/entities/character/ui/ModularAvatar/creatures/fox/foxZones";
 import { SkillCard, SkillTitlePlate } from "@/entities/character/ui/SkillBadge";
 
 import styles from "./AvatarPlaygroundPage.module.scss";
@@ -198,6 +200,12 @@ export function AvatarPlaygroundPage() {
 
   const avatarParams = computeAvatarParams(character, attributes, skills, null);
   const assetInfo = getAvatarAssetInfo(selectedClass, level);
+
+  // the playground may load every creature and tier up front (switching class / level has no empty canvas)
+  useEffect(() => {
+    void preloadAllCreatureAssets();
+    void preloadAllFoxTiers();
+  }, []);
   avatarParams.silhouetteOnly = silhouetteOnly;
 
   const testSkillViews: SkillView[] = testSkills.slice(0, testSkillCount).map((t, i) => ({

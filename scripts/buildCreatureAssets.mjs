@@ -1,10 +1,12 @@
 /**
  * npm run build:assets — builds the TS asset data of every creature in scripts/creatures.config.mjs from
  * its SVGs (source SVGs are only read):
- * - <Animal>L{N}AssetData.ts: polygons in document order with their own colours, canvas fit (fox rule),
- *   aspectAccentIds = polygons inside <g id="aspectAccent"> (any nesting), source file name;
- * - a tier without its SVG re-exports the nearest lower tier (warning) — add the SVG and re-run;
- * - <animal>Assets.ts: the 5 tier assets as one array (used by the creature registry).
+ * - <Animal>L{N}AssetData.ts (one per tier WITH its own SVG): polygons in document order with their own
+ *   colours and aspectAccentIds = polygons inside <g id="aspectAccent"> (any nesting). Loaded lazily, one chunk
+ *   per creature and tier;
+ * - <animal>Assets.ts: the static metadata of the 5 tiers (canvas fit by the shared rule, source file, counts)
+ *   and a dynamic-import loader per tier. A tier without its SVG (warning) points at the nearest lower tier's
+ *   data and fit — add the SVG and re-run;
  * Background leftovers (near-black / transparent polygons sticking out of the animal) are dropped and counted.
  * Prints per class and tier: polygons / in aspectAccent / file used.
  */
@@ -16,10 +18,10 @@ import * as prettier from "prettier";
 import {
   computeFit,
   defaultExists,
-  fallbackTierModule,
   indexModule,
   parseCreatureSvg,
   resolveTierFiles,
+  STALE_FALLBACK_MARKER,
   tierModule,
 } from "./creatureAssets.lib.mjs";
 import { CREATURES } from "./creatures.config.mjs";
@@ -45,25 +47,28 @@ for (const c of CREATURES) {
   fs.mkdirSync(c.outDir, { recursive: true });
   console.log(`\n${c.classId} / ${c.animal}`);
 
-  const counts = new Map();
+  /** tier → { fit, polygonCount, accentCount } of the tiers with their own SVG */
+  const built = new Map();
+  const tiers = [];
   for (const r of resolved) {
     const out = path.join(c.outDir, `${filePrefixPascal}L${r.tier}AssetData.ts`);
     if (r.fallbackFrom !== null) {
-      await writeFormatted(
-        out,
-        fallbackTierModule({
-          constPrefix,
-          filePrefixPascal,
-          tier: r.tier,
-          fallbackFrom: r.fallbackFrom,
-          sourceFile: r.file,
-        }),
-      );
-      const [total, accent] = counts.get(r.fallbackFrom);
+      // old format: a data file that only re-exported the lower tier — it is not needed any more
+      if (fs.existsSync(out) && fs.readFileSync(out, "utf8").includes(STALE_FALLBACK_MARKER)) {
+        fs.rmSync(out);
+      }
+      const from = built.get(r.fallbackFrom);
+      tiers.push({
+        tier: r.tier,
+        usesTier: r.fallbackFrom,
+        fallbackFrom: r.fallbackFrom,
+        sourceFile: r.file,
+        ...from,
+      });
       console.warn(`  WARN L${r.tier}: no ${c.filePrefix}L${r.tier}.svg — uses L${r.fallbackFrom}`);
       warnings++;
       console.log(
-        `  L${r.tier}: ${total} polygons / ${accent} aspectAccent / ${path.basename(r.file)} (fallback)`,
+        `  L${r.tier}: ${from.polygonCount} polygons / ${from.accentCount} aspectAccent / ${path.basename(r.file)} (fallback)`,
       );
       continue;
     }
@@ -78,7 +83,19 @@ for (const c of CREATURES) {
       out,
       tierModule({ constPrefix, tier: r.tier, sourceFile: r.file, parsed, fit }),
     );
-    counts.set(r.tier, [parsed.polygons.length, parsed.aspectAccentIds.length]);
+    const info = {
+      fit,
+      polygonCount: parsed.polygons.length,
+      accentCount: parsed.aspectAccentIds.length,
+    };
+    built.set(r.tier, info);
+    tiers.push({
+      tier: r.tier,
+      usesTier: r.tier,
+      fallbackFrom: null,
+      sourceFile: r.file,
+      ...info,
+    });
     console.log(
       `  L${r.tier}: ${parsed.polygons.length} polygons / ${parsed.aspectAccentIds.length} aspectAccent / ${path.basename(r.file)}` +
         (parsed.filtered ? ` / ${parsed.filtered} background polygons dropped` : ""),
@@ -86,7 +103,7 @@ for (const c of CREATURES) {
   }
   await writeFormatted(
     path.join(c.outDir, `${c.animal}Assets.ts`),
-    indexModule({ constPrefix, filePrefixPascal, resolved }),
+    indexModule({ constPrefix, animal: c.animal, filePrefixPascal, tiers }),
   );
 }
 console.log(`\ndone, ${warnings} warning(s)`);

@@ -1,9 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { CREATURE_REGISTRY } from "../creatures/creatureRegistry";
 import { FOX_TIER_CONFIG } from "../creatures/fox/foxEvolutionConfig";
-import { getTierPolys } from "../creatures/fox/foxZones";
+import { getTierPolys, preloadAllFoxTiers } from "../creatures/fox/foxZones";
 import { computeCanvasFit, fieldShare, FIT_FIELD, polygonBBox } from "./creatureFit";
+import { loadTier } from "./tierAssetStore";
+
+beforeAll(async () => {
+  await preloadAllFoxTiers();
+});
 
 describe("canvas fit rule", () => {
   it("height 86 % of the field unless the width limits; bottom on the ground line; centred on x = 100", () => {
@@ -25,28 +30,29 @@ describe("canvas fit rule", () => {
     }
   });
 
-  it("every generated creature tier (own SVG) equals the rule applied to its polygons; share table", () => {
+  it("every generated creature tier (own SVG) equals the rule applied to its polygons; share table", async () => {
     const rows: string[] = [];
     for (const creature of Object.values(CREATURE_REGISTRY)) {
       for (const asset of creature.tierAssets) {
         if (asset.fallbackFrom !== null) continue;
-        const fit = computeCanvasFit(asset.polygons);
+        const { polygons } = await loadTier(asset.dataKey, asset.load);
+        const fit = computeCanvasFit(polygons);
         expect(asset.fit.scale, `${creature.animal} L${asset.tierIndex}`).toBeCloseTo(fit.scale, 3);
         expect(asset.fit.tx).toBeCloseTo(fit.tx, 1);
         expect(asset.fit.ty).toBeCloseTo(fit.ty, 1);
-        const share = fieldShare(asset.polygons, asset.fit);
+        const share = fieldShare(polygons, asset.fit);
         // the animal fills the field: 86 % of the height, or 100 % of the width when the width limits
         expect(
           Math.abs(share.height - FIT_FIELD.heightShare) < 0.005 ||
             Math.abs(share.width - 1) < 0.005,
           `${creature.animal} L${asset.tierIndex}`,
         ).toBe(true);
-        const b = polygonBBox(asset.polygons);
+        const b = polygonBBox(polygons);
         rows.push(
           `${creature.animal} L${asset.tierIndex}: h ${Math.round(share.height * 100)}% w ${Math.round(share.width * 100)}% (${b.w}x${b.h})`,
         );
       }
     }
     expect(rows.length).toBe(5 + 5 + 5 + 3); // wolf, bear, lion, deer (own SVGs)
-  });
+  }, 60_000); // loads 18 data chunks
 });

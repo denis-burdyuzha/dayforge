@@ -1,26 +1,16 @@
-import type React from "react";
-
-import type { FoxBaseAssetProps } from "../../assets/foxAssetTypes";
-import { FoxL1BaseAsset } from "../../assets/FoxL1BaseAsset";
-import { FoxL2BaseAsset } from "../../assets/FoxL2BaseAsset";
-import { FoxL3BaseAsset } from "../../assets/FoxL3BaseAsset";
-import { FoxL4BaseAsset } from "../../assets/FoxL4BaseAsset";
-import { FoxL5BaseAsset } from "../../assets/FoxL5BaseAsset";
-import { getFoxAspectAccentIds } from "./foxAspectAccent";
 import type { FoxTierIndex } from "./foxZones";
 
 export interface FoxTierConfigItem {
   /** 1..5 - asset tier (L1 curled .. L5 mythic); used to pick zones */
   tierIndex: FoxTierIndex;
-  component: React.ComponentType<FoxBaseAssetProps>;
   scale: number;
   tx: number;
   ty: number;
   viewBox: string;
   polygonCount: number;
   name: string;
-  /** polygons recoloured into the aspect colour: eyes + tail tips (shared aspect accent) */
-  aspectAccentIds: readonly string[];
+  /** number of aspect accent polygons (eyes + warm tail tips); a test checks it against the data */
+  aspectAccentCount: number;
 }
 
 /**
@@ -30,8 +20,7 @@ export interface FoxTierConfigItem {
 export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = {
   1: {
     tierIndex: 1,
-    aspectAccentIds: getFoxAspectAccentIds(1),
-    component: FoxL1BaseAsset,
+    aspectAccentCount: 25,
     scale: 0.4541,
     tx: -3.9784,
     ty: -26.8324,
@@ -41,8 +30,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   3: {
     tierIndex: 2,
-    aspectAccentIds: getFoxAspectAccentIds(2),
-    component: FoxL2BaseAsset,
+    aspectAccentCount: 61,
     scale: 0.228,
     tx: 5.7422,
     ty: 36.2497,
@@ -52,8 +40,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   10: {
     tierIndex: 3,
-    aspectAccentIds: getFoxAspectAccentIds(3),
-    component: FoxL3BaseAsset,
+    aspectAccentCount: 19,
     scale: 0.4038,
     tx: 12.7692,
     ty: 61.7692,
@@ -63,8 +50,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   35: {
     tierIndex: 4,
-    aspectAccentIds: getFoxAspectAccentIds(4),
-    component: FoxL4BaseAsset,
+    aspectAccentCount: 47,
     scale: 0.3037,
     tx: 32.882,
     ty: 28.8682,
@@ -74,8 +60,7 @@ export const FOX_TIER_CONFIG: Record<1 | 3 | 10 | 35 | 50, FoxTierConfigItem> = 
   },
   50: {
     tierIndex: 5,
-    aspectAccentIds: getFoxAspectAccentIds(5),
-    component: FoxL5BaseAsset,
+    aspectAccentCount: 348,
     scale: 0.151,
     tx: 31.1652,
     ty: 17.8737,
@@ -120,4 +105,11 @@ export function getFoxTierConfig(
   if (tier <= 4) return FOX_TIER_CONFIG[10];
   if (tier <= 6) return FOX_TIER_CONFIG[35];
   return FOX_TIER_CONFIG[50];
+}
+
+/** Tier config by asset tier index 1..5 */
+export function getFoxTierConfigByIndex(tier: FoxTierIndex): FoxTierConfigItem {
+  const config = Object.values(FOX_TIER_CONFIG).find((c) => c.tierIndex === tier);
+  if (!config) throw new Error(`no fox tier ${tier}`);
+  return config;
 }

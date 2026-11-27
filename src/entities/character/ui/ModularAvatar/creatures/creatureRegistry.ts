@@ -6,7 +6,8 @@
  * `npm run build:assets` → one entry below (see docs/ai-context/adding-creature.md).
  */
 import type { AvatarEvolutionStage } from "../../../model/avatarTypes";
-import type { CreatureTierAsset } from "../shared/creatureAssetTypes";
+import type { CreatureTierData, CreatureTierMeta } from "../shared/creatureAssetTypes";
+import { loadTier } from "../shared/tierAssetStore";
 import type { TierFxMatrix } from "../tierFx";
 import { BEAR_TIER_ASSETS } from "./bear/assets/bearAssets";
 import { BEAR_FX_MATRIX } from "./bear/bearFxMatrix";
@@ -24,8 +25,8 @@ export interface CreatureDefinition {
   animal: string;
   /** accessible name, e.g. "Warrior Wolf" */
   label: string;
-  /** the 5 tier assets, tier 1 first */
-  tierAssets: readonly CreatureTierAsset[];
+  /** static metadata of the 5 tiers, tier 1 first (the polygon data is loaded lazily per tier) */
+  tierAssets: readonly CreatureTierMeta[];
   fxMatrix: TierFxMatrix;
   /** display names of the 5 tiers */
   tierNames: readonly [string, string, string, string, string];
@@ -74,12 +75,21 @@ export function getCreature(
   return classId === "explorer" ? null : CREATURE_REGISTRY[classId];
 }
 
-/** The tier asset of a creature for a level index 1..5 */
+/** The tier metadata of a creature for a tier 1..5 */
 export function creatureTierAsset(
   creature: CreatureDefinition,
   tier: 1 | 2 | 3 | 4 | 5,
-): CreatureTierAsset {
+): CreatureTierMeta {
   const asset = creature.tierAssets[tier - 1];
   if (!asset) throw new Error(`${creature.animal}: no tier ${tier} asset`);
   return asset;
+}
+
+/** Load the polygon data of every tier of every creature (tests, the playground) */
+export function preloadAllCreatureAssets(): Promise<unknown[]> {
+  return Promise.all(
+    Object.values(CREATURE_REGISTRY).flatMap((creature) =>
+      creature.tierAssets.map((meta) => loadTier<CreatureTierData>(meta.dataKey, meta.load)),
+    ),
+  );
 }

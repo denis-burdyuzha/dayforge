@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { ATTRIBUTE_COLORS } from "../../../model/aspect";
-import { getFoxAspectAccentIds } from "../creatures/fox/foxAspectAccent";
-import { getTierPolys } from "../creatures/fox/foxZones";
+import { FOX_TIER_CONFIG } from "../creatures/fox/foxEvolutionConfig";
+import { getTierPolys, loadFoxTier, preloadAllFoxTiers } from "../creatures/fox/foxZones";
 import {
   createAspectAccentResolver,
   hexToOklch,
@@ -25,6 +25,10 @@ const SAME_L = [
   { id: "x", defaultFill: "#e0702a" },
   { id: "y", defaultFill: "#d98a4a" },
 ];
+
+beforeAll(async () => {
+  await preloadAllFoxTiers();
+});
 
 describe("aspect accent recolour", () => {
   it("nothing to do: no aspect, no ids, empty list → null (no crash)", () => {
@@ -102,10 +106,10 @@ describe("aspect accent recolour", () => {
     }
   });
 
-  it("real fox data: eyes on every tier, warm tail tips where the asset has them, no collapse", () => {
+  it("real fox data: eyes on every tier, warm tail tips where the asset has them, no collapse", async () => {
     const tailTips: number[] = [];
     for (const tier of [1, 2, 3, 4, 5] as const) {
-      const ids = getFoxAspectAccentIds(tier);
+      const { aspectAccentIds: ids } = await loadFoxTier(tier);
       const polys = getTierPolys(tier).filter((p) => ids.includes(p.id));
       expect(
         polys.some((p) => p.zone === "eyes"),
@@ -123,6 +127,11 @@ describe("aspect accent recolour", () => {
       }
     }
     // L1 (curled spark) has an all-navy tail — no warm tips, as before; the grown tiers have them
+    // the static counts of the fox config equal the computed lists
+    for (const config of Object.values(FOX_TIER_CONFIG)) {
+      const { aspectAccentIds } = await loadFoxTier(config.tierIndex);
+      expect(aspectAccentIds.length, `fox L${config.tierIndex}`).toBe(config.aspectAccentCount);
+    }
     expect(tailTips[0]).toBe(0);
     expect(tailTips[1]! + tailTips[3]! + tailTips[4]!).toBeGreaterThan(0);
   });

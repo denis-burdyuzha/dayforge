@@ -5,13 +5,13 @@
  */
 
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { computeAvatarParams } from "../../../model/avatarEngine";
 import type { CharacterAttribute } from "../../../model/characterTypes";
 import { getFoxAnatomy } from "../creatures/fox/foxAnatomy";
 import { FOX_TIER_CONFIG } from "../creatures/fox/foxEvolutionConfig";
-import { type FoxTierIndex, getTierPolys } from "../creatures/fox/foxZones";
+import { type FoxTierIndex, getTierPolys, preloadAllFoxTiers } from "../creatures/fox/foxZones";
 import { ModularAvatar } from "../ModularAvatar";
 import { AttributeFxLayer } from "./AttributeFxLayer";
 import { createBodyToneResolver } from "./bodyTone";
@@ -94,6 +94,11 @@ function isAccentShade(color: string, accent: string, light: string): boolean {
   return false;
 }
 
+// the fox tier data is a lazy chunk: load all five tiers before the synchronous checks
+beforeAll(async () => {
+  await preloadAllFoxTiers();
+});
+
 describe("attribute FX v2 invariants (fox L1–L5)", () => {
   it("fxStep: 1 → 0, 18 → max, ≥2 → ≥1", () => {
     expect(fxStep(1, 7)).toBe(0);
@@ -130,7 +135,7 @@ describe("attribute FX v2 invariants (fox L1–L5)", () => {
         expect(html).toContain("Explorer Fox Avatar");
       }
     }
-  });
+  }, 60_000); // 35 full SVG renders — slow when the whole suite runs in parallel
 
   it("app render has no on-body attribute FX; the playground toggle (legacyAttributeFx) restores them", () => {
     const all18 = Object.fromEntries(Object.keys(PRESETS["Новичок"]!).map((k) => [k, 18]));

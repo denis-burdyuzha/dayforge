@@ -45,6 +45,8 @@ export type ParseRequest = z.infer<typeof ParseRequestSchema>;
 
 export const ModelItemSchema = z.object({
   title: z.string().trim().min(1),
+  /** "plan" = planDate, "next" = the day after it */
+  date: z.enum(["plan", "next"]),
   startTime: z.string().nullable(),
   durationMinutes: z.number().finite(),
   skill: SkillRefSchema,
@@ -62,6 +64,8 @@ export type ModelOutput = z.infer<typeof ModelOutputSchema>;
 
 export interface PlanItem {
   title: string;
+  /** "YYYY-MM-DD": planDate or the next day */
+  date: string;
   /** "HH:MM" or null when the time cannot be inferred */
   startTime: string | null;
   durationMinutes: number;
@@ -87,6 +91,7 @@ export const SUBMIT_TOOL_INPUT_SCHEMA = {
         additionalProperties: false,
         required: [
           "title",
+          "date",
           "startTime",
           "durationMinutes",
           "skill",
@@ -96,6 +101,11 @@ export const SUBMIT_TOOL_INPUT_SCHEMA = {
         ],
         properties: {
           title: { type: "string", description: "Короткое название действия" },
+          date: {
+            type: "string",
+            enum: ["plan", "next"],
+            description: "plan — дата плана (planDate); next — следующий день (nextDate)",
+          },
           startTime: {
             ...nullableString,
             description: "Время начала HH:MM; null, если его нельзя определить даже примерно",
@@ -107,7 +117,7 @@ export const SUBMIT_TOOL_INPUT_SCHEMA = {
           skill: SKILL_REF_JSON_SCHEMA,
           duplicateOfExisting: {
             type: "boolean",
-            description: "true, если пункт повторяет уже существующий квест на эту дату",
+            description: "true, если пункт повторяет уже существующий квест на ту же дату",
           },
           confidence: { type: "string", enum: ["high", "low"] },
           note: { ...nullableString, description: "Для low: что оценено или неясно; иначе null" },

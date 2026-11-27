@@ -430,6 +430,107 @@
           { "match": ["почт"], "skill": { "kind": "none" }, "time": ">=21:40" }
         ]
       }
+    },
+    {
+      "id": "16-evening-plan-tomorrow",
+      "covers": "вечерний план на завтра: «завтра» = дата плана, всё на planDate",
+      "today": false,
+      "nowLocal": "20:30",
+      "text": "Завтра в 8 пробежка полчаса, потом час английского, вечером гитара 40 минут.",
+      "expected": {
+        "items": [
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "08:00",
+            "minutes": 30,
+            "date": "plan"
+          },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "morning",
+            "minutes": 60,
+            "date": "plan"
+          },
+          {
+            "match": ["гитар"],
+            "skill": { "kind": "existing", "skillId": "s-guitar" },
+            "time": "evening",
+            "minutes": 40,
+            "date": "plan"
+          }
+        ]
+      }
+    },
+    {
+      "id": "17-tonight-and-tomorrow-morning",
+      "covers": "смешанный план: сегодня вечером + завтра утром → date plan / next",
+      "today": true,
+      "nowLocal": "18:30",
+      "text": "Сегодня вечером почитаю час и полчаса поиграю на гитаре. Завтра утром пробежка 30 минут и английский в 10.",
+      "expected": {
+        "items": [
+          {
+            "match": ["чит", "чтен"],
+            "skill": { "kind": "existing", "skillId": "s-read" },
+            "time": ">=18:30",
+            "minutes": 60,
+            "date": "plan"
+          },
+          {
+            "match": ["гитар"],
+            "skill": { "kind": "existing", "skillId": "s-guitar" },
+            "time": ">=18:30",
+            "minutes": 30,
+            "date": "plan"
+          },
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "morning",
+            "minutes": 30,
+            "date": "next"
+          },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "10:00",
+            "date": "next"
+          }
+        ]
+      }
+    },
+    {
+      "id": "18-night-0100-boundary-0400",
+      "covers": "план в 01:00 при границе дня 04:00: дата плана = календарное сегодня, пункты на неё и не в прошлом",
+      "today": true,
+      "nowLocal": "01:00",
+      "dayStartTime": "04:00",
+      "text": "Утром пробежка, днём два часа кода, вечером английский.",
+      "expected": {
+        "items": [
+          {
+            "match": ["пробеж", "бег"],
+            "skill": { "kind": "existing", "skillId": "s-run" },
+            "time": "morning",
+            "date": "plan"
+          },
+          {
+            "match": ["код", "програм"],
+            "skill": { "kind": "existing", "skillId": "s-code" },
+            "time": "afternoon",
+            "minutes": 120,
+            "date": "plan"
+          },
+          {
+            "match": ["англ"],
+            "skill": { "kind": "existing", "skillId": "s-en" },
+            "time": "evening",
+            "date": "plan"
+          }
+        ]
+      }
     }
   ]
 }

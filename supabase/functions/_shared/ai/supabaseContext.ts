@@ -9,6 +9,8 @@ import type { SkillContext } from "./skills.ts";
 
 export interface QuestRow {
   id: string;
+  /** date of the quest's plan ("YYYY-MM-DD") */
+  plan_date: string;
   title: string;
   status: string;
   skill_name: string | null;
@@ -17,12 +19,16 @@ export interface QuestRow {
   hours: number | null;
 }
 
-/** The user's skills (with attribute codes) and the quests of `date` (all statuses, by position) */
+/**
+ * The user's skills (with attribute codes) and the quests of `date` — one date or several (all statuses, by date
+ * then position); each quest carries its plan date.
+ */
 export async function loadSkillsAndQuests(
   userClient: SupabaseClient,
   userId: string,
-  date: string,
+  date: string | readonly string[],
 ): Promise<{ skills: SkillContext[]; quests: QuestRow[] }> {
+  const dates = typeof date === "string" ? [date] : [...date];
   const { data: character, error: charError } = await userClient
     .from("characters")
     .select("id")
@@ -39,10 +45,9 @@ export async function loadSkillsAndQuests(
       .eq("character_id", character.id),
     userClient
       .from("daily_plans")
-      .select("id")
+      .select("id, date")
       .eq("character_id", character.id)
-      .eq("date", date)
-      .maybeSingle(),
+      .in("date", dates),
   ]);
   if (defsRes.error) throw new Error(`attributes: ${defsRes.error.message}`);
   if (skillsRes.error) throw new Error(`skills: ${skillsRes.error.message}`);
@@ -68,15 +73,22 @@ export async function loadSkillsAndQuests(
     }),
   );
 
+  const plans = (planRes.data ?? []) as Array<{ id: string; date: string }>;
   let quests: QuestRow[] = [];
-  if (planRes.data) {
+  if (plans.length > 0) {
+    const dateByPlan = new Map(plans.map((p) => [p.id, p.date]));
     const { data, error } = await userClient
       .from("quests")
-      .select("id, title, status, skill_name, start_time, duration_minutes, hours")
-      .eq("daily_plan_id", planRes.data.id)
+      .select("id, daily_plan_id, title, status, skill_name, start_time, duration_minutes, hours")
+      .in(
+        "daily_plan_id",
+        plans.map((p) => p.id),
+      )
       .order("position");
     if (error) throw new Error(`quests: ${error.message}`);
-    quests = (data ?? []) as QuestRow[];
+    quests = ((data ?? []) as Array<Omit<QuestRow, "plan_date"> & { daily_plan_id: string }>)
+      .map(({ daily_plan_id, ...q }) => ({ ...q, plan_date: dateByPlan.get(daily_plan_id) ?? "" }))
+      .sort((a, b) => dates.indexOf(a.plan_date) - dates.indexOf(b.plan_date));
   }
   return { skills, quests };
 }

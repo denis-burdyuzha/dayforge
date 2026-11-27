@@ -8,9 +8,11 @@ import type { PlanItem } from "./schema.ts";
 export { type AiProvider, ProviderError } from "../_shared/ai/provider.ts";
 export type { SkillContext } from "../_shared/ai/skills.ts";
 
-/** A quest already on the date (any status) — so the model does not duplicate it */
+/** A quest already on the plan date or the next day (any status) — so the model does not duplicate it */
 export interface ExistingQuestContext {
   id: string;
+  /** "YYYY-MM-DD" of its plan */
+  date: string;
   title: string;
   startTime: string | null;
   durationMinutes: number | null;
@@ -25,10 +27,16 @@ export interface PlanParseContext {
 /** Everything the prompt is built from */
 export interface PlanProviderInput {
   planDate: string;
+  /** planDate + 1 — items explicitly about the next day go there (date "next") */
+  nextDate: string;
   text: string;
-  /** the plan is for the client's today → nothing before nowLocal */
+  /** planDate is the user's today (by the day boundary) → nothing before now */
   isToday: boolean;
+  /** the local calendar date and time now */
+  nowDate: string;
   nowLocal: string;
+  /** the user's day boundary "HH:MM" */
+  dayStartTime: string;
   context: PlanParseContext;
   retry?: RetryHint | undefined;
 }
@@ -50,7 +58,8 @@ export interface PlanAttemptLog {
 export interface DayPlanStore {
   /** plan parse requests (attempt = 1) of the user since `sinceIso` */
   countParseRequestsSince(userId: string, sinceIso: string): Promise<number>;
-  loadContext(userId: string, planDate: string): Promise<PlanParseContext>;
+  /** skills + quests of the given dates (the plan date and the next day) */
+  loadContext(userId: string, dates: readonly string[]): Promise<PlanParseContext>;
   /** inserts the attempt row, returns its id */
   logAttempt(log: PlanAttemptLog): Promise<string>;
 }

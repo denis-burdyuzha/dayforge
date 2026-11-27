@@ -1,10 +1,11 @@
 /**
  * Fixtures of parse-day-plan and how a parse result is scored against them (used by the eval script and by
- * the fixture unit test). An expected item is found by title keywords + skill; then its time, duration and
+ * the fixture unit test). An expected item is found by title keywords + skill; then its date, time, duration and
  * duplicate flag are checked. Times: "HH:MM" exact, "morning" | "afternoon" | "evening", ">=HH:MM", or any.
- * For a plan on today no item may start before nowLocal.
+ * No item may start before «now» (FIXTURE_TODAY at nowLocal) — compared as an absolute date + time.
  */
 import { normalizeSkillName } from "../../_shared/ai/skills.ts";
+import { addDaysIso, isBefore } from "../../_shared/ai/userDay.ts";
 import type { PlanItem } from "../schema.ts";
 import type { ExistingQuestContext, PlanParseContext } from "../types.ts";
 import data from "./day-plans.json" with { type: "json" };
@@ -23,15 +24,21 @@ export interface ExpectedItem {
   /** expected duration (±30%) */
   minutes?: number;
   duplicate?: boolean;
+  /** "plan" (default) = the plan date, "next" = the day after it */
+  date?: "plan" | "next";
 }
 
 export interface DayPlanFixture {
   id: string;
   covers: string;
+  /** true: planDate = FIXTURE_TODAY (the calendar date of «now»); false: FIXTURE_TOMORROW */
   today: boolean;
   nowLocal: string;
+  /** the user's day boundary (default 04:00) */
+  dayStartTime?: string;
   text: string;
-  existingQuests?: ExistingQuestContext[];
+  /** quests already on the plan date (date may be omitted → the plan date) */
+  existingQuests?: Array<Omit<ExistingQuestContext, "date"> & { date?: string }>;
   expected: { items: ExpectedItem[]; ignoreExtraNone?: boolean };
 }
 
@@ -47,9 +54,16 @@ export const fixturePlanDate = (f: DayPlanFixture) => (f.today ? FIXTURE_TODAY :
 export function fixtureContext(fixture: DayPlanFixture): PlanParseContext {
   return {
     skills: data.skills as PlanParseContext["skills"],
-    quests: fixture.existingQuests ?? [],
+    quests: (fixture.existingQuests ?? []).map((q) => ({
+      ...q,
+      date: q.date ?? fixturePlanDate(fixture),
+    })),
   };
 }
+
+/** the expected date of an item */
+export const expectedDate = (fixture: DayPlanFixture, exp: ExpectedItem) =>
+  exp.date === "next" ? addDaysIso(fixturePlanDate(fixture), 1) : fixturePlanDate(fixture);
 
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
@@ -138,6 +152,9 @@ export function scorePlanFixture(fixture: DayPlanFixture, items: PlanItem[]): Pl
     if (skillMatches(exp.skill, got.skill)) skillsCorrect++;
     else problems.push(`${label}: навык ${describeSkill(got.skill)}`);
 
+    const wantDate = expectedDate(fixture, exp);
+    if (got.date !== wantDate) problems.push(`${label}: дата ${got.date} вместо ${wantDate}`);
+
     if (exp.time) {
       timesChecked++;
       if (timeMatches(exp.time, got.startTime)) timesCorrect++;
@@ -153,9 +170,9 @@ export function scorePlanFixture(fixture: DayPlanFixture, items: PlanItem[]): Pl
     }
   }
 
-  // global rules: nothing in the past on today; inferred times inside the day window
+  // global rule: nothing in the past (absolute date + time before «now»)
   for (const it of items) {
-    if (fixture.today && it.startTime && toMinutes(it.startTime) < toMinutes(fixture.nowLocal)) {
+    if (it.startTime && isBefore(it.date, it.startTime, FIXTURE_TODAY, fixture.nowLocal)) {
       problems.push(`«${it.title}»: ${it.startTime} раньше текущего ${fixture.nowLocal}`);
     }
   }

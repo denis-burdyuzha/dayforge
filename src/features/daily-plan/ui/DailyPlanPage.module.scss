@@ -184,6 +184,53 @@
   margin-top: var(--space-4);
 }
 
+.appendActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+
+  @media (max-width: 380px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* «Сегодня / Завтра» switch above the plan input */
+.dayToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+}
+
+.dayToggleBtn,
+.dayToggleActive {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 150ms, color 150ms;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.dayToggleActive {
+  background: var(--color-primary);
+  color: #fff;
+}
+
 .addToggleBtn {
   width: 100%;
   display: flex;

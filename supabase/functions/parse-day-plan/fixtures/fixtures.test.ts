@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { AttributeCode } from "../../_shared/ai/catalog.ts";
 import { ModelOutputSchema, type PlanItem } from "../schema.ts";
 import {
+  type DayPlanFixture,
+  expectedDate,
   type ExpectedItem,
   fixtureContext,
+  fixturePlanDate,
   FIXTURES,
   scorePlanFixture,
   timeMatches,
@@ -16,13 +19,17 @@ const PART_TIME: Record<string, string> = {
   evening: "18:00",
 };
 
-/** A perfect answer built from the expectations */
-const perfect = (items: ExpectedItem[]): PlanItem[] =>
+/** A perfect answer built from the expectations (dates resolved) */
+const perfect = (
+  fixture: DayPlanFixture,
+  items: ExpectedItem[] = fixture.expected.items,
+): PlanItem[] =>
   items.map((e) => {
     const skill = Array.isArray(e.skill) ? e.skill[0]! : e.skill;
     const time = e.time ? (PART_TIME[e.time] ?? e.time.replace(">=", "")) : "10:00";
     return {
       title: `${e.match[0]} — пункт`,
+      date: expectedDate(fixture, e),
       startTime: time,
       durationMinutes: e.minutes ?? 30,
       skill:
@@ -41,9 +48,9 @@ const perfect = (items: ExpectedItem[]): PlanItem[] =>
   });
 
 describe("day plan fixtures", () => {
-  it("15 fixtures with unique ids; texts 3–4000 chars; referenced skills exist in the context", () => {
-    expect(FIXTURES).toHaveLength(15);
-    expect(new Set(FIXTURES.map((f) => f.id)).size).toBe(15);
+  it("18 fixtures with unique ids; texts 3–4000 chars; referenced skills exist in the context", () => {
+    expect(FIXTURES).toHaveLength(18);
+    expect(new Set(FIXTURES.map((f) => f.id)).size).toBe(18);
     for (const f of FIXTURES) {
       expect(f.text.length, f.id).toBeGreaterThanOrEqual(3);
       expect(f.text.length, f.id).toBeLessThanOrEqual(4000);
@@ -58,10 +65,23 @@ describe("day plan fixtures", () => {
 
   it("a perfect answer scores as fully correct and passes the output schema", () => {
     for (const f of FIXTURES) {
-      const items = perfect(f.expected.items);
+      const items = perfect(f);
       expect(scorePlanFixture(f, items), f.id).toMatchObject({ correct: true, problems: [] });
-      expect(ModelOutputSchema.safeParse({ items }).success, f.id).toBe(true);
+      // the model's form of the same answer: date "plan" | "next"
+      const modelItems = items.map((it, i) => ({
+        ...it,
+        date: f.expected.items[i]?.date ?? "plan",
+      }));
+      expect(ModelOutputSchema.safeParse({ items: modelItems }).success, f.id).toBe(true);
     }
+  });
+
+  it("the scorer catches a wrong date", () => {
+    const f = FIXTURES.find((x) => x.id === "17-tonight-and-tomorrow-morning")!;
+    const items = perfect(f).map((it) => ({ ...it, date: fixturePlanDate(f) }));
+    expect(scorePlanFixture(f, items).problems.join("\n")).toMatch(
+      /дата 2026-11-27 вместо 2026-11-28/,
+    );
   });
 
   it("time rules: exact, part of the day, >=", () => {
@@ -78,7 +98,7 @@ describe("day plan fixtures", () => {
 
   it("the scorer catches a wrong time, a past time, a wrong skill, a missed duplicate and invented items", () => {
     const f = FIXTURES.find((x) => x.id === "09-duplicates")!;
-    const items = perfect(f.expected.items);
+    const items = perfect(f);
     items[0] = { ...items[0]!, duplicateOfExisting: false };
     items[1] = { ...items[1]!, startTime: "20:00", skill: { kind: "none" } };
     items.push({
@@ -97,7 +117,7 @@ describe("day plan fixtures", () => {
     expect(score.extraItems).toBe(1);
 
     const late = FIXTURES.find((x) => x.id === "05-today-after-1530")!;
-    const past = perfect(late.expected.items);
+    const past = perfect(late);
     past[0] = { ...past[0]!, startTime: "08:00" };
     expect(scorePlanFixture(late, past).problems.join("\n")).toMatch(/08:00 раньше текущего 15:30/);
   });

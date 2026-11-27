@@ -7,8 +7,15 @@ import { formatZodIssues, runAttempts, utcDayStart } from "../_shared/ai/attempt
 import { fail } from "../_shared/ai/http.ts";
 import type { AiProvider } from "../_shared/ai/provider.ts";
 import { normalizeSkillName, resolveSkillRef } from "../_shared/ai/skills.ts";
-import { isBefore, localDateTime, toHHMM, toMinutes, userDayDate } from "../_shared/ai/userDay.ts";
-import { buildDayPlanRequest } from "./prompt.ts";
+import {
+  addDaysIso,
+  isBefore,
+  localDateTime,
+  toHHMM,
+  toMinutes,
+  userDayDate,
+} from "../_shared/ai/userDay.ts";
+import { buildDayPlanRequest, planDateStatus } from "./prompt.ts";
 import {
   HHMM,
   LIMITS,
@@ -32,23 +39,41 @@ export function localDate(now: Date, timezone: string): string | null {
 }
 
 export interface SanitizeOptions {
-  /** the date the items are planned on */
+  /** the plan date ("plan" items); "next" items go to the day after it */
   planDate: string;
-  /** the user's day today (by the day boundary) — items before it are never moved */
+  /** the user's day today (by the day boundary) — items on earlier dates are never moved */
   userToday: string;
   /** the local calendar date and time now — «the past» is everything before this moment */
   calendarDate: string;
   nowLocal: string;
+  /**
+   * may an item go to the next day? Only when the plan date is already in progress and either the text mentions
+   * «завтра» or it is evening (≥ 18:00); otherwise a "next" from the model is put back on the plan date
+   * (the model over-uses "next" — see the eval).
+   */
+  allowNext?: boolean;
 }
+
+/** the server rule for options.allowNext */
+export function nextDayAllowed(
+  status: "in_progress" | "ahead",
+  text: string,
+  nowLocal: string,
+): boolean {
+  return status === "in_progress" && (/завтр/i.test(text) || toMinutes(nowLocal) >= 18 * 60);
+}
+
+const padTime = (t: string) => (/^\d:\d\d$/.test(t) ? `0${t}` : t);
 
 /**
  * Make validated model output safe to show and apply:
+ * - date "plan" → planDate, "next" → planDate + 1;
  * - duration → a multiple of 5 within 5–480 (out of range → low + note);
- * - startTime must be HH:MM (else null + low); on the user's today (or later) a moment already in the past
- *   (date + time before now) moves after now — cascading in time order, each after the previous one (low + note);
- *   the plan is never put into the past;
+ * - startTime must be HH:MM (else null + low); on a date that is the user's today or later, a moment already in
+ *   the past (date + time before now) moves after now — per date, cascading in time order, each after the
+ *   previous one (low + note); the plan is never put into the past;
  * - skills by the shared rules (foreign id → a new skill to review, alias → existing, icon fallback);
- * - duplicateOfExisting is also set when the title equals a quest already on the date;
+ * - duplicateOfExisting is also set when the title equals a quest already on the SAME date;
  * - a note on every low-confidence item.
  */
 export function sanitizeItems(
@@ -56,50 +81,52 @@ export function sanitizeItems(
   context: PlanParseContext,
   options: SanitizeOptions,
 ): PlanItem[] {
-  const existingTitles = new Set(context.quests.map((q) => normalizeSkillName(q.title)));
-  const itemDate = options.planDate;
+  const nextDate = addDaysIso(options.planDate, 1);
+  const allowNext = options.allowNext ?? true;
+  const dateOf = (item: ModelOutput["items"][number]) =>
+    item.date === "next" && allowNext ? nextDate : options.planDate;
+  const existingByDate = new Set(
+    context.quests.map((q) => `${q.date}|${normalizeSkillName(q.title)}`),
+  );
   const nowMin = toMinutes(options.nowLocal);
-  /** the first free 5-minute slot after now; past items are placed from here on, one after another */
-  let cursor =
-    itemDate === options.calendarDate
-      ? Math.ceil(nowMin / LIMITS.durationStep) * LIMITS.durationStep
-      : null; // the whole date is in the past (planning the user's day after midnight) → no slot left on it
-  const mayShift = itemDate >= options.userToday;
-  const pastOrder = output.items
-    .map((item, index) => ({ index, time: item.startTime?.trim() ?? "" }))
-    .filter(
-      ({ time }) =>
-        mayShift &&
-        HHMM.test(time.length === 4 ? `0${time}` : time) &&
-        isBefore(
-          itemDate,
-          time.length === 4 ? `0${time}` : time,
-          options.calendarDate,
-          options.nowLocal,
-        ),
-    )
-    .sort((a, b) => toMinutes(a.time) - toMinutes(b.time) || a.index - b.index)
-    .map(({ index }) => index);
-  /** index → the new start of a past item (null: no time left on the date) */
+
+  /** index → the new start of a past item (null: no time left on its date) */
   const shifted = new Map<number, string | null>();
-  for (const index of pastOrder) {
-    const item = output.items[index]!;
-    const duration = Math.min(
-      LIMITS.durationMax,
-      Math.max(
-        LIMITS.durationMin,
-        Math.round(item.durationMinutes / LIMITS.durationStep) * LIMITS.durationStep,
-      ),
-    );
-    if (cursor !== null && cursor < 24 * 60) {
-      shifted.set(index, toHHMM(cursor));
-      cursor += duration;
-    } else {
-      shifted.set(index, null);
+  for (const date of [options.planDate, nextDate]) {
+    if (date < options.userToday) continue;
+    /** the first free 5-minute slot after now; null — the whole date is already in the past */
+    let cursor =
+      date === options.calendarDate
+        ? Math.ceil(nowMin / LIMITS.durationStep) * LIMITS.durationStep
+        : null;
+    const past = output.items
+      .map((item, index) => ({ item, index, time: padTime(item.startTime?.trim() ?? "") }))
+      .filter(
+        ({ item, time }) =>
+          dateOf(item) === date &&
+          HHMM.test(time) &&
+          isBefore(date, time, options.calendarDate, options.nowLocal),
+      )
+      .sort((a, b) => toMinutes(a.time) - toMinutes(b.time) || a.index - b.index);
+    for (const { item, index } of past) {
+      const duration = Math.min(
+        LIMITS.durationMax,
+        Math.max(
+          LIMITS.durationMin,
+          Math.round(item.durationMinutes / LIMITS.durationStep) * LIMITS.durationStep,
+        ),
+      );
+      if (cursor !== null && cursor < 24 * 60) {
+        shifted.set(index, toHHMM(cursor));
+        cursor += duration;
+      } else {
+        shifted.set(index, null);
+      }
     }
   }
 
   return output.items.map((item, index) => {
+    const date = dateOf(item);
     const notes: string[] = item.note ? [item.note] : [];
     let confidence = item.confidence;
 
@@ -144,12 +171,13 @@ export function sanitizeItems(
     }
 
     const duplicateOfExisting =
-      item.duplicateOfExisting || existingTitles.has(normalizeSkillName(title));
+      item.duplicateOfExisting || existingByDate.has(`${date}|${normalizeSkillName(title)}`);
 
     if (confidence === "low" && notes.length === 0) notes.push("модель не уверена в этом пункте");
 
     return {
       title,
+      date,
       startTime,
       durationMinutes: duration,
       skill: resolved.skill,
@@ -193,7 +221,14 @@ export async function parseDayPlan(
   // the user's day: before the day boundary the night still belongs to the previous date
   const userToday = userDayDate(calendarDate, nowLocal, dayStartTime);
   const isToday = userToday === planDate;
-  const sanitizeOptions: SanitizeOptions = { planDate, userToday, calendarDate, nowLocal };
+  const status = planDateStatus({ planDate, nowDate: calendarDate, nowLocal, dayStartTime });
+  const sanitizeOptions: SanitizeOptions = {
+    planDate,
+    userToday,
+    calendarDate,
+    nowLocal,
+    allowNext: nextDayAllowed(status, text, nowLocal),
+  };
 
   // 2. Daily limit (requests since 00:00 UTC; a retry is not a new request)
   const used = await deps.store.countParseRequestsSince(userId, utcDayStart(now()));
@@ -201,15 +236,26 @@ export async function parseDayPlan(
     return fail(429, "RATE_LIMIT", `Лимит ${LIMITS.parsesPerDay} разборов плана в сутки исчерпан`);
   }
 
-  // 3. Context
-  const context = await deps.store.loadContext(userId, planDate);
+  // 3. Context: skills + quests of the plan date and the next day
+  const nextDate = addDaysIso(planDate, 1);
+  const context = await deps.store.loadContext(userId, [planDate, nextDate]);
 
   // 4. Model: up to 2 attempts
   const result = await runAttempts<PlanItem[]>({
     provider: deps.provider,
     timeoutMs: deps.timeoutMs ?? LIMITS.timeoutMs,
     buildRequest: (retry) =>
-      buildDayPlanRequest({ planDate, text, isToday, nowLocal, context, retry }),
+      buildDayPlanRequest({
+        planDate,
+        nextDate,
+        text,
+        isToday,
+        nowDate: calendarDate,
+        nowLocal,
+        dayStartTime,
+        context,
+        retry,
+      }),
     validate(raw) {
       const parsed = ModelOutputSchema.safeParse(raw);
       return parsed.success

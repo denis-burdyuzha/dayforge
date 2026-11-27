@@ -8,7 +8,7 @@ import {
   type EditablePlanItem,
   findOverlaps,
   planDrafts,
-  sortByTime,
+  sortByDateTime,
   type TimedEntry,
   toEditableItems,
   totalMinutes,
@@ -21,7 +21,7 @@ export interface UseAiDayPlanOptions {
   planDate: string;
   /** the user's day boundary ("HH:MM") */
   dayStartTime: string;
-  /** quests already on the plan — for the «Пересекается с …» warnings */
+  /** quests already on the plan date and the next day (with `date`) — for the «Пересекается с …» warnings */
   existingQuests: ReadonlyArray<TimedEntry>;
   /** called after apply_day_plan succeeded (draft already cleared) */
   onApplied: (result: ApplyDayPlanResult) => void | Promise<void>;
@@ -113,7 +113,12 @@ export function useAiDayPlan({
 
   /** re-sort after a time edit is committed (on blur), so cards do not jump while typing */
   function resort() {
-    setItems((prev) => sortByTime(prev));
+    setItems((prev) => sortByDateTime(prev));
+  }
+
+  /** move an item to the other day of the preview (plan date ↔ the next day) */
+  function moveToDate(key: string, date: string) {
+    setItems((prev) => sortByDateTime(prev.map((i) => (i.key === key ? { ...i, date } : i))));
   }
 
   function backToText() {
@@ -137,6 +142,7 @@ export function useAiDayPlan({
     confirm,
     updateItem,
     resort,
+    moveToDate,
     backToText,
     dismissError: () => setError(null),
   };

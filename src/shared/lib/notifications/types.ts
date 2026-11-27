@@ -7,6 +7,7 @@ export interface Notification {
 }
 
 export interface NotificationContextValue {
-  notify: (message: string, type?: NotificationType) => void;
+  /** shows a toast; it hides itself after `durationMs` (default 2.5 s, errors 4 s) */
+  notify: (message: string, type?: NotificationType, durationMs?: number) => void;
   remove: (id: number) => void;
 }

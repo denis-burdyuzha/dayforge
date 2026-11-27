@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 
 import { profileRepository } from "@/entities/profile/api/profileRepository";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/entities/profile/model/bedtime";
 import type { Profile } from "@/entities/profile/model/profileTypes";
 import { profileQueryKey } from "@/entities/profile/model/useProfile";
+import { useNotifications } from "@/shared/lib/notifications/context";
 
 import styles from "../SettingsPage.module.scss";
 import { SettingsSection } from "./SettingsSection";
@@ -41,16 +42,8 @@ export function DaySection({ userId, profile }: { userId: string; profile: Profi
   const queryClient = useQueryClient();
   const selectId = useId();
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ text: string; error: boolean } | null>(null);
   const [remembered, setRemembered] = useState(loadChoice);
-  const toastTimer = useRef<number | undefined>(undefined);
-
-  /** one toast at a time; a new one restarts the timer (an old timer must not hide it early) */
-  function showToast(text: string, error: boolean) {
-    window.clearTimeout(toastTimer.current);
-    setToast({ text, error });
-    toastTimer.current = window.setTimeout(() => setToast(null), 2200);
-  }
+  const { notify } = useNotifications();
 
   const choice = dayStartToBedtime(profile.dayStartTime, remembered);
 
@@ -61,9 +54,9 @@ export function DaySection({ userId, profile }: { userId: string; profile: Profi
       saveChoice(next);
       setRemembered(next);
       await queryClient.invalidateQueries({ queryKey: profileQueryKey(userId) });
-      showToast("Сохранено", false);
+      notify("Сохранено", "success");
     } catch {
-      showToast("Не удалось сохранить — проверь соединение", true);
+      notify("Не удалось сохранить — проверь соединение", "error");
     } finally {
       setSaving(false);
     }
@@ -93,15 +86,6 @@ export function DaySection({ userId, profile }: { userId: string; profile: Profi
       <p className={styles.hint} data-testid="bedtime-hint">
         {dayStartExplanation(choice)}
       </p>
-      {toast && (
-        <div
-          className={toast.error ? styles.toastError : styles.toast}
-          role={toast.error ? "alert" : "status"}
-          data-testid="settings-toast"
-        >
-          {toast.text}
-        </div>
-      )}
     </SettingsSection>
   );
 }

@@ -1,46 +1,44 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
-import { NotificationContext } from "./context";
-import type { Notification, NotificationType } from "./types";
+import { NotificationContext } from "@/shared/lib/notifications/context";
+import type { Notification, NotificationType } from "@/shared/lib/notifications/types";
+import { Toast, ToastViewport } from "@/shared/ui/Toast/ui/Toast";
 
 interface NotificationProviderProps {
   children: ReactNode;
 }
 
+/** Renders the app's toasts (shared/ui/Toast) in one fixed viewport; `notify` comes from useNotifications() */
 export function NotificationProvider({ children }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const nextId = useRef(0);
 
-  const notify = (message: string, type: NotificationType = "info") => {
-    const id = Date.now();
+  const remove = useCallback((id: number) => {
+    setNotifications((current) => current.filter((n) => n.id !== id));
+  }, []);
 
-    setNotifications((current) => [
-      ...current,
-      {
-        id,
-        type,
-        message,
-      },
-    ]);
+  const notify = useCallback(
+    (message: string, type: NotificationType = "info", durationMs?: number) => {
+      nextId.current += 1;
+      const id = nextId.current;
+      setNotifications((current) => [...current, { id, type, message }]);
+      window.setTimeout(() => remove(id), durationMs ?? (type === "error" ? 4000 : 2500));
+    },
+    [remove],
+  );
 
-    setTimeout(() => {
-      setNotifications((current) => current.filter((notification) => notification.id !== id));
-    }, 4000);
-  };
-
-  const remove = (id: number) => {
-    setNotifications((current) => current.filter((notification) => notification.id !== id));
-  };
+  const value = useMemo(() => ({ notify, remove }), [notify, remove]);
 
   return (
-    <NotificationContext.Provider value={{ notify, remove }}>
+    <NotificationContext.Provider value={value}>
       {children}
 
-      <div id="notifications-root">
-        {notifications.map((notification) => (
-          <div key={notification.id}>{notification.message}</div>
+      <ToastViewport>
+        {notifications.map((n) => (
+          <Toast key={n.id} message={n.message} type={n.type} onClose={() => remove(n.id)} />
         ))}
-      </div>
+      </ToastViewport>
     </NotificationContext.Provider>
   );
 }

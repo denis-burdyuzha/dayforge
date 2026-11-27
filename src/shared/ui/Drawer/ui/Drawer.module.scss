@@ -1,7 +1,7 @@
 .overlay {
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: 200;
 
     background: rgb(0 0 0 / 50%);
 }
@@ -21,6 +21,43 @@
     animation: drawerIn 250ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* bottom sheet: full width on phones, a centred card on wide screens */
+.sheet {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+
+    width: min(100%, 560px);
+    max-height: 88dvh;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: var(--shadow-lg);
+
+    animation: sheetIn 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes sheetIn {
+    from {
+        transform: translate(-50%, 100%);
+    }
+
+    to {
+        transform: translate(-50%, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .drawer,
+    .sheet {
+        animation: none;
+    }
+}
+
 .header {
     display: flex;
     align-items: center;
@@ -30,11 +67,18 @@
     border-bottom: 1px solid var(--color-border);
 }
 
+.header h2 {
+    font-size: var(--font-size-lg, 1.125rem);
+    font-weight: 600;
+}
+
 .header button {
     border: 0;
     background: transparent;
     color: var(--color-text-secondary);
     font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .content {

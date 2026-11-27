@@ -26,6 +26,12 @@ export interface Quest {
   source: QuestSource;
 }
 
+/** A quest with the date of its plan (calendar views) */
+export interface CalendarQuest extends Quest {
+  /** "YYYY-MM-DD" */
+  date: string;
+}
+
 export interface DailyPlan {
   id: string;
   characterId: string;

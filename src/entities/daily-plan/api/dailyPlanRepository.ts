@@ -2,7 +2,13 @@ import { xpRequiredForLevel } from "@/entities/character/model/characterTypes";
 import { supabase } from "@/shared/api/supabase/client";
 import type { QuestCompletionResult } from "@/shared/api/supabase/rpcTypes";
 
-import type { DailyPlan, NewQuestInput, Quest, QuestUpdateInput } from "../model/dailyPlanTypes";
+import type {
+  CalendarQuest,
+  DailyPlan,
+  NewQuestInput,
+  Quest,
+  QuestUpdateInput,
+} from "../model/dailyPlanTypes";
 
 function mapQuestRow(row: {
   id: string;
@@ -79,6 +85,53 @@ export const dailyPlanRepository = {
       status: plan.status as DailyPlan["status"],
       quests: (quests ?? []).map(mapQuestRow),
     };
+  },
+
+  /**
+   * Quests of the character's plans from `from` to `to` (inclusive, "YYYY-MM-DD"), each with its plan date —
+   * for the calendar (day and week views).
+   */
+  async getQuestsInRange(characterId: string, from: string, to: string): Promise<CalendarQuest[]> {
+    const { data: plans, error: plansError } = await supabase
+      .from("daily_plans")
+      .select("id, date")
+      .eq("character_id", characterId)
+      .gte("date", from)
+      .lte("date", to);
+    if (plansError) throw new Error(plansError.message);
+    if (!plans || plans.length === 0) return [];
+
+    const dateByPlan = new Map(plans.map((p) => [p.id, p.date]));
+    const { data: quests, error: questsError } = await supabase
+      .from("quests")
+      .select(QUEST_SELECT)
+      .in(
+        "daily_plan_id",
+        plans.map((p) => p.id),
+      )
+      .order("position", { ascending: true });
+    if (questsError) throw new Error(questsError.message);
+
+    return (quests ?? []).map((row) => ({
+      ...mapQuestRow(row),
+      date: dateByPlan.get(row.daily_plan_id) ?? from,
+    }));
+  },
+
+  /**
+   * Creates a quest on a date with a time / duration / existing skill (RPC create_quest; the plan of the date is
+   * created on the server when missing). Used by the calendar.
+   */
+  async createQuest(input: QuestUpdateInput): Promise<Quest> {
+    const { data, error } = await supabase.rpc("create_quest", {
+      p_date: input.date,
+      p_title: input.title,
+      ...(input.startTime !== null ? { p_start_time: input.startTime } : {}),
+      ...(input.durationMinutes !== null ? { p_duration_minutes: input.durationMinutes } : {}),
+      ...(input.skillId !== null ? { p_skill_id: input.skillId } : {}),
+    });
+    if (error) throw new Error(error.message);
+    return mapQuestRow(data as Parameters<typeof mapQuestRow>[0]);
   },
 
   /**

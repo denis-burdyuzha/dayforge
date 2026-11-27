@@ -9,7 +9,12 @@ import type { CharacterAttribute } from "@/entities/character/model/characterTyp
 import { type SkillView, toSkillView } from "@/entities/character/model/skillPresentation";
 import { characterQueryKey } from "@/entities/character/model/useCharacter";
 import { dailyPlanRepository } from "@/entities/daily-plan/api/dailyPlanRepository";
-import type { ApplyDayPlanResult, TimedEntry } from "@/entities/daily-plan/model/aiDayPlan";
+import {
+  type ApplyDayPlanResult,
+  formatDuration,
+  sortByTime,
+  type TimedEntry,
+} from "@/entities/daily-plan/model/aiDayPlan";
 import type { DailyPlan, NewQuestInput, Quest } from "@/entities/daily-plan/model/dailyPlanTypes";
 import { useUserToday } from "@/entities/profile/model/useProfile";
 import { dayLabel } from "@/shared/lib/dayLabel";
@@ -22,7 +27,6 @@ import { Loading } from "@/shared/ui/Loading/ui/Loading";
 
 import { AiDayPlan } from "./AiDayPlan";
 import styles from "./DailyPlanPage.module.scss";
-import { DayTimeline } from "./DayTimeline";
 
 // ---------------------------------------------------------------------------
 // Micro-toast
@@ -346,16 +350,20 @@ function QuestItem({
 
       <div className={styles.questBody}>
         <div className={styles.questTitle}>{quest.title}</div>
-        {quest.durationMinutes != null && !quest.skillName && (
-          <div className={styles.questMeta}>
-            <span className={styles.questSkill}>{quest.durationMinutes} мин · без навыка</span>
-          </div>
-        )}
-        {quest.skillName && (
+        {(quest.startTime || quest.skillName || quest.durationMinutes != null) && (
           <div className={styles.questMeta}>
             <span className={styles.questSkill}>
-              🎯 {quest.skillName}
-              {quest.hours != null ? ` · ${quest.hours}ч` : ""}
+              {[
+                quest.startTime,
+                quest.skillName ? `🎯 ${quest.skillName}` : "без навыка",
+                quest.durationMinutes != null
+                  ? formatDuration(quest.durationMinutes)
+                  : quest.hours != null
+                    ? `${quest.hours}ч`
+                    : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           </div>
         )}
@@ -577,7 +585,6 @@ export function DailyPlanPage() {
   const completedCount = plan?.quests.filter((q) => q.status === "completed").length ?? 0;
   const quests = plan?.quests ?? [];
   const timedQuests = quests.filter((q) => q.startTime);
-  const untimedQuests = quests.filter((q) => !q.startTime);
   // quests of the plan date and the next day — overlaps of the preview are checked per date
   const toTimed = (q: Quest, date: string): TimedEntry => ({
     key: `quest:${q.id}`,
@@ -639,43 +646,22 @@ export function DailyPlanPage() {
         />
       )}
 
-      {/* Day timeline (timed quests) + the rest */}
+      {/* Quests of the day in time order (the timeline lives in the «Календарь» tab) */}
       {quests.length > 0 ? (
         <>
-          {timedQuests.length > 0 && (
-            <>
-              <p className={styles.sectionTitle}>
-                {pendingCount > 0 ? "План дня" : "Все выполнено!"}
-              </p>
-              <DayTimeline
-                quests={timedQuests}
-                skills={skills}
+          <p className={styles.sectionTitle}>
+            {pendingCount > 0 ? "Квесты дня" : "Все выполнено!"}
+          </p>
+          <div className={styles.questList} data-testid="plan-quest-list">
+            {sortByTime(quests).map((quest) => (
+              <QuestItem
+                key={quest.id}
+                quest={quest}
                 onComplete={handleCompleteQuest}
-                completingId={completing}
+                completing={completing === quest.id}
               />
-            </>
-          )}
-          {untimedQuests.length > 0 && (
-            <>
-              <p className={styles.sectionTitle}>
-                {timedQuests.length > 0
-                  ? "Без времени"
-                  : pendingCount > 0
-                    ? "Квесты"
-                    : "Все выполнено!"}
-              </p>
-              <div className={styles.questList}>
-                {untimedQuests.map((quest) => (
-                  <QuestItem
-                    key={quest.id}
-                    quest={quest}
-                    onComplete={handleCompleteQuest}
-                    completing={completing === quest.id}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+            ))}
+          </div>
         </>
       ) : (
         <div className={styles.emptyQuestsWrap}>

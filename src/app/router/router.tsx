@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
+import { CalendarPage } from "@/features/calendar/ui/CalendarPage";
 import { DailyPlanPage } from "@/features/daily-plan/ui/DailyPlanPage";
 import { DailyReportPage } from "@/features/daily-report/ui/DailyReportPage";
 import { OnboardingPage } from "@/features/onboarding/ui/OnboardingPage";
@@ -58,6 +59,10 @@ export const appRouter = createBrowserRouter([
           {
             path: "plan",
             element: <DailyPlanPage />,
+          },
+          {
+            path: "calendar",
+            element: <CalendarPage />,
           },
           {
             path: "report",

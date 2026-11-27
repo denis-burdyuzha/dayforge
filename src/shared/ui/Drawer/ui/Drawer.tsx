@@ -1,16 +1,18 @@
 import { type ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
 
-import styles from "./Drawer.module.css";
+import styles from "./Drawer.module.scss";
 
 interface DrawerProps {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  /** "right" — a side panel (default); "bottom" — a bottom sheet (mobile editing cards) */
+  side?: "right" | "bottom";
 }
 
-export function Drawer({ open, onClose, children, title }: DrawerProps) {
+export function Drawer({ open, onClose, children, title, side = "right" }: DrawerProps) {
   useEffect(() => {
     if (!open) {
       return;
@@ -36,7 +38,7 @@ export function Drawer({ open, onClose, children, title }: DrawerProps) {
   return createPortal(
     <div className={styles.overlay} onMouseDown={onClose}>
       <aside
-        className={styles.drawer}
+        className={side === "bottom" ? styles.sheet : styles.drawer}
         onMouseDown={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"

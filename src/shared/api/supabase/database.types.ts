@@ -914,6 +914,7 @@ export type Database = {
       get_friends: { Args: never; Returns: Json };
       get_my_friend_code: { Args: never; Returns: Json };
       get_my_streak: { Args: never; Returns: Json };
+      get_invite_preview: { Args: { p_code: string }; Returns: Json };
       get_or_create_daily_plan: { Args: { p_date: string }; Returns: Json };
       quest_counts_for_league: {
         Args: { p_quest_id: string };

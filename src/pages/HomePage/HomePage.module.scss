@@ -209,7 +209,10 @@
 /* Character name */
 .heroName {
   margin: 0;
-  font-size: var(--font-size-2xl);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-3xl, 2rem);
+  line-height: 1.15;
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
   letter-spacing: -0.01em;
@@ -379,7 +382,7 @@
 
 /* Title plate under the rune ring */
 .titlePlate {
-  margin-top: calc(-1 * var(--space-1));
+  margin-top: 0;
 }
 
 .skillsScroll {
@@ -636,4 +639,59 @@
 
 .evolutionDeltas {
   /* container for deltas block */
+}
+
+/* Streak: flame + the week row */
+.streakRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+/* «С возвращением!» */
+.welcomeBack {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in oklch, #ff9a3c 40%, var(--color-border));
+  border-radius: var(--radius-lg, 12px);
+  background: color-mix(in oklch, #ff9a3c 8%, var(--color-surface));
+}
+
+.welcomeBackTitle {
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.welcomeBackText {
+  margin: 4px 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.welcomeBackClose {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-raised);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 }

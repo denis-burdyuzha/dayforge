@@ -30,6 +30,9 @@ export function Header() {
             data-testid="profile-btn"
           >
             <Avatar size="sm" />
+            <span className={styles.characterName} data-testid="header-name">
+              {character.name}
+            </span>
             <Badge variant="primary" className={styles.levelBadge}>
               Lv.&nbsp;{character.level}
             </Badge>

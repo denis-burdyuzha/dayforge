@@ -1,0 +1,94 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+}
+
+.badgeActive {
+  color: #ff9a3c;
+  background: color-mix(in oklch, #ff9a3c 14%, var(--color-surface-raised));
+}
+
+.badgeValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  max-width: 320px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  color: var(--color-bg);
+  box-sizing: border-box;
+}
+
+.dayLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.day[data-status="done"] .dot {
+  border-color: #ff9a3c;
+  background: #ff9a3c;
+}
+
+.day[data-status="frozen"] .dot {
+  border-color: #6cc4ff;
+  background: color-mix(in oklch, #6cc4ff 22%, transparent);
+  color: #6cc4ff;
+}
+
+.day[data-status="missed"] .dot {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.day[data-status="today"] .dot {
+  border-color: #ff9a3c;
+}
+
+.day[data-status="today"] .dayLabel {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.day[data-status="future"] .dot {
+  opacity: 0.35;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -6,4 +6,6 @@ export interface Profile {
   dayStartTime: string;
   /** IANA zone of the device, updated on app entry; null = unknown */
   timezone: string | null;
+  /** friends see the summary of my day (counts, hours, skills — never texts) */
+  shareDailySummary: boolean;
 }

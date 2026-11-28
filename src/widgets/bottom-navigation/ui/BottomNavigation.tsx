@@ -1,4 +1,4 @@
-import { CalendarDays, House, ListTodo, NotebookPen } from "lucide-react";
+import { CalendarDays, House, ListTodo, NotebookPen, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 import styles from "./BottomNavigation.module.scss";
@@ -8,6 +8,7 @@ const navigationItems = [
   { label: "План", to: "/app/plan", icon: ListTodo },
   { label: "Календарь", to: "/app/calendar", icon: CalendarDays },
   { label: "Отчёт", to: "/app/report", icon: NotebookPen },
+  { label: "Друзья", to: "/app/friends", icon: Users },
 ];
 
 export function BottomNavigation() {

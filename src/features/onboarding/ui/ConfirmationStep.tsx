@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 
+import { characterNameErrorMessage } from "@/entities/character/model/characterName";
 import { characterClasses, startingDirections } from "@/entities/character/model/classes";
 import { onboardingRepository } from "@/features/onboarding/api/onboardingRepository";
 import { supabase } from "@/shared/api/supabase/client";
@@ -65,7 +66,12 @@ export function ConfirmationStep({ values, onBack }: ConfirmationStepProps) {
       navigate("/app", { replace: true });
     } catch (err) {
       hasCompletedRef.current = false;
-      setAuthError(err instanceof Error ? err.message : "Не удалось создать персонажа.");
+      const raw = err instanceof Error ? err.message : "";
+      setAuthError(
+        /NAME_NOT_ALLOWED|INVALID_NAME/.test(raw)
+          ? `${characterNameErrorMessage(err)}. Вернись назад и поменяй имя.`
+          : raw || "Не удалось создать персонажа.",
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { CalendarPage } from "@/features/calendar/ui/CalendarPage";
 import { DailyPlanPage } from "@/features/daily-plan/ui/DailyPlanPage";
 import { DailyReportPage } from "@/features/daily-report/ui/DailyReportPage";
+import { FriendProfilePage } from "@/features/friends/ui/FriendProfilePage";
 import { FriendsPage } from "@/features/friends/ui/FriendsPage";
 import { OnboardingPage } from "@/features/onboarding/ui/OnboardingPage";
 import { AuthCallbackPage } from "@/pages/AuthCallbackPage/AuthCallbackPage";
@@ -78,6 +79,10 @@ export const appRouter = createBrowserRouter([
           {
             path: "friends",
             element: <FriendsPage />,
+          },
+          {
+            path: "friends/:userId",
+            element: <FriendProfilePage />,
           },
           {
             path: "report/review",

@@ -7,14 +7,14 @@ import type { Profile } from "../model/profileTypes";
 const toHHMM = (t: string | null | undefined) => (t ? t.slice(0, 5) : DEFAULT_DAY_START_TIME);
 
 /**
- * profiles of the signed-in user. The client may update only display_name, avatar_url, day_start_time and timezone
+ * profiles of the signed-in user. The client may update only display_name, avatar_url, day_start_time, timezone and share_daily_summary
  * of its own row (column-level grants, see docs/ai-context/security.md).
  */
 export const profileRepository = {
   async getProfile(userId: string): Promise<Profile | null> {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, day_start_time, timezone")
+      .select("id, username, display_name, day_start_time, timezone, share_daily_summary")
       .eq("id", userId)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw new Error(error.message);
@@ -25,6 +25,7 @@ export const profileRepository = {
       displayName: data.display_name,
       dayStartTime: toHHMM(data.day_start_time),
       timezone: data.timezone,
+      shareDailySummary: data.share_daily_summary,
     };
   },
 
@@ -32,6 +33,14 @@ export const profileRepository = {
     const { error } = await supabase
       .from("profiles")
       .update({ day_start_time: dayStartTime })
+      .eq("id", userId);
+    if (error) throw new Error(error.message);
+  },
+
+  async updateShareDailySummary(userId: string, share: boolean): Promise<void> {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ share_daily_summary: share })
       .eq("id", userId);
     if (error) throw new Error(error.message);
   },

@@ -583,14 +583,22 @@ export type Database = {
           },
         ];
       };
+      friendships: {
+        Row: { created_at: string; created_by: string; user_high: string; user_low: string };
+        Insert: { created_at?: string; created_by: string; user_high: string; user_low: string };
+        Update: { created_at?: string; created_by?: string; user_high?: string; user_low?: string };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
           created_at: string;
           day_start_time: string;
           display_name: string | null;
+          friend_code: string;
           id: string;
           onboarding_completed: boolean;
+          share_daily_summary: boolean;
           timezone: string | null;
           updated_at: string;
           username: string | null;
@@ -600,8 +608,10 @@ export type Database = {
           created_at?: string;
           day_start_time?: string;
           display_name?: string | null;
+          friend_code?: string;
           id: string;
           onboarding_completed?: boolean;
+          share_daily_summary?: boolean;
           timezone?: string | null;
           updated_at?: string;
           username?: string | null;
@@ -611,8 +621,10 @@ export type Database = {
           created_at?: string;
           day_start_time?: string;
           display_name?: string | null;
+          friend_code?: string;
           id?: string;
           onboarding_completed?: boolean;
+          share_daily_summary?: boolean;
           timezone?: string | null;
           updated_at?: string;
           username?: string | null;
@@ -897,12 +909,18 @@ export type Database = {
         Returns: Json;
       };
       delete_quest: { Args: { p_quest_id: string }; Returns: Json };
+      add_friend_by_code: { Args: { p_code: string }; Returns: Json };
+      get_friend_profile: { Args: { p_friend_user_id: string }; Returns: Json };
+      get_friends: { Args: never; Returns: Json };
+      get_my_friend_code: { Args: never; Returns: Json };
       get_my_streak: { Args: never; Returns: Json };
       get_or_create_daily_plan: { Args: { p_date: string }; Returns: Json };
       quest_counts_for_league: {
         Args: { p_quest_id: string };
         Returns: boolean;
       };
+      regenerate_friend_code: { Args: never; Returns: Json };
+      remove_friend: { Args: { p_friend_user_id: string }; Returns: Json };
       rename_character: {
         Args: { p_name: string };
         Returns: Json;

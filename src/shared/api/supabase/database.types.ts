@@ -57,6 +57,18 @@ export type Database = {
         };
         Relationships: [];
       };
+      banned_words: {
+        Row: {
+          word: string;
+        };
+        Insert: {
+          word: string;
+        };
+        Update: {
+          word?: string;
+        };
+        Relationships: [];
+      };
       character_attributes: {
         Row: {
           attribute_id: string;
@@ -174,6 +186,7 @@ export type Database = {
           relics: Json;
           skills_count: number;
           snapshot_date: string;
+          streak: number;
           tier: number;
           top_skills: Json;
           total_xp: number;
@@ -189,6 +202,7 @@ export type Database = {
           relics?: Json;
           skills_count?: number;
           snapshot_date: string;
+          streak?: number;
           tier: number;
           top_skills?: Json;
           total_xp: number;
@@ -204,6 +218,7 @@ export type Database = {
           relics?: Json;
           skills_count?: number;
           snapshot_date?: string;
+          streak?: number;
           tier?: number;
           top_skills?: Json;
           total_xp?: number;
@@ -584,9 +599,24 @@ export type Database = {
         ];
       };
       friendships: {
-        Row: { created_at: string; created_by: string; user_high: string; user_low: string };
-        Insert: { created_at?: string; created_by: string; user_high: string; user_low: string };
-        Update: { created_at?: string; created_by?: string; user_high?: string; user_low?: string };
+        Row: {
+          created_at: string;
+          created_by: string;
+          user_high: string;
+          user_low: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          user_high: string;
+          user_low: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          user_high?: string;
+          user_low?: string;
+        };
         Relationships: [];
       };
       profiles: {
@@ -829,6 +859,8 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _are_friends: { Args: { p_a: string; p_b: string }; Returns: boolean };
+      _check_character_name: { Args: { p_name: string }; Returns: string };
       _check_quest_fields: {
         Args: { p_duration_minutes: number; p_title: string };
         Returns: string;
@@ -838,6 +870,10 @@ export type Database = {
         Returns: Json;
       };
       _current_character_id: { Args: never; Returns: string };
+      _day_summary: {
+        Args: { p_character_id: string; p_date: string };
+        Returns: Json;
+      };
       _ensure_daily_plan: {
         Args: { p_character_id: string; p_date: string };
         Returns: string;
@@ -849,6 +885,9 @@ export type Database = {
           skill_name: string;
         }[];
       };
+      _friend_card: { Args: { p_user_id: string }; Returns: Json };
+      _new_friend_code: { Args: never; Returns: string };
+      _normalize_name_for_ban: { Args: { p_text: string }; Returns: string };
       _normalize_skill_name: { Args: { p_name: string }; Returns: string };
       _own_skill_name: {
         Args: { p_character_id: string; p_skill_id: string };
@@ -867,10 +906,19 @@ export type Database = {
       _skill_level_for_xp: { Args: { p_xp: number }; Returns: number };
       _snapshot_aspect: { Args: { p_attributes: Json }; Returns: string };
       _snapshot_tier: { Args: { p_level: number }; Returns: number };
+      _streak_info: {
+        Args: { p_character_id: string; p_now?: string };
+        Returns: Json;
+      };
       _upsert_character_snapshot: {
         Args: { p_character_id: string; p_date: string };
         Returns: undefined;
       };
+      _user_today: {
+        Args: { p_now?: string; p_user_id: string };
+        Returns: string;
+      };
+      add_friend_by_code: { Args: { p_code: string }; Returns: Json };
       apply_day_plan: {
         Args: { p_items: Json; p_parse_id: string; p_plan_date: string };
         Returns: Json;
@@ -909,12 +957,11 @@ export type Database = {
         Returns: Json;
       };
       delete_quest: { Args: { p_quest_id: string }; Returns: Json };
-      add_friend_by_code: { Args: { p_code: string }; Returns: Json };
       get_friend_profile: { Args: { p_friend_user_id: string }; Returns: Json };
       get_friends: { Args: never; Returns: Json };
+      get_invite_preview: { Args: { p_code: string }; Returns: Json };
       get_my_friend_code: { Args: never; Returns: Json };
       get_my_streak: { Args: never; Returns: Json };
-      get_invite_preview: { Args: { p_code: string }; Returns: Json };
       get_or_create_daily_plan: { Args: { p_date: string }; Returns: Json };
       quest_counts_for_league: {
         Args: { p_quest_id: string };
@@ -922,10 +969,7 @@ export type Database = {
       };
       regenerate_friend_code: { Args: never; Returns: Json };
       remove_friend: { Args: { p_friend_user_id: string }; Returns: Json };
-      rename_character: {
-        Args: { p_name: string };
-        Returns: Json;
-      };
+      rename_character: { Args: { p_name: string }; Returns: Json };
       save_daily_report: {
         Args: { p_content: string; p_date: string };
         Returns: Json;

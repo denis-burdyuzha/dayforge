@@ -208,6 +208,15 @@ describe("the user's date: day_start_time + timezone", () => {
 describe("get_my_streak + writers", () => {
   it("RPC: the caller's own streak; anon and internal helpers are closed", async () => {
     await reports([]);
+    // PostgREST runs STABLE RPCs read-only — the function must not lock rows
+    const ro = await db.transaction(async (tx) => {
+      await tx.exec(
+        `set transaction read only; set local role authenticated;
+         select set_config('request.jwt.claim.sub', '${USER_A}', true);`,
+      );
+      return tx.query<{ s: Streak }>("select public.get_my_streak() as s");
+    });
+    expect(ro.rows[0]?.s.current).toBe(0);
     const r = await asUser<{ s: Streak }>(db, USER_A, "select public.get_my_streak() as s");
     expect(r.rows[0]?.s).toMatchObject({ current: 0, today_done: false });
     await expect(asAnon(db, "select public.get_my_streak()")).rejects.toThrow(/permission denied/);

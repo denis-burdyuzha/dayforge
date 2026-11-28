@@ -171,6 +171,7 @@ REVOKE ALL ON FUNCTION public._streak_info(UUID, TIMESTAMPTZ) FROM PUBLIC, anon,
 
 
 -- ── 4. RPC ──────────────────────────────────────────────────────────────────
+-- STABLE: PostgREST runs it in a read-only transaction, so no _current_character_id() here (it locks FOR UPDATE).
 CREATE OR REPLACE FUNCTION public.get_my_streak()
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -178,8 +179,17 @@ STABLE
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
+DECLARE
+    v_character_id UUID;
 BEGIN
-    RETURN public._streak_info(public._current_character_id());
+    IF auth.uid() IS NULL THEN
+        RAISE EXCEPTION USING MESSAGE = 'NOT_AUTHENTICATED';
+    END IF;
+    SELECT id INTO v_character_id FROM public.characters WHERE profile_id = auth.uid();
+    IF v_character_id IS NULL THEN
+        RAISE EXCEPTION USING MESSAGE = 'CHARACTER_NOT_FOUND';
+    END IF;
+    RETURN public._streak_info(v_character_id);
 END;
 $$;
 

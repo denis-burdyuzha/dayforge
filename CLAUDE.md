@@ -86,14 +86,15 @@ solution-style с `"files": []`). Все прошлые отчёты «tsc ✅ 0
 ## Текущий фокус
 
 Атрибуты: аспект (цвет rim/ауры + сигил за аватаром) + вращающийся круг рун (22.11.2026, в `main`); эффекты на
-теле v2 отложены (тег `avatar-attribute-fx-v2`, чекбокс в Playground). Миграцию онбординга (20261122150000) нужно
-применить `npx supabase db push`. Открытые вопросы — `progress.md`.
+теле v2 отложены (тег `avatar-attribute-fx-v2`, чекбокс в Playground). Открытые вопросы — `progress.md`.
 Все 5 классов на SVG-пайплайне (26.11.2026): лиса, волк, медведь, лев, олень. Владелец доразмечает `aspectAccent`
 у волка и добавит оленя L4–L5 → `npm run build:assets`.
 Ежедневные снимки персонажа `character_snapshots` (27.11.2026) — данные для будущего повтора эволюции и витрины.
 «Сегодня» = день пользователя (`getUserDayDate`, граница `profiles.day_start_time`, по умолчанию 04:00) — никогда
 не календарная дата напрямую. План на сегодня/завтра, вкладка «Календарь» (`features/calendar`), правило лиги
 `quest_counts_for_league` (по `scheduled_at`, пока не используется) — 27.11.2026.
+Социальный слой (28.11.2026, `social.md`): имя с бан-листом, серия с недельной заморозкой, друзья по коду/ссылке
+`/invite/:code`; данные друзей — только RPC, отбирающие поля (`features/friends`).
 AI-разбор отчёта и AI-план дня (26.11.2026). Следующий шаг — экспорт плана во внешние календари через фид-подписку.
 Supabase CLI: Docker не запускать; удалённый проект — `npx supabase db push` (linked), типы — `gen types --linked`.
 
@@ -133,6 +134,7 @@ Supabase CLI: Docker не запускать; удалённый проект �
 - [ai-day-report.md](docs/ai-context/ai-day-report.md) — AI-разбор отчёта: схема, лимиты, коды ошибок, eval, деплой.
 - [ai-day-plan.md](docs/ai-context/ai-day-plan.md) — AI-план дня: схема, лимиты, коды, таймлайн, eval.
 - [adding-creature.md](docs/ai-context/adding-creature.md) — добавить/обновить зверя: SVG, разметка aspectAccent, сборка.
+- [social.md](docs/ai-context/social.md) — имя, серия, друзья, приглашение: правила, RPC, ограничения.
 - [security.md](docs/ai-context/security.md) — доступ к данным: что клиент может, RPC записи, проверки.
 - [progress.md](docs/ai-context/progress.md) — что сделано, текущий статус, открытые задачи, расхождения, результат сборки.
 
